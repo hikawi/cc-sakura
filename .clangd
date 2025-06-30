@@ -1,0 +1,14 @@
+CompileFlags:
+  Add: [
+    -Wall,
+    -Wextra,
+    -Wpedantic,
+    -Wconversion,
+    -Wshadow,
+    -Wnull-dereference,
+    -Wunused,
+    -Wdouble-promotion,
+    -Wformat=2,
+    -Wcast-align,
+    -std=c17
+  ]
