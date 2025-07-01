@@ -1,0 +1,59 @@
+// misc/vector.h
+//
+// Mathematical operations on vectors. These are not C++ vectors
+// that are array lists.
+
+#pragma once
+
+/**
+ * Represents a vector of coordinates (x, y). THis may be used as
+ * directional vectors or as a 2D point.
+ */
+typedef struct
+{
+  double x;
+  double y;
+} Vector2;
+
+/**
+ * Makes a new 2D vector.
+ */
+Vector2 make_vector2(double x, double y);
+
+/**
+ * Adds two vectors and returns the result as a newly created vector.
+ */
+Vector2 add_vector2(Vector2 lhs, Vector2 rhs);
+
+/**
+ * Scales a 2D vector with a scalar.
+ */
+Vector2 scale_vector2(Vector2 vec, double scalar);
+
+/**
+ * Rotates a 2D vector around the origin by an angle in radians.
+ *
+ * I don't know why but sometimes this does not preserve length, I may be
+ * stupid but last implementation I made needs to be normalized AFTER
+ * rotation.
+ */
+Vector2 rotate_vector2(Vector2 vec, double angle);
+
+/**
+ * Calculates the length of a 2D vector.
+ *
+ * This uses some CPU cycles for sqrt, use sparingly.
+ */
+double length_vector2(Vector2 vec);
+
+/**
+ * Calculates the length squared of a 2D vector.
+ *
+ * This is to mostly conserve CPU cycles for calculating the SQRT if not needed.
+ */
+double length_squared_vector2(Vector2 vec);
+
+/**
+ * Normalize a 2D vector. Does nothing if the vector is already length 1.
+ */
+Vector2 normalize_vector2(Vector2 vec);

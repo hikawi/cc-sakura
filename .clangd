@@ -10,5 +10,4 @@ CompileFlags:
     -Wdouble-promotion,
     -Wformat=2,
     -Wcast-align,
-    -std=c17
   ]

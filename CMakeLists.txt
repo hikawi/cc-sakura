@@ -1,6 +1,7 @@
 # Thanks GPT for fixing this shit after i accidentally deleted it
 
 cmake_minimum_required(VERSION 3.21)
+set(EXPORT_COMPILE_COMMANDS true)
 project(CCSakura C)
 
 # Set C standard
