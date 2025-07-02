@@ -1,7 +1,7 @@
 # Thanks GPT for fixing this shit after i accidentally deleted it
 
 cmake_minimum_required(VERSION 3.21)
-set(EXPORT_COMPILE_COMMANDS true)
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 project(CCSakura C)
 
 # Set C standard
@@ -19,10 +19,35 @@ add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
 
 # Add your source files
-file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS "src/*.c")
+set(GAME_SOURCES
+    src/engine/engine.c
+
+    src/misc/vector.c
+
+    src/render/renderer.c
+    src/render/font_renderer.c
+
+    src/spr/sakura.c
+    src/spr/sprites.c
+
+    src/main.c
+)
+set(GAME_HEADERS
+    include/engine/engine.h
+
+    include/misc/vector.h
+
+    include/render/renderer.h
+    include/render/font_renderer.h
+
+    include/spr/sakura.h
+    include/spr/sprites.h
+
+    include/app.h
+)
 
 # Create the game executable
-add_executable(CCSakura ${GAME_SOURCES})
+add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE

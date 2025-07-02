@@ -7,11 +7,12 @@
 
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_video.h"
+#include "app.h"
 
 /**
  * Initializes SDL's window and renderer.
  */
-void init_window_and_renderer(void);
+bool init_window_and_renderer(void);
 
 /**
  * Retrieves the app's current window. This is never NULL.
@@ -24,9 +25,9 @@ SDL_Window *get_current_window(void);
 SDL_Renderer *get_current_renderer(void);
 
 /**
- * Renders the testing screen.
+ * Starts the rendering process.
  */
-void render_test_screen(void);
+void render(AppState *state);
 
 /**
  * Destroys the allocated window and renderer.
