@@ -29,7 +29,7 @@ typedef struct
   SpriteTexture *textures;
   uint32_t textures_len;
   uint8_t ani_idx;
-  uint8_t last_ani_tick;
+  double dt_accumulator;
   uint8_t fps;
 } Sprite;
 
@@ -46,4 +46,4 @@ SpriteTexture load_texture_from_image(SDL_Renderer *renderer, const char *file);
  *
  * It's time when the last_ani_tick is at equal or greater than its fps.
  */
-void advance_animation_tick(Sprite *spr);
+void advance_animation_tick(Sprite *spr, double dt);

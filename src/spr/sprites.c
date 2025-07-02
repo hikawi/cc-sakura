@@ -1,5 +1,4 @@
 #include "spr/sprites.h"
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
@@ -31,12 +30,13 @@ SpriteTexture load_texture_from_image(SDL_Renderer *renderer, const char *file)
   return spr_text;
 }
 
-void advance_animation_tick(Sprite *spr)
+void advance_animation_tick(Sprite *spr, double dt)
 {
-  spr->last_ani_tick++;
-  if (spr->last_ani_tick >= spr->fps)
+  spr->dt_accumulator += dt;
+  if (spr->dt_accumulator >= (1.0 / spr->fps))
   {
-    spr->last_ani_tick = 0;
-    spr->ani_idx = (spr->ani_idx + 1) % spr->textures_len;
+    spr->dt_accumulator -= (1.0 / spr->fps);
+    spr->ani_idx++;
+    spr->ani_idx %= spr->textures_len;
   }
 }

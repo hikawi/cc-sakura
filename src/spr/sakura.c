@@ -79,15 +79,17 @@ bool init_sakura(void)
   sakura = malloc(sizeof(Sakura));
   sakura->pos.x = 0;
   sakura->pos.y = 0;
-  sakura->dir.x = 0;
-  sakura->dir.y = 0;
+  sakura->is_moving_down = false;
+  sakura->is_moving_left = false;
+  sakura->is_moving_right = false;
+  sakura->is_moving_up = false;
 
   sakura->idle = malloc(sizeof(Sprite));
   sakura->idle->textures = malloc(sizeof(SpriteTexture) * SAKURA_IDLE_ANIMATION_LENGTH);
   sakura->idle->textures_len = SAKURA_IDLE_ANIMATION_LENGTH;
   sakura->idle->ani_idx = 0;
   sakura->idle->fps = SAKURA_ANIMATION_FPS;
-  sakura->idle->last_ani_tick = 0;
+  sakura->idle->dt_accumulator = 0;
 
   // Initialize her idle animation textures.
   // Oh no, I'm PirateSoftware with how many magic numbers.

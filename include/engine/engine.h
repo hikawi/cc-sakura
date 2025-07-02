@@ -5,7 +5,13 @@
 
 #pragma once
 
+#include "SDL3/SDL_events.h"
 #include "app.h"
+
+/**
+ * Parses the event the application caught.
+ */
+void engine_handle_event(AppState *app, SDL_Event *event);
 
 /**
  * Make the engine run one iteration of the application.

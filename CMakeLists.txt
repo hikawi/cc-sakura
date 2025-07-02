@@ -21,10 +21,13 @@ add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
 # Add your source files
 set(GAME_SOURCES
     src/engine/engine.c
+    src/engine/events.c
+    src/engine/physics.c
 
     src/misc/vector.c
 
     src/render/renderer.c
+    src/render/char_renderer.c
     src/render/font_renderer.c
 
     src/spr/sakura.c
@@ -34,10 +37,13 @@ set(GAME_SOURCES
 )
 set(GAME_HEADERS
     include/engine/engine.h
+    include/engine/events.h
+    include/engine/physics.h
 
     include/misc/vector.h
 
     include/render/renderer.h
+    include/render/char_renderer.h
     include/render/font_renderer.h
 
     include/spr/sakura.h

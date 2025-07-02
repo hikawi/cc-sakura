@@ -1,5 +1,4 @@
 #include "render/font_renderer.h"
-#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
@@ -9,26 +8,37 @@
 #include "render/renderer.h"
 #include <string.h>
 
-static const char *PIXELIFY_SANS_PATH = "assets/font/pixelify-sans.ttf";
+static const char *RAINYHEARTS_PATH = "assets/font/rainyhearts.ttf";
+static const char *DAYDREAM_PATH = "assets/font/daydream.ttf";
 static const char *UNIFONT_PATH = "assets/font/unifont.ttf";
 
-static TTF_Font *pixelify_font = NULL;
+static TTF_Font *rainyhearts_font = NULL;
+static TTF_Font *daydream_font = NULL;
 static TTF_Font *unifont_font = NULL;
 
 bool init_font_faces(void)
 {
-  pixelify_font = TTF_OpenFont(PIXELIFY_SANS_PATH, 32);
-  if (pixelify_font == NULL)
-  {
-    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Couldn't load Pixelify Sans font. Are you in the correct path?");
-    return false;
-  }
-
   unifont_font = TTF_OpenFont(UNIFONT_PATH, 32);
   if (unifont_font == NULL)
   {
-    TTF_CloseFont(pixelify_font);
     SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "COuldn't load Unifont font. Are you in the correct path?");
+    return false;
+  }
+
+  daydream_font = TTF_OpenFont(DAYDREAM_PATH, 32);
+  if (daydream_font == NULL)
+  {
+    TTF_CloseFont(unifont_font);
+    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Couldn't load Daydream font. Are you in the correct path?");
+    return false;
+  }
+
+  rainyhearts_font = TTF_OpenFont(RAINYHEARTS_PATH, 32);
+  if (rainyhearts_font == NULL)
+  {
+    TTF_CloseFont(unifont_font);
+    TTF_CloseFont(daydream_font);
+    SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Couldn't load Rainy Hearts font. Are you in the correct path?");
     return false;
   }
 
@@ -41,8 +51,11 @@ void draw_font(FontFace face, const char *str, SDL_Color color,
   TTF_Font *font;
   switch (face)
   {
-  case FONT_FACE_PIXELIFY_SANS:
-    font = pixelify_font;
+  case FONT_FACE_RAINY_HEARTS:
+    font = rainyhearts_font;
+    break;
+  case FONT_FACE_DAYDREAM:
+    font = daydream_font;
     break;
   default:
     font = unifont_font;
@@ -104,6 +117,7 @@ void draw_font(FontFace face, const char *str, SDL_Color color,
 
 void destroy_font_faces(void)
 {
-  TTF_CloseFont(pixelify_font);
+  TTF_CloseFont(daydream_font);
+  TTF_CloseFont(rainyhearts_font);
   TTF_CloseFont(unifont_font);
 }

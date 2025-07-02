@@ -6,7 +6,6 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include <stdbool.h>
 
 /**
@@ -15,7 +14,10 @@
 typedef enum
 {
   // The font face that should be the main font to be used.
-  FONT_FACE_PIXELIFY_SANS,
+  FONT_FACE_RAINY_HEARTS,
+
+  // The font face that should be used as secondary font.
+  FONT_FACE_DAYDREAM,
 
   // The debug font face that can also display all Unicode characters.
   FONT_FACE_UNIFONT,

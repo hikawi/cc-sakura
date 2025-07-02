@@ -1,12 +1,30 @@
 #include "engine/engine.h"
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
+#include "engine/events.h"
+#include "engine/physics.h"
+#include "misc/vector.h"
+#include "spr/sakura.h"
+#include "spr/sprites.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * Calls every frame.
  */
 void app_tick(AppState *app, double dt)
 {
+  Sakura *skr = get_sakura();
+
+  // Move Sakura.
+  Vector2 skr_dir;
+  skr_dir.x = (int)skr->is_moving_right - (int)skr->is_moving_left;
+  skr_dir.y = (int)skr->is_moving_down - (int)skr->is_moving_up;
+  skr->pos = apply_movement(skr->pos, skr_dir, 100, dt);
+  advance_animation_tick(skr->idle, dt);
 }
 
 /**
@@ -49,5 +67,26 @@ void engine_iterate(AppState *app)
     app->frames_per_sec = app->frames_counter;
     app->frames_counter = 0;
     app->frames_elapsed -= 1;
+  }
+}
+
+void engine_handle_event(AppState *app, SDL_Event *event)
+{
+  // Retrieve the event data and log it out.
+  int buflen = SDL_GetEventDescription(event, NULL, 0);
+  char *buf = malloc(sizeof(char) * ((unsigned long)buflen + 1));
+  SDL_GetEventDescription(event, buf, buflen);
+  SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", buf);
+  free(buf);
+
+  // Handle the event itself.
+  switch (event->type)
+  {
+  case SDL_EVENT_KEY_DOWN:
+    handle_key_down_event(app, event->key);
+    break;
+  case SDL_EVENT_KEY_UP:
+    handle_key_up_event(app, event->key);
+    break;
   }
 }

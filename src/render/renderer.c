@@ -1,12 +1,13 @@
 #include "render/renderer.h"
 #include "SDL3/SDL_assert.h"
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
 #include "app.h"
+#include "render/char_renderer.h"
 #include "render/font_renderer.h"
+#include "spr/sakura.h"
 #include <stdlib.h>
 
 static SDL_Window *window = NULL;
@@ -53,9 +54,28 @@ void render(AppState *state)
     color.b = 255;
     color.a = 255;
 
-    draw_font(FONT_FACE_PIXELIFY_SANS, buf, color,
+    draw_font(FONT_FACE_DAYDREAM, buf, color,
               w / 2.0, 10, FONT_ORIGIN_TOP_CENTER);
   }
+
+  // Render Sakura's position.
+  {
+    Sakura *skr = get_sakura();
+
+    char buf[31];
+    SDL_snprintf(buf, 30, "(%.2f, %.2f)", skr->pos.x, skr->pos.y);
+
+    SDL_Color color;
+    color.r = 100;
+    color.g = 20;
+    color.b = 20;
+    color.a = 255;
+
+    draw_font(FONT_FACE_RAINY_HEARTS, buf, color,
+              w / 2.0, 50, FONT_ORIGIN_TOP_CENTER);
+  }
+
+  render_sakura();
 
   // Present the change on screen.
   SDL_RenderPresent(renderer);

@@ -8,6 +8,7 @@
 
 #include "misc/vector.h"
 #include "spr/sprites.h"
+#include <stdbool.h>
 
 /**
  * Represents the player, Sakura.
@@ -15,8 +16,12 @@
 typedef struct
 {
   Vector2 pos;  // Sakura's position.
-  Vector2 dir;  // Sakura's current direction, we only allow x to move.
   Sprite *idle; // The set of sprites for Sakura's idle animation.
+
+  bool is_moving_up;    // Flag to see whether she's moving up.
+  bool is_moving_down;  // Flag to see whether she's moving down.
+  bool is_moving_left;  // Flag to see whether she's moving left.
+  bool is_moving_right; // Flag to see whether she's moving right.
 } Sakura;
 
 /**
