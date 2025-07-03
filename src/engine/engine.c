@@ -17,6 +17,8 @@
  */
 void app_tick(AppState *app, double dt)
 {
+  (void)app;
+
   Sakura *skr = get_sakura();
 
   // Move Sakura.
@@ -33,6 +35,7 @@ void app_tick(AppState *app, double dt)
  */
 void app_fixed_tick(AppState *app)
 {
+  (void)app;
 }
 
 void engine_iterate(AppState *app)

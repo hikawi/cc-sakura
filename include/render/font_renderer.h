@@ -6,6 +6,8 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
+#include "misc/vector.h"
+#include "render/renderer.h"
 #include <stdbool.h>
 
 /**
@@ -24,22 +26,6 @@ typedef enum
 } FontFace;
 
 /**
- * Decides where to draw the font at, using the origin space.
- */
-typedef enum
-{
-  FONT_ORIGIN_TOP_LEFT,
-  FONT_ORIGIN_TOP_CENTER,
-  FONT_ORIGIN_TOP_RIGHT,
-  FONT_ORIGIN_MIDDLE_LEFT,
-  FONT_ORIGIN_MIDDLE_CENTER,
-  FONT_ORIGIN_MIDDLE_RIGHT,
-  FONT_ORIGIN_BOTTOM_LEFT,
-  FONT_ORIGIN_BOTTOM_CENTER,
-  FONT_ORIGIN_BOTTOM_RIGHT,
-} FontOrigin;
-
-/**
  * Initializes and loads up the font faces.
  */
 bool init_font_faces(void);
@@ -48,8 +34,8 @@ bool init_font_faces(void);
  * Draws some text in the font face on the screen
  * at the destination.
  */
-void draw_font(FontFace face, const char *str, SDL_Color color,
-               double ori_x, double ori_y, FontOrigin ori_type);
+void draw_font(FontFace face, const char *str, double ori_x, double ori_y,
+               SDL_Color color, RenderingOriginType origin);
 
 /**
  * Destroys and reclaims memory used by the font faces.

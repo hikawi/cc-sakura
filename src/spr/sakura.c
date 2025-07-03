@@ -2,6 +2,7 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_video.h"
 #include "render/renderer.h"
 #include "spr/sprites.h"
 #include <stdlib.h>
@@ -76,9 +77,12 @@ bool init_sakura(void)
     return true;
   }
 
+  int w, h;
+  SDL_GetWindowSize(get_current_window(), &w, &h);
+
   sakura = malloc(sizeof(Sakura));
-  sakura->pos.x = 0;
-  sakura->pos.y = 0;
+  sakura->pos.x = w / 2.0;
+  sakura->pos.y = h / 2.0;
   sakura->is_moving_down = false;
   sakura->is_moving_left = false;
   sakura->is_moving_right = false;
@@ -108,7 +112,7 @@ bool init_sakura(void)
   return true;
 }
 
-Sakura *get_sakura()
+Sakura *get_sakura(void)
 {
   SDL_assert(sakura != NULL);
   return sakura;

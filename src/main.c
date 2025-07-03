@@ -24,6 +24,9 @@
  */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
+  (void)argc;
+  (void)argv;
+
   SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
   SDL_SetAppMetadata(APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_IDENTIFIER);
 

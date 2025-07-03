@@ -45,8 +45,8 @@ bool init_font_faces(void)
   return true;
 }
 
-void draw_font(FontFace face, const char *str, SDL_Color color,
-               double ori_x, double ori_y, FontOrigin ori_type)
+void draw_font(FontFace face, const char *str, double ori_x, double ori_y,
+               SDL_Color color, RenderingOriginType origin)
 {
   TTF_Font *font;
   switch (face)
@@ -67,48 +67,19 @@ void draw_font(FontFace face, const char *str, SDL_Color color,
   SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
   SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
 
-  // Calculate where to put on the screen.
   SDL_FRect dstrect;
   dstrect.x = (float)ori_x;
   dstrect.y = (float)ori_y;
-  SDL_GetTextureSize(texture, &dstrect.w, &dstrect.h);
+  dstrect.w = 0; // Let them calculate the width/height later.
+  dstrect.h = 0;
 
-  switch (ori_type)
-  {
-  case FONT_ORIGIN_TOP_LEFT: // Do nothing.
-    break;
-  case FONT_ORIGIN_TOP_CENTER: // Move origin X to left by half.
-    dstrect.x -= dstrect.w / 2;
-    break;
-  case FONT_ORIGIN_TOP_RIGHT: // Move origin X to left full.
-    dstrect.x -= dstrect.w;
-    break;
-  case FONT_ORIGIN_MIDDLE_LEFT: // Move origin Y down by half.
-    dstrect.y -= dstrect.h / 2;
-    break;
-  case FONT_ORIGIN_MIDDLE_CENTER: // Move both origins by half.
-    dstrect.x -= dstrect.w / 2;
-    dstrect.y -= dstrect.h / 2;
-    break;
-  case FONT_ORIGIN_MIDDLE_RIGHT: // Move X by full and Y by half.
-    dstrect.x -= dstrect.w;
-    dstrect.y -= dstrect.h / 2;
-    break;
-  case FONT_ORIGIN_BOTTOM_LEFT: // Move Y by full.
-    dstrect.y -= dstrect.h;
-    break;
-  case FONT_ORIGIN_BOTTOM_CENTER: // Move Y full and X half.
-    dstrect.x -= dstrect.w / 2;
-    dstrect.y -= dstrect.h;
-    break;
-  case FONT_ORIGIN_BOTTOM_RIGHT: // Move Y full and X full.
-    dstrect.x -= dstrect.w;
-    dstrect.y -= dstrect.h;
-    break;
-  }
+  RenderingOptions opts = create_default_rendering_options();
+  opts.align = origin;
+  opts.texture = texture;
+  opts.dstrect = &dstrect;
 
   // Ok now we can render.
-  SDL_RenderTexture(renderer, texture, NULL, &dstrect);
+  render_aligned_texture(opts);
 
   // Clean up after use.
   SDL_DestroySurface(surface);

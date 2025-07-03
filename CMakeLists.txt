@@ -55,6 +55,13 @@ set(GAME_HEADERS
 # Create the game executable
 add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 
+# Set warnings as error
+if(MSVC)
+  target_compile_options(CCSakura PRIVATE /W4 /WX)
+else()
+  target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE
     SDL3::SDL3
