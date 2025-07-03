@@ -37,6 +37,11 @@ Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos)
   return res;
 }
 
+double get_rotation(Vector2 vec)
+{
+  return SDL_atan2(vec.y, vec.x);
+}
+
 double length_vector2(Vector2 vec)
 {
   return SDL_sqrt(length_squared_vector2(vec));

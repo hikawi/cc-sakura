@@ -3,6 +3,10 @@
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_video.h"
+#include "app.h"
+#include "engine/collision.h"
+#include "engine/physics.h"
+#include "misc/vector.h"
 #include "render/renderer.h"
 #include "spr/sprites.h"
 #include <stdlib.h>
@@ -88,6 +92,14 @@ bool init_sakura(void)
   sakura->is_moving_right = false;
   sakura->is_moving_up = false;
 
+  // Initialize Sakura's collider
+  sakura->collider = malloc(sizeof(Collider));
+  sakura->collider->collider_type = COLLIDER_TYPE_CAPSULE;
+  sakura->collider->collision_type = COLLISION_DYNAMIC;
+  sakura->collider->name = "sakura";
+
+  // Initialize her idle animation textures.
+  // Oh no, I'm PirateSoftware with how many magic numbers.
   sakura->idle = malloc(sizeof(Sprite));
   sakura->idle->textures = malloc(sizeof(SpriteTexture) * SAKURA_IDLE_ANIMATION_LENGTH);
   sakura->idle->textures_len = SAKURA_IDLE_ANIMATION_LENGTH;
@@ -95,8 +107,6 @@ bool init_sakura(void)
   sakura->idle->fps = SAKURA_ANIMATION_FPS;
   sakura->idle->dt_accumulator = 0;
 
-  // Initialize her idle animation textures.
-  // Oh no, I'm PirateSoftware with how many magic numbers.
   for (int i = 0; i < SAKURA_IDLE_ANIMATION_LENGTH; i++)
   {
     SpriteTexture *texture = sakura->idle->textures + i;
@@ -118,11 +128,65 @@ Sakura *get_sakura(void)
   return sakura;
 }
 
+void update_sakura(AppState *app, double dt)
+{
+  (void)app;
+  Sakura *skr = sakura;
+
+  advance_animation_tick(skr->idle, dt);
+}
+
+void fixed_update_sakura(AppState *app)
+{
+  Sakura *skr = sakura;
+
+  // We can apply gravity if Sakura is not on the ground.
+  // Sakura is on the ground if she collides with the ground.
+  apply_velocity(&sakura->pos, &sakura->velo);
+
+  // Move Sakura.
+  Vector2 skr_dir;
+  skr_dir.x = (int)skr->is_moving_right - (int)skr->is_moving_left;
+  skr_dir.y = (int)skr->is_moving_down - (int)skr->is_moving_up;
+  Vector2 old_pos = skr->pos;
+  skr->pos = apply_movement(skr->pos, skr_dir, 5);
+
+  // Move Sakura's bounding box.
+  SpriteTexture cur_text = skr->idle->textures[skr->idle->ani_idx];
+  double h = (double)cur_text.srcrect.h * 2;
+  double w = (double)cur_text.srcrect.w * 2;
+  CapsuleCollider old_capsule = skr->collider->capsule;
+  skr->collider->capsule.p1.x = skr->pos.x;
+  skr->collider->capsule.p1.y = skr->pos.y - h / 2;
+  skr->collider->capsule.p2.x = skr->pos.x;
+  skr->collider->capsule.p2.y = skr->pos.y + h / 2;
+  skr->collider->capsule.r = w / 2;
+
+  // Check for collisions.
+  bool can_move = true;
+  for (int i = 0; i < app->floor_colliders->length; i++)
+  {
+    if (check_collision(skr->collider, app->floor_colliders->list[i]))
+    {
+      // Don't allow move.
+      can_move = false;
+      break;
+    }
+  }
+
+  if (!can_move)
+  {
+    skr->collider->capsule = old_capsule;
+    skr->pos = old_pos;
+  }
+}
+
 void destroy_sakura(void)
 {
   if (sakura == NULL)
     return;
 
+  free(sakura->collider);
   free(sakura->idle->textures);
   free(sakura->idle);
   free(sakura);

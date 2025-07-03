@@ -1,4 +1,5 @@
 #include "render/char_renderer.h"
+#include "render/collider_renderer.h"
 #include "render/renderer.h"
 #include "spr/sakura.h"
 #include "spr/sprites.h"
@@ -22,7 +23,8 @@ void render_sakura(void)
   opts.srcrect = &spr.srcrect;
   opts.dstrect = &dstrect;
   opts.flipped_horizontally = skr->is_moving_left;
-  opts.align = RENDER_ORIGIN_BOTTOM_LEFT;
+  opts.align = RENDER_ORIGIN_MIDDLE_CENTER;
 
   render_aligned_texture(opts);
+  render_collider(skr->collider);
 }

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
+#include "misc/vector.h"
 
 /**
  * Represents an enumeration of collider types.
@@ -16,6 +17,7 @@ typedef enum
   COLLIDER_TYPE_CAPSULE,
   COLLIDER_TYPE_AABB,
   COLLIDER_TYPE_OBB,
+  COLLIDER_TYPE_CIRCLE,
 } ColliderType;
 
 /**
@@ -39,10 +41,9 @@ typedef enum
  */
 typedef struct
 {
-  double x; // The center's X.
-  double y; // The center's Y.
-  double w; // The capsule's full width. This / 2 is the radius horizontally.
-  double h; // The capsule's full height. This / 2 is the radius vertically.
+  Vector2 p1; // The line segment connecting the center line of the capsule.
+  Vector2 p2;
+  double r; // The radius, half width of the capsule.
 } CapsuleCollider;
 
 /**
@@ -71,21 +72,81 @@ typedef struct
 } OBBCollider;
 
 /**
+ * Represents a bounding box in the shape of a circle.
+ */
+typedef struct
+{
+  double x;
+  double y;
+  double r;
+} CircleCollider;
+
+/**
  * Represents a struct of a collider, with multiple types.
  */
 typedef struct
 {
   ColliderType collider_type;
   CollisionType collision_type;
+  const char *name;
   union
   {
     CapsuleCollider capsule;
     AABBCollider aabb;
     OBBCollider obb;
+    CircleCollider circle;
   };
 } Collider;
+
+/**
+ * Represents a list of colliders. Meant to hold multiple colliders,
+ * usually with the same collision type.
+ */
+typedef struct
+{
+  Collider **list; // A list of pointers, since Collider should be held by the actors themselves.
+  int length;
+  int capacity;
+} ColliderList;
 
 /**
  * Retrieves the color needed to debug a collision type.
  */
 SDL_Color get_collision_type_debug_color(CollisionType type);
+
+/**
+ * Checks collisions of two colliders.
+ */
+bool check_collision(Collider *c1, Collider *c2);
+
+/**
+ * Creates a collider list.
+ */
+ColliderList *create_collider_list(void);
+
+/**
+ * Removes a collider from list.
+ */
+void add_collider_to_list(ColliderList *list, Collider *collider);
+
+/**
+ * Removes the collider at a certain index in the list.
+ */
+void remove_collider_at_index(ColliderList *list, int idx);
+
+/**
+ * Removes a collider by the pointer value. This removes only
+ * the first instance.
+ */
+void remove_collider_from_list(ColliderList *list, Collider *collider);
+
+/**
+ * Removes a collider by the name of the collider. This removes only
+ * the first instance.
+ */
+void remove_collider_by_name(ColliderList *list, const char *name);
+
+/**
+ * Destroys the collider list. The pointer is now freed.
+ */
+void destroy_collider_list(ColliderList *list);

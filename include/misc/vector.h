@@ -49,6 +49,11 @@ Vector2 rotate_vector2(Vector2 vec, double angle);
 Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos);
 
 /**
+ * Finds the rotation of a vector compared to the X axis.
+ */
+double get_rotation(Vector2 vec);
+
+/**
  * Calculates the length of a 2D vector.
  *
  * This uses some CPU cycles for sqrt, use sparingly.

@@ -4,6 +4,7 @@
 // updating should be delegated to other source files. Do not do actual handling
 // in this file.
 
+#include "engine/collision.h"
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "SDL3/SDL_init.h"
@@ -94,6 +95,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
   state->frames_elapsed = 0;
   state->frames_per_sec = 0;
 
+  state->floor_colliders = create_collider_list();
+  Collider *floor = malloc(sizeof(Collider));
+  SDL_Window *window = get_current_window();
+  int w, h;
+  SDL_GetWindowSize(window, &w, &h);
+
+  floor->collider_type = COLLIDER_TYPE_AABB;
+  floor->collision_type = COLLISION_SOLID;
+  floor->aabb.x = w / 2.0;
+  floor->aabb.y = h / 2.0 + 200;
+  floor->aabb.h = 60;
+  floor->aabb.w = w;
+  add_collider_to_list(state->floor_colliders, floor);
+
   SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Bootstrapped application successfully.");
   return SDL_APP_CONTINUE;
 }
@@ -125,8 +140,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+  AppState *app = (AppState *)appstate;
+
   destroy_window_and_renderer();
   destroy_sakura();
+  free(app->floor_colliders->list[0]);
+  destroy_collider_list(app->floor_colliders);
   free(appstate);
 
   SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Closing application with result %d", result);

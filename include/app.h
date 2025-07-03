@@ -17,6 +17,18 @@
 #define APPLICATION_SHOW_FPS 1
 
 #include "SDL3/SDL_stdinc.h"
+#include "engine/collision.h"
+
+/**
+ * Represents the keyboard's key state.
+ */
+typedef struct
+{
+  bool key_a;
+  bool key_d;
+  bool key_s;
+  bool key_w;
+} KeyboardStatus;
 
 /**
  * Represents a struct that holds the main information about the game.
@@ -29,4 +41,8 @@ typedef struct
   Uint32 frames_counter; // Counter for frames to calculate FPS.
   double frames_elapsed; // How much time in seconds have elapsed.
   Uint32 frames_per_sec; // The final value for FPS to display.
+
+  KeyboardStatus keyboard; // The keyboard struct for querying keys.
+
+  ColliderList *floor_colliders;
 } AppState;

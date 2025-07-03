@@ -14,6 +14,12 @@
  * - pos: The current position
  * - dir: The direction, might or might not be normalized
  * - spd: The actor's speed
- * - dt: The deltatime to scale with frame rate
  */
-Vector2 apply_movement(Vector2 pos, Vector2 dir, double spd, double dt);
+Vector2 apply_movement(Vector2 pos, Vector2 dir, double spd);
+
+/**
+ * Apply the velocity to the current position.
+ *
+ * This also changes the position and the velocity passed in.
+ */
+void apply_velocity(Vector2 *pos, Vector2 *velo);

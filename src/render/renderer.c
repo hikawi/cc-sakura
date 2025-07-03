@@ -161,6 +161,12 @@ void render(AppState *state)
     draw_font(FONT_FACE_DAYDREAM, buf, w / 2.0, 10, color, RENDER_ORIGIN_TOP_CENTER);
   }
 
+  // Render ground tiles
+  for (int i = 0; i < state->floor_colliders->length; i++)
+  {
+    render_collider(state->floor_colliders->list[i]);
+  }
+
   // Render Sakura's position.
   {
     Sakura *skr = get_sakura();

@@ -4,10 +4,7 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "engine/events.h"
-#include "engine/physics.h"
-#include "misc/vector.h"
 #include "spr/sakura.h"
-#include "spr/sprites.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,16 +14,7 @@
  */
 void app_tick(AppState *app, double dt)
 {
-  (void)app;
-
-  Sakura *skr = get_sakura();
-
-  // Move Sakura.
-  Vector2 skr_dir;
-  skr_dir.x = (int)skr->is_moving_right - (int)skr->is_moving_left;
-  skr_dir.y = (int)skr->is_moving_down - (int)skr->is_moving_up;
-  skr->pos = apply_movement(skr->pos, skr_dir, 100, dt);
-  advance_animation_tick(skr->idle, dt);
+  update_sakura(app, dt);
 }
 
 /**
@@ -35,7 +23,7 @@ void app_tick(AppState *app, double dt)
  */
 void app_fixed_tick(AppState *app)
 {
-  (void)app;
+  fixed_update_sakura(app);
 }
 
 void engine_iterate(AppState *app)
