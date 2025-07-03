@@ -23,12 +23,14 @@ set(GAME_SOURCES
     src/engine/engine.c
     src/engine/events.c
     src/engine/physics.c
+    src/engine/collision.c
 
     src/misc/vector.c
 
     src/render/renderer.c
     src/render/char_renderer.c
     src/render/font_renderer.c
+    src/render/collider_renderer.c
 
     src/spr/sakura.c
     src/spr/sprites.c
@@ -39,12 +41,14 @@ set(GAME_HEADERS
     include/engine/engine.h
     include/engine/events.h
     include/engine/physics.h
+    include/engine/collision.h
 
     include/misc/vector.h
 
     include/render/renderer.h
     include/render/char_renderer.h
     include/render/font_renderer.h
+    include/render/collider_renderer.h
 
     include/spr/sakura.h
     include/spr/sprites.h

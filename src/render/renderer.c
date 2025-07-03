@@ -8,7 +8,9 @@
 #include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_video.h"
 #include "app.h"
+#include "engine/collision.h"
 #include "render/char_renderer.h"
+#include "render/collider_renderer.h"
 #include "render/font_renderer.h"
 #include "spr/sakura.h"
 #include <stdbool.h>
@@ -136,6 +138,7 @@ void render_aligned_texture(RenderingOptions options)
 void render(AppState *state)
 {
   // Clear the screen every frame.
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
   SDL_RenderClear(renderer);
 

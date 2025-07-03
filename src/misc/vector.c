@@ -25,8 +25,13 @@ Vector2 scale_vector2(Vector2 vec, double scalar)
 
 Vector2 rotate_vector2(Vector2 vec, double angle)
 {
-  Vector2 res;
   double sin = SDL_sin(angle), cos = SDL_cos(angle);
+  return rotate_vector2_sincos(vec, sin, cos);
+}
+
+Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos)
+{
+  Vector2 res;
   res.x = vec.x * cos - vec.y * sin;
   res.y = vec.x * sin + vec.y * cos;
   return res;

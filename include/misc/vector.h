@@ -40,6 +40,15 @@ Vector2 scale_vector2(Vector2 vec, double scalar);
 Vector2 rotate_vector2(Vector2 vec, double angle);
 
 /**
+ * Rotates a 2D vector around the origin by an angle,
+ * with its sin and cos precalculated.
+ *
+ * This is usually used when there is need to rotate multiple
+ * vectors in the same angle.
+ */
+Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos);
+
+/**
  * Calculates the length of a 2D vector.
  *
  * This uses some CPU cycles for sqrt, use sparingly.
