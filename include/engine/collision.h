@@ -9,6 +9,9 @@
 #include "SDL3/SDL_pixels.h"
 #include "misc/vector.h"
 
+#define MAX_QUADTREE_DEPTH 6
+#define MAX_COLLIDERS_PER_NODE 10
+
 /**
  * Represents an enumeration of collider types.
  */
@@ -99,6 +102,17 @@ typedef struct
 } Collider;
 
 /**
+ * Represents a structure containing the collision, and explains
+ * how the collision occurred.
+ */
+typedef struct
+{
+  bool is_colliding;
+  Vector2 normal;
+  double depth;
+} Collision;
+
+/**
  * Represents a list of colliders. Meant to hold multiple colliders,
  * usually with the same collision type.
  */
@@ -110,14 +124,36 @@ typedef struct
 } ColliderList;
 
 /**
+ * Represents a quadtree of collider regions, meant to subdivide colliders
+ * into small regions on the screen, so on one physical tick, it only has to clash
+ * with objects in the region, not everywhere.
+ */
+typedef struct QuadtreeNode
+{
+  AABBCollider bounds;            // Where the node surrounds.
+  int depth;                      // The current depth. 0 is on the root.
+  ColliderList *colliders;        // The list of colliders in this region.
+  struct QuadtreeNode **children; // The children, in order of TL, TR, BR, BL.
+} QuadtreeNode;
+
+/**
  * Retrieves the color needed to debug a collision type.
  */
 SDL_Color get_collision_type_debug_color(CollisionType type);
 
 /**
  * Checks collisions of two colliders.
+ *
+ * This is important, a collision happens when one object tries to "go inside" another object.
+ * The one doing the "penetration" is called the "colliding object", and the other is called
+ * the collided object. In this function, c1 should ALWAYS be the collided, and c2 should ALWAYS
+ * be the colliding. Calling opposite might cause normal vectors to be inverted.
+ *
+ * The normal vector is DEFINED (by me) to be the vector that is pointing OUTWARDS
+ * from the surface that is being collided (c1). Applying this vector to c2 at the length
+ * of "depth" would completely separate both objects.
  */
-bool check_collision(Collider *c1, Collider *c2);
+Collision check_collision(Collider *c1, Collider *c2);
 
 /**
  * Creates a collider list.
@@ -147,6 +183,32 @@ void remove_collider_from_list(ColliderList *list, Collider *collider);
 void remove_collider_by_name(ColliderList *list, const char *name);
 
 /**
+ * Copies all elements from the src collider list to the dst collider list
+ * as new elements appending.
+ */
+void join_collider_lists(ColliderList *dst, ColliderList *src);
+
+/**
  * Destroys the collider list. The pointer is now freed.
  */
 void destroy_collider_list(ColliderList *list);
+
+/**
+ * Creates a new quadtree node.
+ */
+QuadtreeNode *create_quadtree_node(AABBCollider bounds, int depth);
+
+/**
+ * Looks for the nearest node that holds a collider in a quadtree.
+ */
+void query_quadtree_node(QuadtreeNode *root, Collider *collider, ColliderList *list);
+
+/**
+ * Populates the quadtree node after filling it with colliders.
+ */
+void subdivide_quadtree(QuadtreeNode *node);
+
+/**
+ * Destroys the populated quadtree node.
+ */
+void destroy_quadtree_node(QuadtreeNode *node);

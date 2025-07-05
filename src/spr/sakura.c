@@ -2,6 +2,7 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
 #include "app.h"
 #include "engine/collision.h"
@@ -87,10 +88,9 @@ bool init_sakura(void)
   sakura = malloc(sizeof(Sakura));
   sakura->pos.x = w / 2.0;
   sakura->pos.y = h / 2.0;
-  sakura->is_moving_down = false;
-  sakura->is_moving_left = false;
-  sakura->is_moving_right = false;
-  sakura->is_moving_up = false;
+  sakura->velo.x = 0;
+  sakura->velo.y = 0;
+  sakura->is_on_ground = false;
 
   // Initialize Sakura's collider
   sakura->collider = malloc(sizeof(Collider));
@@ -128,6 +128,23 @@ Sakura *get_sakura(void)
   return sakura;
 }
 
+/**
+ * Moves Sakura's collider to align with her current position and sprite.
+ */
+void move_sakura_collider(void)
+{
+  Sakura *skr = sakura;
+
+  SpriteTexture cur_text = skr->idle->textures[skr->idle->ani_idx];
+  double h = (double)cur_text.srcrect.h * 2;
+  double w = (double)cur_text.srcrect.w * 2;
+  skr->collider->capsule.p1.x = skr->pos.x;
+  skr->collider->capsule.p1.y = skr->pos.y - h / 2;
+  skr->collider->capsule.p2.x = skr->pos.x;
+  skr->collider->capsule.p2.y = skr->pos.y + h / 2;
+  skr->collider->capsule.r = w / 2 - 2;
+}
+
 void update_sakura(AppState *app, double dt)
 {
   (void)app;
@@ -140,45 +157,121 @@ void fixed_update_sakura(AppState *app)
 {
   Sakura *skr = sakura;
 
-  // We can apply gravity if Sakura is not on the ground.
-  // Sakura is on the ground if she collides with the ground.
-  apply_velocity(&sakura->pos, &sakura->velo);
+  // Apply gravity.
+  skr->velo.y += SAKURA_GRAVITY;
 
-  // Move Sakura.
-  Vector2 skr_dir;
-  skr_dir.x = (int)skr->is_moving_right - (int)skr->is_moving_left;
-  skr_dir.y = (int)skr->is_moving_down - (int)skr->is_moving_up;
-  Vector2 old_pos = skr->pos;
-  skr->pos = apply_movement(skr->pos, skr_dir, 5);
+  // Apply movements based on keyboard states for Sakura.
+  skr->velo.x = 0;
+  if (app->keyboard.key_a)
+    skr->velo.x -= SAKURA_SPEED;
+  if (app->keyboard.key_d)
+    skr->velo.x += SAKURA_SPEED;
 
-  // Move Sakura's bounding box.
-  SpriteTexture cur_text = skr->idle->textures[skr->idle->ani_idx];
-  double h = (double)cur_text.srcrect.h * 2;
-  double w = (double)cur_text.srcrect.w * 2;
-  CapsuleCollider old_capsule = skr->collider->capsule;
-  skr->collider->capsule.p1.x = skr->pos.x;
-  skr->collider->capsule.p1.y = skr->pos.y - h / 2;
-  skr->collider->capsule.p2.x = skr->pos.x;
-  skr->collider->capsule.p2.y = skr->pos.y + h / 2;
-  skr->collider->capsule.r = w / 2;
+  // Jump if she is on the ground and key space pressed.
+  if (app->keyboard.key_space && skr->is_on_ground)
+    skr->velo.y = SAKURA_JUMP_VELOCITY;
+  skr->is_on_ground = false;
 
-  // Check for collisions.
-  bool can_move = true;
-  for (int i = 0; i < app->floor_colliders->length; i++)
+  ColliderList *list;
+
+  // Move on the X axis discretely and check.
+  // We only push her back on the X axis on the most prominent collision.
+  skr->pos.x += skr->velo.x;
+  list = create_collider_list();
+  move_sakura_collider();
+  query_quadtree_node(app->quadtree, skr->collider, list);
+  Collision deepest_x_info = {.is_colliding = false};
+  for (int i = 0; i < list->length; i++)
   {
-    if (check_collision(skr->collider, app->floor_colliders->list[i]))
+    if (list->list[i] == skr->collider)
+      continue;
+
+    Collision info = check_collision(list->list[i], skr->collider);
+    if (info.is_colliding)
     {
-      // Don't allow move.
-      can_move = false;
-      break;
+      // Ensure it's primarily an X-axis collision (important for corners)
+      if (SDL_fabs(info.normal.x) > SDL_fabs(info.normal.y))
+        if (!deepest_x_info.is_colliding || info.depth > deepest_x_info.depth)
+          deepest_x_info = info;
     }
   }
 
-  if (!can_move)
+  // Resolve X collisions.
+  if (deepest_x_info.is_colliding)
   {
-    skr->collider->capsule = old_capsule;
-    skr->pos = old_pos;
+    skr->pos = add_vector2(skr->pos, scale_vector2(deepest_x_info.normal, deepest_x_info.depth));
+    skr->velo.x = 0;
+    move_sakura_collider();
   }
+  destroy_collider_list(list);
+
+  // Move on the Y axis discretely and check.
+  skr->pos.y += skr->velo.y;
+  list = create_collider_list();
+  move_sakura_collider();
+  query_quadtree_node(app->quadtree, skr->collider, list);
+  Collision deepest_y_info = {.is_colliding = false};
+  for (int i = 0; i < list->length; i++)
+  {
+    if (list->list[i] == skr->collider)
+      continue;
+
+    Collision info = check_collision(list->list[i], skr->collider);
+    if (info.is_colliding)
+    {
+      // Ensure it's primarily an Y-axis collision (important for corners)
+      if (SDL_fabs(info.normal.y) > SDL_fabs(info.normal.x))
+        if (!deepest_y_info.is_colliding || info.depth > deepest_y_info.depth)
+          deepest_y_info = info;
+    }
+  }
+
+  // Resolve Y collisions.
+  if (deepest_y_info.is_colliding)
+  {
+    skr->pos = add_vector2(skr->pos, scale_vector2(deepest_y_info.normal, deepest_y_info.depth));
+    skr->velo.y = 0;
+    move_sakura_collider();
+    SDL_Log("Resolving collision of depth %.2f at (%.2f, %.2f)", deepest_y_info.depth, deepest_y_info.normal.x, deepest_y_info.normal.y);
+  }
+  destroy_collider_list(list);
+
+  // The on-ground check.
+  // There's a chance Sakura's Y has moved. We need to refresh the list.
+  list = create_collider_list();
+  move_sakura_collider();
+  query_quadtree_node(app->quadtree, skr->collider, list);
+
+  // Check for collisions
+  AABBCollider feet;
+  CapsuleCollider cap = skr->collider->capsule;
+  feet.x = (cap.p1.x + cap.p2.x) / 2;
+  feet.y = SDL_max(cap.p1.y, cap.p2.y) + 2;
+  feet.h = 2;
+  feet.w = cap.r / 2;
+
+  for (int i = 0; i < list->length; i++)
+  {
+    Collision info;
+    if (list->list[i] == skr->collider || list->list[i]->collision_type != COLLISION_SOLID)
+      continue;
+
+    // Make collider
+    Collider collider;
+    collider.collider_type = COLLIDER_TYPE_AABB;
+    collider.collision_type = COLLISION_DYNAMIC;
+    collider.name = "sakura-feet";
+    collider.aabb = feet;
+
+    info = check_collision(list->list[i], &collider);
+    if (info.is_colliding && info.normal.y < 0)
+    {
+      skr->is_on_ground = true;
+      skr->velo.y = 0;
+      break;
+    }
+  }
+  destroy_collider_list(list);
 }
 
 void destroy_sakura(void)

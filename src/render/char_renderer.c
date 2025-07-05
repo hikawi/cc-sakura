@@ -22,7 +22,7 @@ void render_sakura(void)
   opts.texture = spr.texture;
   opts.srcrect = &spr.srcrect;
   opts.dstrect = &dstrect;
-  opts.flipped_horizontally = skr->is_moving_left;
+  opts.flipped_horizontally = skr->velo.x < 0;
   opts.align = RENDER_ORIGIN_MIDDLE_CENTER;
 
   render_aligned_texture(opts);

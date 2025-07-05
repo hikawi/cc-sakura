@@ -1,44 +1,45 @@
 #include "engine/events.h"
-#include "spr/sakura.h"
 
-void handle_key_down_event(AppState *_, SDL_KeyboardEvent e)
+void handle_key_down_event(AppState *app, SDL_KeyboardEvent e)
 {
-  Sakura *skr = get_sakura();
-
   switch (e.key)
   {
   case SDLK_W:
-    skr->is_moving_up = true;
+    app->keyboard.key_w = true;
     break;
   case SDLK_S:
-    skr->is_moving_down = true;
+    app->keyboard.key_s = true;
     break;
   case SDLK_A:
-    skr->is_moving_left = true;
+    app->keyboard.key_a = true;
     break;
   case SDLK_D:
-    skr->is_moving_right = true;
+    app->keyboard.key_d = true;
+    break;
+  case SDLK_SPACE:
+    app->keyboard.key_space = true;
     break;
   }
 }
 
-void handle_key_up_event(AppState *_, SDL_KeyboardEvent e)
+void handle_key_up_event(AppState *app, SDL_KeyboardEvent e)
 {
-  Sakura *skr = get_sakura();
-
   switch (e.key)
   {
   case SDLK_W:
-    skr->is_moving_up = false;
+    app->keyboard.key_w = false;
     break;
   case SDLK_S:
-    skr->is_moving_down = false;
+    app->keyboard.key_s = false;
     break;
   case SDLK_A:
-    skr->is_moving_left = false;
+    app->keyboard.key_a = false;
     break;
   case SDLK_D:
-    skr->is_moving_right = false;
+    app->keyboard.key_d = false;
+    break;
+  case SDLK_SPACE:
+    app->keyboard.key_space = false;
     break;
   }
 }

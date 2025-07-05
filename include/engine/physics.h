@@ -6,6 +6,8 @@
 
 #include "misc/vector.h"
 
+#define GRAVITY 1200.0
+
 /**
  * Apply the direction to the current position, taking account for
  * the delta time.

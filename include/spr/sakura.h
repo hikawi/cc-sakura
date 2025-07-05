@@ -12,6 +12,12 @@
 #include "spr/sprites.h"
 #include <stdbool.h>
 
+// This defines some configuration for Sakura.
+// Most values are in some form of pixels/tick or pixels/tick^2.
+#define SAKURA_SPEED 5.0
+#define SAKURA_JUMP_VELOCITY -20.0
+#define SAKURA_GRAVITY 1.2
+
 /**
  * Represents the player, Sakura.
  */
@@ -21,11 +27,7 @@ typedef struct
   Vector2 velo;       // Sakura's current velocity.
   Sprite *idle;       // The set of sprites for Sakura's idle animation.
   Collider *collider; // Sakura's collider.
-
-  bool is_moving_up;    // Flag to see whether she's moving up.
-  bool is_moving_down;  // Flag to see whether she's moving down.
-  bool is_moving_left;  // Flag to see whether she's moving left.
-  bool is_moving_right; // Flag to see whether she's moving right.
+  bool is_on_ground;  // Whether sakura is colliding with the ground.
 } Sakura;
 
 /**

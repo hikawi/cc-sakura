@@ -101,6 +101,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
   int w, h;
   SDL_GetWindowSize(window, &w, &h);
 
+  floor->name = "floor";
   floor->collider_type = COLLIDER_TYPE_AABB;
   floor->collision_type = COLLISION_SOLID;
   floor->aabb.x = w / 2.0;
@@ -145,6 +146,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
   destroy_window_and_renderer();
   destroy_sakura();
   free(app->floor_colliders->list[0]);
+  destroy_quadtree_node(app->quadtree);
   destroy_collider_list(app->floor_colliders);
   free(appstate);
 

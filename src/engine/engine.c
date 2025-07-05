@@ -3,7 +3,10 @@
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
+#include "SDL3/SDL_video.h"
+#include "engine/collision.h"
 #include "engine/events.h"
+#include "render/renderer.h"
 #include "spr/sakura.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -23,6 +26,20 @@ void app_tick(AppState *app, double dt)
  */
 void app_fixed_tick(AppState *app)
 {
+  int w, h;
+  SDL_GetWindowSize(get_current_window(), &w, &h);
+
+  if (app->quadtree)
+    destroy_quadtree_node(app->quadtree);
+
+  // For each fixed tick, we create a quadtree to pass around.
+  // Populate and subdivide.
+  app->quadtree = create_quadtree_node((AABBCollider){w / 2.0, h / 2.0, (double)w, (double)h}, 0);
+  join_collider_lists(app->quadtree->colliders, app->floor_colliders);
+  add_collider_to_list(app->quadtree->colliders, get_sakura()->collider);
+  subdivide_quadtree(app->quadtree);
+
+  // Call fixed updates.
   fixed_update_sakura(app);
 }
 

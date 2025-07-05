@@ -26,6 +26,16 @@ Vector2 make_vector2(double x, double y);
 Vector2 add_vector2(Vector2 lhs, Vector2 rhs);
 
 /**
+ * Subtracts too vectors and returns the result as a newly created vector.
+ */
+Vector2 subtract_vector2(Vector2 lhs, Vector2 rhs);
+
+/**
+ * Negates a vector.
+ */
+Vector2 negate_vector2(Vector2 vec);
+
+/**
  * Scales a 2D vector with a scalar.
  */
 Vector2 scale_vector2(Vector2 vec, double scalar);
@@ -47,6 +57,22 @@ Vector2 rotate_vector2(Vector2 vec, double angle);
  * vectors in the same angle.
  */
 Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos);
+
+/**
+ * On segment made by A->B, find an arbitrary point Q that is the closest
+ * in distance to P.
+ */
+Vector2 closest_point_on_segment(Vector2 a, Vector2 b, Vector2 p);
+
+/**
+ * Calculates the dot product of two vectors.
+ */
+double dot_vector2(Vector2 a, Vector2 b);
+
+/**
+ * Projects a vector `from` onto the vector `to`.
+ */
+Vector2 project_vector2(Vector2 from, Vector2 to);
 
 /**
  * Finds the rotation of a vector compared to the X axis.

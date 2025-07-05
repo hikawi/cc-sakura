@@ -28,6 +28,7 @@ typedef struct
   bool key_d;
   bool key_s;
   bool key_w;
+  bool key_space;
 } KeyboardStatus;
 
 /**
@@ -45,4 +46,5 @@ typedef struct
   KeyboardStatus keyboard; // The keyboard struct for querying keys.
 
   ColliderList *floor_colliders;
+  QuadtreeNode *quadtree;
 } AppState;
