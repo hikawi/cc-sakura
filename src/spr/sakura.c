@@ -219,7 +219,6 @@ void fixed_update_sakura(AppState *app)
     Collision info = check_collision(list->list[i], skr->collider);
     if (info.is_colliding)
     {
-      // Ensure it's primarily an Y-axis collision (important for corners)
       if (SDL_fabs(info.normal.y) > SDL_fabs(info.normal.x))
         if (!deepest_y_info.is_colliding || info.depth > deepest_y_info.depth)
           deepest_y_info = info;
@@ -242,13 +241,13 @@ void fixed_update_sakura(AppState *app)
   move_sakura_collider();
   query_quadtree_node(app->quadtree, skr->collider, list);
 
-  // Check for collisions
+  // Find the feet collision. Since she's a capsule, she can be rotated arbitrarily, therefore,
+  // we get her feet by averaging her x axis, and take the larger of her y coords + alpha.
   AABBCollider feet;
-  CapsuleCollider cap = skr->collider->capsule;
-  feet.x = (cap.p1.x + cap.p2.x) / 2;
-  feet.y = SDL_max(cap.p1.y, cap.p2.y) + 2;
-  feet.h = 2;
-  feet.w = cap.r / 2;
+  feet.x = (skr->collider->capsule.p1.x + skr->collider->capsule.p2.x) / 2;
+  feet.y = SDL_max(skr->collider->capsule.p1.y, skr->collider->capsule.p2.y) + APPLICATION_SCALE;
+  feet.h = APPLICATION_SCALE;
+  feet.w = skr->collider->capsule.r;
 
   for (int i = 0; i < list->length; i++)
   {

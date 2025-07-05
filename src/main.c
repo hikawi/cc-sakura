@@ -95,20 +95,32 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
   state->frames_elapsed = 0;
   state->frames_per_sec = 0;
 
-  state->floor_colliders = create_collider_list();
-  Collider *floor = malloc(sizeof(Collider));
-  SDL_Window *window = get_current_window();
-  int w, h;
-  SDL_GetWindowSize(window, &w, &h);
+  {
+    state->floor_colliders = create_collider_list();
+    SDL_Window *window = get_current_window();
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
 
-  floor->name = "floor";
-  floor->collider_type = COLLIDER_TYPE_AABB;
-  floor->collision_type = COLLISION_SOLID;
-  floor->aabb.x = w / 2.0;
-  floor->aabb.y = h / 2.0 + 200;
-  floor->aabb.h = 60;
-  floor->aabb.w = w;
-  add_collider_to_list(state->floor_colliders, floor);
+    Collider *floor = malloc(sizeof(Collider));
+    floor->name = "floor";
+    floor->collider_type = COLLIDER_TYPE_AABB;
+    floor->collision_type = COLLISION_SOLID;
+    floor->aabb.x = w / 2.0;
+    floor->aabb.y = h / 2.0 + 200;
+    floor->aabb.h = 60;
+    floor->aabb.w = w;
+    add_collider_to_list(state->floor_colliders, floor);
+
+    Collider *wall = malloc(sizeof(Collider));
+    wall->name = "wall";
+    wall->collider_type = COLLIDER_TYPE_AABB;
+    wall->collision_type = COLLISION_SOLID;
+    wall->aabb.x = w / 2.0 + 400;
+    wall->aabb.y = h / 2.0 + 100;
+    wall->aabb.h = 150;
+    wall->aabb.w = 70;
+    add_collider_to_list(state->floor_colliders, wall);
+  }
 
   SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Bootstrapped application successfully.");
   return SDL_APP_CONTINUE;

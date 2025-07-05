@@ -39,6 +39,17 @@ void app_fixed_tick(AppState *app)
   add_collider_to_list(app->quadtree->colliders, get_sakura()->collider);
   subdivide_quadtree(app->quadtree);
 
+  static bool movement = false;
+  if (app->floor_colliders->list[1]->aabb.x > 1000)
+    movement = false;
+  else if (app->floor_colliders->list[1]->aabb.x < 200)
+    movement = true;
+
+  if (movement)
+    app->floor_colliders->list[1]->aabb.x++;
+  else
+    app->floor_colliders->list[1]->aabb.x--;
+
   // Call fixed updates.
   fixed_update_sakura(app);
 }

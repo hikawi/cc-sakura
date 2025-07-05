@@ -369,7 +369,12 @@ Collision get_collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
   Collision info = {.is_colliding = false, .depth = 0};
 
   // Step 1. Find the closest point on the capsule to the AABB center.
-  Vector2 p = closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
+  // Before doing that we would like to find the true segment (the one at the shaft)
+  // not the ones that cover the entire capsule.
+  Vector2 segment = normalize_vector2(subtract_vector2(c2.p1, c2.p2));
+  Vector2 new_p1 = add_vector2(c2.p1, scale_vector2(segment, -c2.r));
+  Vector2 new_p2 = add_vector2(c2.p2, scale_vector2(segment, c2.r));
+  Vector2 p = closest_point_on_segment(new_p1, new_p2, (Vector2){.x = c1.x, .y = c1.y});
 
   // Step 2. Find the closest point on the AABB that is the closest to
   // that representative point.
