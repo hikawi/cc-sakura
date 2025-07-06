@@ -9,6 +9,7 @@
  * Represents a vector of coordinates (x, y). THis may be used as
  * directional vectors or as a 2D point.
  */
+#include <stdbool.h>
 typedef struct
 {
   double x;
@@ -97,3 +98,8 @@ double length_squared_vector2(Vector2 vec);
  * Normalize a 2D vector. Does nothing if the vector is already length 1.
  */
 Vector2 normalize_vector2(Vector2 vec);
+
+/**
+ * Checks if two vectors are equal. This uses epsilon for floating point comparisons.
+ */
+bool equal_vector2(Vector2 a, Vector2 b);

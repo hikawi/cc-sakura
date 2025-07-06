@@ -19,9 +19,20 @@ Collider types:
 - Circle: A circular bounding box. Denoted by `x`, `y` (center) and `r` (the radius).
 - Capsule: A capsule bounding box. Denoted by `p1`, `p2` (this draws the line segment of the capsule, can be rotated arbitrarily), and `r` (the thickness radius of the capsule).
 
-**Currently, OBB is not implemented.**
-
 `render_collider(Collider *)` is available for debugging purposes, provided by `collider_renderer.h`.
+
+| Collider A | Collider B | Implemented? |        Reuse?         |
+| :--------: | :--------: | :----------: | :-------------------: |
+|    AABB    |    AABB    |    ✅ Yes    |     ⚡ Optimized      |
+|    AABB    |    OBB     |    ✅ Yes    |   Reuse OBB vs OBB    |
+|    AABB    |   Circle   |    ✅ Yes    |     ⚡ Optimized      |
+|    AABB    |  Capsule   |    ✅ Yes    |     ⚡ Optimized      |
+|    OBB     |    OBB     |    ✅ Yes    |     ⚡ Optimized      |
+|    OBB     |   Circle   |    ✅ Yes    | Reuse AABB vs Circle  |
+|    OBB     |  Capsule   |    ✅ Yes    | Reuse AABB vs Capsule |
+|   Circle   |   Circle   |    ✅ Yes    |     ⚡ Optimized      |
+|   Circle   |  Capsule   |    ✅ Yes    |     ⚡ Optimized      |
+|  Capsule   |  Capsule   |    ❌ No     |                       |
 
 ### Tick System
 

@@ -1,5 +1,6 @@
 #include "misc/vector.h"
 #include "SDL3/SDL_stdinc.h"
+#include "misc/mathex.h"
 
 Vector2 make_vector2(double x, double y)
 {
@@ -125,4 +126,9 @@ Vector2 normalize_vector2(Vector2 vec)
   vec.x /= len;
   vec.y /= len;
   return vec;
+}
+
+bool equal_vector2(Vector2 a, Vector2 b)
+{
+  return feq(a.x, b.x) && feq(a.y, b.y);
 }

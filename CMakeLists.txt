@@ -26,6 +26,7 @@ set(GAME_SOURCES
     src/engine/collision.c
 
     src/misc/vector.c
+    src/misc/mathex.c
 
     src/render/renderer.c
     src/render/char_renderer.c
@@ -44,6 +45,7 @@ set(GAME_HEADERS
     include/engine/collision.h
 
     include/misc/vector.h
+    include/misc/mathex.h
 
     include/render/renderer.h
     include/render/char_renderer.h
@@ -61,9 +63,9 @@ add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 
 # Set warnings as error
 if(MSVC)
-  target_compile_options(CCSakura PRIVATE /W4 /WX)
+    target_compile_options(CCSakura PRIVATE /W4 /WX)
 else()
-  target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 # Link SDL3 libraries

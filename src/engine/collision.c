@@ -1,6 +1,7 @@
 #include "engine/collision.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
+#include "misc/mathex.h"
 #include "misc/vector.h"
 #include <math.h>
 
@@ -474,6 +475,122 @@ Collision get_collision_obb_capsule(OBBCollider c1, CapsuleCollider c2)
   return info;
 }
 
+/**
+ * Checks the collision between a circle and a capsule.
+ */
+Collision get_collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
+{
+  Collision info = {.is_colliding = false, .depth = 0};
+  Vector2 in = subtract_vector2(c2.p1, c2.p2);
+
+  // Special case: degenerate capsule
+  if (length_vector2(in) <= c2.r * 2)
+  {
+    CircleCollider c3 = {
+        .x = (c2.p1.x + c2.p2.x) / 2,
+        .y = (c2.p1.y + c2.p2.y) / 2,
+        .r = c2.r,
+    };
+    return get_collision_circle_circle(c1, c3);
+  }
+
+  // Step 1. Find the closest point on the capsule closest to the circle's center.
+  c2.p1 = add_vector2(c2.p1, scale_vector2(in, -c2.r));
+  c2.p2 = add_vector2(c2.p2, scale_vector2(in, c2.r));
+  Vector2 p = closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
+
+  // Step 2. Calculate the distance between the capsule's segment and the center.
+  Vector2 d = subtract_vector2(p, (Vector2){.x = c1.x, .y = c1.y});
+  if (length_squared_vector2(d) > c1.r + c2.r)
+    return info;
+  info.is_colliding = true;
+
+  // Step 3. Calculate collision normal.
+  if (feq(length_squared_vector2(d), 0))
+  {
+    // If length is close enough to 0, the center of the circle is on
+    // the capsule's segment.
+    info.normal = normalize_vector2(rotate_vector2(in, -M_PI_2));
+    info.depth = c1.r + c2.r;
+  }
+  else
+  {
+    info.normal = normalize_vector2(d);
+    info.depth = c1.r + c2.r - length_vector2(d);
+  }
+
+  return info;
+}
+
+// Collision get_collision_capsule_capsule(CapsuleCollider c1, CapsuleCollider c2)
+// {
+//   Collision info = {0};
+
+//   // Step 1: Shrink segments to exclude caps (requires normalized directions)
+//   Vector2 u = subtract_vector2(c1.p2, c1.p1);
+//   Vector2 v = subtract_vector2(c2.p2, c2.p1);
+//   double u_len = length_vector2(u);
+//   double v_len = length_vector2(v);
+
+//   // Refine segments (move inward by radius)
+//   Vector2 u_dir = scale_vector2(u, 1.0 / u_len);
+//   Vector2 v_dir = scale_vector2(v, 1.0 / v_len);
+//   c1.p1 = add_vector2(c1.p1, scale_vector2(u_dir, c1.r));
+//   c1.p2 = add_vector2(c1.p2, scale_vector2(u_dir, -c1.r));
+//   c2.p1 = add_vector2(c2.p1, scale_vector2(v_dir, c2.r));
+//   c2.p2 = add_vector2(c2.p2, scale_vector2(v_dir, -c2.r));
+
+//   // Step 2: Recompute u/v/w after refinement
+//   u = subtract_vector2(c1.p2, c1.p1);
+//   v = subtract_vector2(c2.p2, c2.p1);
+//   Vector2 w = subtract_vector2(c2.p1, c1.p1);
+
+//   // Step 3: Solve for s and t
+//   double uu = dot_vector2(u, u);
+//   double uv = dot_vector2(u, v);
+//   double uw = dot_vector2(u, w);
+//   double vv = dot_vector2(v, v);
+//   double vw = dot_vector2(v, w);
+//   double denominator = uv * uv - uu * vv;
+
+//   // Parallel segments? Fall back to endpoint checks.
+//   if (fabs(denominator) < EPSILON)
+//   {
+//     // (Implement endpoint-segment distance checks here)
+//     return info;
+//   }
+
+//   double t = SDL_clamp((uv * uw - vw * uu) / denominator, 0.0, 1.0);
+//   double s = SDL_clamp((-uw + t * uv) / uu, 0.0, 1.0);
+
+//   // Step 4: Closest points
+//   Vector2 p = add_vector2(c1.p1, scale_vector2(u, s));
+//   Vector2 q = add_vector2(c2.p1, scale_vector2(v, t));
+//   Vector2 d = subtract_vector2(q, p);
+//   double dist = length_vector2(d);
+
+//   // Step 5: Collision check
+//   if (dist > c1.r + c2.r)
+//     return info;
+//   info.is_colliding = true;
+
+//   // Step 6: Normal and depth
+//   if (dist < EPSILON)
+//   {
+//     // Segments intersect; use perpendicular to relative direction
+//     Vector2 rel_dir = normalize_vector2(subtract_vector2(u, v));
+//     info.normal = (Vector2){-rel_dir.y, rel_dir.x}; // 90° rotation
+//     info.depth = c1.r + c2.r;
+//   }
+//   else
+//   {
+//     info.normal = scale_vector2(d, 1.0 / dist); // Normalize
+//     info.depth = c1.r + c2.r - dist;
+//   }
+
+//   return info;
+// }
+
 Collision check_collision(Collider *c1, Collider *c2)
 {
   // NOTE:
@@ -508,6 +625,10 @@ Collision check_collision(Collider *c1, Collider *c2)
       info = get_collision_obb_capsule(c2->obb, c1->capsule);
       info.normal = negate_vector2(info.normal);
       return info;
+    case COLLIDER_TYPE_CIRCLE:
+      info = get_collision_circle_capsule(c2->circle, c1->capsule);
+      info.normal = negate_vector2(info.normal);
+      return info;
     default:
       break;
     }
@@ -525,6 +646,8 @@ Collision check_collision(Collider *c1, Collider *c2)
       info = get_collision_obb_circle(c2->obb, c1->circle);
       info.normal = negate_vector2(info.normal);
       return info;
+    case COLLIDER_TYPE_CAPSULE:
+      return get_collision_circle_capsule(c1->circle, c2->capsule);
     default:
       break;
     }
