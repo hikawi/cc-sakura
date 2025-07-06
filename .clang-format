@@ -1,7 +1,7 @@
 BasedOnStyle: LLVM
-IndentWidth: 2
+IndentWidth: 4
 UseTab: Never
-ColumnLimit: 0
+ColumnLimit: 80
 
 # Braces
 BreakBeforeBraces: Allman
@@ -17,7 +17,8 @@ PointerAlignment: Right
 
 # Always indent inside braces
 BraceWrapping:
-  AfterControlStatement: true
+  AfterClass: true
+  AfterControlStatement: Always
   AfterEnum: true
   AfterFunction: true
   AfterStruct: true

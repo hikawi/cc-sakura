@@ -19,15 +19,15 @@
  */
 typedef enum
 {
-  RENDER_ORIGIN_TOP_LEFT,
-  RENDER_ORIGIN_TOP_CENTER,
-  RENDER_ORIGIN_TOP_RIGHT,
-  RENDER_ORIGIN_MIDDLE_LEFT,
-  RENDER_ORIGIN_MIDDLE_CENTER,
-  RENDER_ORIGIN_MIDDLE_RIGHT,
-  RENDER_ORIGIN_BOTTOM_LEFT,
-  RENDER_ORIGIN_BOTTOM_CENTER,
-  RENDER_ORIGIN_BOTTOM_RIGHT,
+    RENDER_ORIGIN_TOP_LEFT,
+    RENDER_ORIGIN_TOP_CENTER,
+    RENDER_ORIGIN_TOP_RIGHT,
+    RENDER_ORIGIN_MIDDLE_LEFT,
+    RENDER_ORIGIN_MIDDLE_CENTER,
+    RENDER_ORIGIN_MIDDLE_RIGHT,
+    RENDER_ORIGIN_BOTTOM_LEFT,
+    RENDER_ORIGIN_BOTTOM_CENTER,
+    RENDER_ORIGIN_BOTTOM_RIGHT,
 } RenderingOriginType;
 
 /**
@@ -39,14 +39,15 @@ typedef enum
  */
 typedef struct
 {
-  SDL_Texture *texture;      // The texture to render.
-  SDL_FRect *srcrect;        // The rectangle to render from the texture.
-  SDL_FRect *dstrect;        // The rectangle to render the texture to. Height and width is not required.
-  RenderingOriginType align; // The alignment for the origin.
-  Vector2 scale;             // How much to scale the texture by. Default to 1x1.
-  bool flipped_horizontally; // Whether to flip the texture horizontally.
-  bool flipped_vertically;   // Whether to flip the texture vertically.
-  bool is_tiled;             // Whether to tile the texture repeatedly in the dstrect.
+    SDL_Texture *texture; // The texture to render.
+    SDL_FRect *srcrect;   // The rectangle to render from the texture.
+    SDL_FRect *dstrect;   // The rectangle to render the texture to. Height and
+                          // width is not required.
+    RenderingOriginType align; // The alignment for the origin.
+    Vector2 scale; // How much to scale the texture by. Default to 1x1.
+    bool flipped_horizontally; // Whether to flip the texture horizontally.
+    bool flipped_vertically;   // Whether to flip the texture vertically.
+    bool is_tiled; // Whether to tile the texture repeatedly in the dstrect.
 } RenderingOptions;
 
 /**

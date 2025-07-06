@@ -1,8 +1,12 @@
+<div align="center">
+
 # Sakura and the Clow Cards
 
-### A self-designed 2D platformer game made from scratch with C and SDL3
+A self-designed, built from the ground up 2D platformer game, using C and SDL3
 
-## 📖 Overview
+</div>
+
+## Overview
 
 A passion project where Kinomoto Sakura (from Cardcaptor Sakura) traverses the 2D platforming world, collecting Clow Cards to unlock new platforming abilities. The game is inspired by popular platformer games such as Super Paper Mario, Celeste, Super Mario Bros. Wonder, etc. (even though I never played the latter two). The engine is inspired by my friend, who works in Graphics and Physics Programming, specializing in raytracing and sampling lighting systems.
 
@@ -21,47 +25,31 @@ Prerequisites
 Clone this repository.
 
 ```bash
-git clone https://github.com/hikawi/cc-sakura
+git clone --recurse-submodules https://github.com/hikawi/cc-sakura
 ```
 
-Recurse git submodules
+Pre-build the project
 
-## Project Structure
+```bash
+cmake -S . -B build && cmake --build build
+```
 
-### Colliders
+Run the binary, you can run it with CMake:
 
-I have written simple collision checks for various primitive types of colliders. All colliders use a system where `x` and `y` refer to the collider's center, not the top left corner or something else.
+```bash
+cmake --build build --target run
+```
 
-Collider types:
+Or you can run it directly (via double-clicking the binary file or through the command line), on the binary file generated in `build/bin`.
 
-- AABB (Axis-aligned Bounding Box): A simple rectangle. Can not be rotated. Denoted by its `x`, `y` (the center) and `w`, `h` (the full dimensions, not half extents).
-- OBB (Oriented Bounding Box): A rotated AABB. Denoted by the same attributes, plus `angle`, calculated in radians. `angle=0` is pointing to the right, and positive values go counter-clockwise.
-- Circle: A circular bounding box. Denoted by `x`, `y` (center) and `r` (the radius).
-- Capsule: A capsule bounding box. Denoted by `p1`, `p2` (this draws the line segment of the capsule, can be rotated arbitrarily), and `r` (the thickness radius of the capsule).
+## 🖊️ Coding Conventions
 
-`render_collider(Collider *)` is available for debugging purposes, provided by `collider_renderer.h`.
+To put it simply:
 
-| Collider A | Collider B | Implemented? |        Reuse?         |
-| :--------: | :--------: | :----------: | :-------------------: |
-|    AABB    |    AABB    |    ✅ Yes    |     ⚡ Optimized      |
-|    AABB    |    OBB     |    ✅ Yes    |   Reuse OBB vs OBB    |
-|    AABB    |   Circle   |    ✅ Yes    |     ⚡ Optimized      |
-|    AABB    |  Capsule   |    ✅ Yes    |     ⚡ Optimized      |
-|    OBB     |    OBB     |    ✅ Yes    |     ⚡ Optimized      |
-|    OBB     |   Circle   |    ✅ Yes    | Reuse AABB vs Circle  |
-|    OBB     |  Capsule   |    ✅ Yes    | Reuse AABB vs Capsule |
-|   Circle   |   Circle   |    ✅ Yes    |     ⚡ Optimized      |
-|   Circle   |  Capsule   |    ✅ Yes    |     ⚡ Optimized      |
-|  Capsule   |  Capsule   |    ❌ No     |                       |
-
-### Tick System
-
-There are expected to be two types of functions of handling for any dynamic actors (moving platforms, sensors, enemies, the player), a variable update and a fixed update. A variable update runs every single frame, meant to be use for animations, particles or UI elements. A fixed update tries to run 60 times a second, meant to be used for physical updates and collision checks.
-
-For each dynamic actor, please create a function that conforms to a simple convention `update_actor_name(AppState *, double)` and `fixed_update_actor_name(AppState *)`.
-
-### Collisions
-
-Since this is a 2D platformer, collisions are optimized using a quadtree. A quadtree is a hierarchical spatial partitioning structure where each node represents a rectangular region that can be subdivided into 4 quadrants: top-left (TL), top-right (TR), bottom-left (BL), and bottom-right (BR).
-
-On each physics tick, dynamic actors query the quadtree to retrieve only nearby colliders within their spatial region, avoiding unnecessary checks against unrelated objects.
+- All variables and functions names are `snake_case`, including local variables or struct properties.
+- Struct names are `PascalCase`.
+- Global constants are `SCREAMING_SNAKE_CASE`, including defines.
+- Global variables should still be in `snake_case`.
+- Make a comment block above each header file, to explain what this header file is responsible for.
+- Use `#pragma once` instead of `#ifndef #define`.
+- Functions are truly in the global namespace, make sure your function names reflect that specific function's actions, and be as detailed as possible without making the name too long. For example, prefer `normalize_vector2d(Vector2D)` over `normalize(Vector2D)`.

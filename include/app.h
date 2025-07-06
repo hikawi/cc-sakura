@@ -24,11 +24,11 @@
  */
 typedef struct
 {
-  bool key_a;
-  bool key_d;
-  bool key_s;
-  bool key_w;
-  bool key_space;
+    bool key_a;
+    bool key_d;
+    bool key_s;
+    bool key_w;
+    bool key_space;
 } KeyboardStatus;
 
 /**
@@ -36,15 +36,24 @@ typedef struct
  */
 typedef struct
 {
-  Uint64 last_frame_tick;   // When the last frame was rendered.
-  double frame_accumulator; // The amount of time accumulated before the next fixed update.
+    Uint64 last_frame_tick;   // When the last frame was rendered.
+    double frame_accumulator; // The amount of time accumulated before the next
+                              // fixed update.
 
-  Uint32 frames_counter; // Counter for frames to calculate FPS.
-  double frames_elapsed; // How much time in seconds have elapsed.
-  Uint32 frames_per_sec; // The final value for FPS to display.
+    Uint32 frames_counter; // Counter for frames to calculate FPS.
+    double frames_elapsed; // How much time in seconds have elapsed.
+    Uint32 frames_per_sec; // The final value for FPS to display.
 
-  KeyboardStatus keyboard; // The keyboard struct for querying keys.
+    KeyboardStatus keyboard; // The keyboard struct for querying keys.
 
-  ColliderList *floor_colliders;
-  QuadtreeNode *quadtree;
+    ColliderList *floor_colliders;
+    QuadtreeNode *quadtree;
 } AppState;
+
+/**
+ * Computes the path needed to retrieve a certain resource. Mostly done as MacOS
+ * app bundles have a weird ass layout.
+ *
+ * The pointer returned is handled by the user, and should be freed.
+ */
+char *get_resource_path(const char *subpath);

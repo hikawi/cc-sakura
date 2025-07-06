@@ -23,11 +23,11 @@
  */
 typedef struct
 {
-  Vector2 pos;        // Sakura's position.
-  Vector2 velo;       // Sakura's current velocity.
-  Sprite *idle;       // The set of sprites for Sakura's idle animation.
-  Collider *collider; // Sakura's collider.
-  bool is_on_ground;  // Whether sakura is colliding with the ground.
+    Vector2 pos;        // Sakura's position.
+    Vector2 velo;       // Sakura's current velocity.
+    Sprite *idle;       // The set of sprites for Sakura's idle animation.
+    Collider *collider; // Sakura's collider.
+    bool is_on_ground;  // Whether sakura is colliding with the ground.
 } Sakura;
 
 /**

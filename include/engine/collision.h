@@ -17,10 +17,10 @@
  */
 typedef enum
 {
-  COLLIDER_TYPE_CAPSULE,
-  COLLIDER_TYPE_AABB,
-  COLLIDER_TYPE_OBB,
-  COLLIDER_TYPE_CIRCLE,
+    COLLIDER_TYPE_CAPSULE,
+    COLLIDER_TYPE_AABB,
+    COLLIDER_TYPE_OBB,
+    COLLIDER_TYPE_CIRCLE,
 } ColliderType;
 
 /**
@@ -29,14 +29,20 @@ typedef enum
  */
 typedef enum
 {
-  COLLISION_SOLID,     // The collider is an unmoving solid. (floors, walls)
-  COLLISION_DYNAMIC,   // The collider is a moveable solid. (chars, enemies, boxes)
-  COLLISION_SENSOR,    // The collider is invisible, but needed to detect something in a range. (checkpoints, doors)
-  COLLISION_HITBOX,    // The collider is meant to deal damage. (sword strikes, projectiles)
-  COLLISION_HURTBOX,   // The collider is meant to take damage. (the body, hitbox touches here to deal damage)
-  COLLISION_GHOST,     // The collider is non-interactive. Ignored by physics (ghosts, decorations)
-  COLLISION_ONE_WAY,   // The collider is interactable from one way. (one-way doors, platforms)
-  COLLISION_DEBUG_ZONE // The collider for debugging zones.
+    COLLISION_SOLID,   // The collider is an unmoving solid. (floors, walls)
+    COLLISION_DYNAMIC, // The collider is a moveable solid. (chars, enemies,
+                       // boxes)
+    COLLISION_SENSOR,  // The collider is invisible, but needed to detect
+                       // something in a range. (checkpoints, doors)
+    COLLISION_HITBOX,  // The collider is meant to deal damage. (sword strikes,
+                       // projectiles)
+    COLLISION_HURTBOX, // The collider is meant to take damage. (the body,
+                       // hitbox touches here to deal damage)
+    COLLISION_GHOST,   // The collider is non-interactive. Ignored by physics
+                       // (ghosts, decorations)
+    COLLISION_ONE_WAY, // The collider is interactable from one way. (one-way
+                       // doors, platforms)
+    COLLISION_DEBUG_ZONE // The collider for debugging zones.
 } CollisionType;
 
 /**
@@ -44,9 +50,9 @@ typedef enum
  */
 typedef struct
 {
-  Vector2 p1; // The line segment connecting the center line of the capsule.
-  Vector2 p2;
-  double r; // The radius, half width of the capsule.
+    Vector2 p1; // The line segment connecting the center line of the capsule.
+    Vector2 p2;
+    double r; // The radius, half width of the capsule.
 } CapsuleCollider;
 
 /**
@@ -55,10 +61,10 @@ typedef struct
  */
 typedef struct
 {
-  double x; // The center's X.
-  double y; // The center's Y.
-  double w; // The rectangle's width.
-  double h; // The rectangle's height.
+    double x; // The center's X.
+    double y; // The center's Y.
+    double w; // The rectangle's width.
+    double h; // The rectangle's height.
 } AABBCollider;
 
 /**
@@ -67,11 +73,11 @@ typedef struct
  */
 typedef struct
 {
-  double x;     // The center's X.
-  double y;     // The center's Y.
-  double w;     // The rectangle's width.
-  double h;     // The rectangle's height.
-  double angle; // The rectangle's rotation in radians.
+    double x;     // The center's X.
+    double y;     // The center's Y.
+    double w;     // The rectangle's width.
+    double h;     // The rectangle's height.
+    double angle; // The rectangle's rotation in radians.
 } OBBCollider;
 
 /**
@@ -79,9 +85,9 @@ typedef struct
  */
 typedef struct
 {
-  double x;
-  double y;
-  double r;
+    double x;
+    double y;
+    double r;
 } CircleCollider;
 
 /**
@@ -89,16 +95,16 @@ typedef struct
  */
 typedef struct
 {
-  ColliderType collider_type;
-  CollisionType collision_type;
-  const char *name;
-  union
-  {
-    CapsuleCollider capsule;
-    AABBCollider aabb;
-    OBBCollider obb;
-    CircleCollider circle;
-  };
+    ColliderType collider_type;
+    CollisionType collision_type;
+    const char *name;
+    union
+    {
+        CapsuleCollider capsule;
+        AABBCollider aabb;
+        OBBCollider obb;
+        CircleCollider circle;
+    };
 } Collider;
 
 /**
@@ -107,9 +113,9 @@ typedef struct
  */
 typedef struct
 {
-  bool is_colliding;
-  Vector2 normal;
-  double depth;
+    bool is_colliding;
+    Vector2 normal;
+    double depth;
 } Collision;
 
 /**
@@ -118,22 +124,23 @@ typedef struct
  */
 typedef struct
 {
-  Collider **list; // A list of pointers, since Collider should be held by the actors themselves.
-  int length;
-  int capacity;
+    Collider **list; // A list of pointers, since Collider should be held by the
+                     // actors themselves.
+    int length;
+    int capacity;
 } ColliderList;
 
 /**
  * Represents a quadtree of collider regions, meant to subdivide colliders
- * into small regions on the screen, so on one physical tick, it only has to clash
- * with objects in the region, not everywhere.
+ * into small regions on the screen, so on one physical tick, it only has to
+ * clash with objects in the region, not everywhere.
  */
 typedef struct QuadtreeNode
 {
-  AABBCollider bounds;            // Where the node surrounds.
-  int depth;                      // The current depth. 0 is on the root.
-  ColliderList *colliders;        // The list of colliders in this region.
-  struct QuadtreeNode **children; // The children, in order of TL, TR, BR, BL.
+    AABBCollider bounds;            // Where the node surrounds.
+    int depth;                      // The current depth. 0 is on the root.
+    ColliderList *colliders;        // The list of colliders in this region.
+    struct QuadtreeNode **children; // The children, in order of TL, TR, BR, BL.
 } QuadtreeNode;
 
 /**
@@ -144,14 +151,15 @@ SDL_Color get_collision_type_debug_color(CollisionType type);
 /**
  * Checks collisions of two colliders.
  *
- * This is important, a collision happens when one object tries to "go inside" another object.
- * The one doing the "penetration" is called the "colliding object", and the other is called
- * the collided object. In this function, c1 should ALWAYS be the collided, and c2 should ALWAYS
- * be the colliding. Calling opposite might cause normal vectors to be inverted.
+ * This is important, a collision happens when one object tries to "go inside"
+ * another object. The one doing the "penetration" is called the "colliding
+ * object", and the other is called the collided object. In this function, c1
+ * should ALWAYS be the collided, and c2 should ALWAYS be the colliding. Calling
+ * opposite might cause normal vectors to be inverted.
  *
- * The normal vector is DEFINED (by me) to be the vector that is pointing OUTWARDS
- * from the surface that is being collided (c1). Applying this vector to c2 at the length
- * of "depth" would completely separate both objects.
+ * The normal vector is DEFINED (by me) to be the vector that is pointing
+ * OUTWARDS from the surface that is being collided (c1). Applying this vector
+ * to c2 at the length of "depth" would completely separate both objects.
  */
 Collision check_collision(Collider *c1, Collider *c2);
 
@@ -201,7 +209,8 @@ QuadtreeNode *create_quadtree_node(AABBCollider bounds, int depth);
 /**
  * Looks for the nearest node that holds a collider in a quadtree.
  */
-void query_quadtree_node(QuadtreeNode *root, Collider *collider, ColliderList *list);
+void query_quadtree_node(QuadtreeNode *root, Collider *collider,
+                         ColliderList *list);
 
 /**
  * Populates the quadtree node after filling it with colliders.

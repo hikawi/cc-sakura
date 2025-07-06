@@ -12,8 +12,8 @@
 #include <stdbool.h>
 typedef struct
 {
-  double x;
-  double y;
+    double x;
+    double y;
 } Vector2;
 
 /**
@@ -100,6 +100,7 @@ double length_squared_vector2(Vector2 vec);
 Vector2 normalize_vector2(Vector2 vec);
 
 /**
- * Checks if two vectors are equal. This uses epsilon for floating point comparisons.
+ * Checks if two vectors are equal. This uses epsilon for floating point
+ * comparisons.
  */
 bool equal_vector2(Vector2 a, Vector2 b);

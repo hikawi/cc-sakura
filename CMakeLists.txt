@@ -2,15 +2,20 @@
 
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
-project(CCSakura C)
+project(CCSakura C ASM)
 
 # Set C standard
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_C_EXTENSIONS ON)
 
-# Output binary to /bin
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(PROJECT_VERSION "0.1.0")
+
+# Output directories
+set(SDLTTF_VENDORED ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Add SDL3 and related libraries
 add_subdirectory(vendored/SDL      EXCLUDE_FROM_ALL)
@@ -19,47 +24,24 @@ add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
 
 # Add your source files
-set(GAME_SOURCES
-    src/engine/engine.c
-    src/engine/events.c
-    src/engine/physics.c
-    src/engine/collision.c
-
-    src/misc/vector.c
-    src/misc/mathex.c
-
-    src/render/renderer.c
-    src/render/char_renderer.c
-    src/render/font_renderer.c
-    src/render/collider_renderer.c
-
-    src/spr/sakura.c
-    src/spr/sprites.c
-
-    src/main.c
-)
-set(GAME_HEADERS
-    include/engine/engine.h
-    include/engine/events.h
-    include/engine/physics.h
-    include/engine/collision.h
-
-    include/misc/vector.h
-    include/misc/mathex.h
-
-    include/render/renderer.h
-    include/render/char_renderer.h
-    include/render/font_renderer.h
-    include/render/collider_renderer.h
-
-    include/spr/sakura.h
-    include/spr/sprites.h
-
-    include/app.h
-)
+file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.c)
+file(GLOB_RECURSE GAME_HEADERS CONFIGURE_DEPENDS include/*.h)
 
 # Create the game executable
-add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+    add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
+elseif(WIN32)
+    option(CMAKE_USE_WIN32_THREADS_INIT "using WIN32 threads" ON)
+    add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
+
+    find_package(Threads REQUIRED)
+    target_link_libraries(CCSakura PRIVATE
+        Threads::Threads
+    )
+else()
+    add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
+endif()
 
 # Set warnings as error
 if(MSVC)
@@ -84,11 +66,3 @@ target_include_directories(CCSakura PRIVATE
     ${CMAKE_SOURCE_DIR}/vendored/SDL_mixer/include
     ${CMAKE_SOURCE_DIR}/vendored/SDL_ttf/include
 )
-
-# What is this weird thing GPT added
-# macOS: fix dynamic library path resolution at runtime
-if(APPLE)
-    set_target_properties(CCSakura PROPERTIES
-        INSTALL_RPATH "@executable_path/../lib"
-    )
-endif()

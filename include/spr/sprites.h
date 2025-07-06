@@ -11,13 +11,14 @@
  * Represents a singular texture to be painted. This can include sprite sheets,
  * then the texture would represent the entire sheet.
  *
- * When you want to use this for sprite sheets, multiple can be made, holding the
- * same pointer to the same texture, but srcrects would be different.
+ * When you want to use this for sprite sheets, multiple can be made, holding
+ * the same pointer to the same texture, but srcrects would be different.
  */
 typedef struct
 {
-  SDL_Texture *texture; // Pointer to an array of textures. This can be shared.
-  SDL_FRect srcrect;    // The FRect that denotes where in the texture to draw.
+    SDL_Texture
+        *texture;      // Pointer to an array of textures. This can be shared.
+    SDL_FRect srcrect; // The FRect that denotes where in the texture to draw.
 } SpriteTexture;
 
 /**
@@ -26,11 +27,11 @@ typedef struct
  */
 typedef struct
 {
-  SpriteTexture *textures;
-  uint32_t textures_len;
-  uint8_t ani_idx;
-  double dt_accumulator;
-  uint8_t fps;
+    SpriteTexture *textures;
+    uint32_t textures_len;
+    uint8_t ani_idx;
+    double dt_accumulator;
+    uint8_t fps;
 } Sprite;
 
 /**
