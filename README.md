@@ -2,9 +2,29 @@
 
 ### A self-designed 2D platformer game made from scratch with C and SDL3
 
-## Overview
+## 📖 Overview
 
-For learning purposes, this is a very simple and primitive 2D platformer game, made with SDL3, and maybe later on with some libraries to help with the game engine. The game revolves around a magical girl named Kinomoto Sakura, who is on a mission to recollect all of the Clow Cards. For each Clow Card she collects, she gets a new ability for platforming.
+A passion project where Kinomoto Sakura (from Cardcaptor Sakura) traverses the 2D platforming world, collecting Clow Cards to unlock new platforming abilities. The game is inspired by popular platformer games such as Super Paper Mario, Celeste, Super Mario Bros. Wonder, etc. (even though I never played the latter two). The engine is inspired by my friend, who works in Graphics and Physics Programming, specializing in raytracing and sampling lighting systems.
+
+- **Pure C + SDL3** – I decided to go fully hands on with engine making and designing, one part as a passion project, and one as a way to learn the internal workings of popular game engines like Unity or Unreal.
+- **Custom Collision System** – Supports AABB, OBB, Circle, and Capsule colliders, partially.
+- **Fixed & Variable Tick System** – Smooth physics (60 FPS) + flexible animations.
+
+## 🚀 Getting Started
+
+Prerequisites
+
+- SDL3: vendored in by Git Submodules.
+- C Compiler (GCC or Clang): I do not recommend MSVC as MSVC is a lot more behind compared to GCC and Clang, even though we stop at C17 and don't require any fancy future features.
+- CMake
+
+Clone this repository.
+
+```bash
+git clone https://github.com/hikawi/cc-sakura
+```
+
+Recurse git submodules
 
 ## Project Structure
 
