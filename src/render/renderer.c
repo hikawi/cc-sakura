@@ -153,7 +153,7 @@ void render(AppState *state)
     if (APPLICATION_SHOW_FPS)
     {
         char buf[21];
-        SDL_snprintf(buf, 20, "%d FPS", state->frames_per_sec);
+        SDL_snprintf(buf, 20, "%d FPS", state->frame_data.fps);
 
         SDL_Color color;
         color.r = 20;

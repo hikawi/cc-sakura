@@ -59,20 +59,20 @@ void engine_iterate(AppState *app)
 {
     // Calculate delta time
     Uint64 cur_frame = SDL_GetTicks();
-    double dt = (cur_frame - app->last_frame_tick) / 1000.0;
-    app->last_frame_tick = cur_frame;
+    double dt = (cur_frame - app->frame_data.last_frame_tick) / 1000.0;
+    app->frame_data.last_frame_tick = cur_frame;
 
     if (dt > 0.1)
         dt = 0.1; // Clamp dt to only be 0.1s desync max.
 
     // Add dt to frame accumulator.
-    app->frame_accumulator += dt;
+    app->frame_data.frame_accum += dt;
 
     // Call fixed update if and only if frame_accum has passed
     // enough for 1 frame time (1 / FPS), for 60FPS this is about 16ms.
-    while (app->frame_accumulator >= (1.0 / APPLICATION_MAX_FPS))
+    while (app->frame_data.frame_accum >= (1.0 / APPLICATION_MAX_FPS))
     {
-        app->frame_accumulator -= (1.0 / APPLICATION_MAX_FPS);
+        app->frame_data.frame_accum -= (1.0 / APPLICATION_MAX_FPS);
         app_fixed_tick(app);
     }
 
@@ -80,13 +80,13 @@ void engine_iterate(AppState *app)
     app_tick(app, dt);
 
     // Before rendering, we update the FPS coutner.
-    app->frames_elapsed += dt;
-    app->frames_counter++;
-    if (app->frames_elapsed >= 1)
+    app->frame_data.frame_time += dt;
+    app->frame_data.frame_count++;
+    if (app->frame_data.frame_time >= 1)
     {
-        app->frames_per_sec = app->frames_counter;
-        app->frames_counter = 0;
-        app->frames_elapsed -= 1;
+        app->frame_data.fps = app->frame_data.frame_count;
+        app->frame_data.frame_count = 0;
+        app->frame_data.frame_time -= 1;
     }
 }
 

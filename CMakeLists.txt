@@ -34,11 +34,6 @@ if(APPLE)
 elseif(WIN32)
     option(CMAKE_USE_WIN32_THREADS_INIT "using WIN32 threads" ON)
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
-
-    find_package(Threads REQUIRED)
-    target_link_libraries(CCSakura PRIVATE
-        Threads::Threads
-    )
 else()
     add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 endif()
