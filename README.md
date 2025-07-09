@@ -73,21 +73,21 @@ This is to show videos, or screenshots of what is being done as days passed.
 <details>
     <summary>Day 3 (Sprite Rendering and Movement)</summary>
 
-    https://github.com/user-attachments/assets/1c4963c5-ea70-4501-96eb-e63d0a730627
+https://github.com/user-attachments/assets/1c4963c5-ea70-4501-96eb-e63d0a730627
 
 </details>
 
 <details>
     <summary>Day 5 (Simple Collisions)</summary>
 
-    https://github.com/user-attachments/assets/6912306c-b8cf-4e80-ab8c-f68f80f74a85
+https://github.com/user-attachments/assets/6912306c-b8cf-4e80-ab8c-f68f80f74a85
 
 </details>
 
 <details>
     <summary>Day 7 (Gravity)</summary>
 
-    https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
+https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
 
 </details>
 
