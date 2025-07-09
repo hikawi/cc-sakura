@@ -12,8 +12,7 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/engine.h"
-#include "render/font_renderer.h"
-#include "render/renderer.h"
+#include "engine/renderer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -36,47 +35,29 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL.");
         return SDL_APP_FAILURE;
     }
-    else
-    {
-        SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Loaded SDL successfully.");
-    }
 
     if (!TTF_Init())
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL_ttf.");
         return SDL_APP_FAILURE;
     }
-    else
-    {
-        SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Loaded SDL_ttf successfully.");
-    }
 
-    if (!init_window_and_renderer())
+    *appstate = NULL;
+    *appstate = init_app_state();
+
+    if (*appstate == NULL)
     {
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
                      "Unable to initialize window and renderer.");
         return SDL_APP_FAILURE;
     }
-    else
-    {
-        SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM,
-                    "Loaded SDL window and renderer successfully.");
-    }
 
-    // Initialize fonts
-    if (!init_font_faces())
+    if (!init_engine(*appstate))
     {
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
-                     "Unable to initialize font faces.");
+                     "Unable to initialize game engine.");
         return SDL_APP_FAILURE;
     }
-    else
-    {
-        SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM,
-                    "Loaded application's fonts successfully.");
-    }
-
-    *appstate = init_app_state();
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                 "Bootstrapped application successfully.");
@@ -88,7 +69,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     AppState *state = (AppState *)appstate;
 
     engine_iterate(state);
-    render(state);
+    render_state(state);
 
     return SDL_APP_CONTINUE;
 }
@@ -112,8 +93,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     AppState *app = (AppState *)appstate;
 
-    destroy_window_and_renderer();
-    // destroy_sakura();
+    destroy_engine();
     destroy_app_state(app);
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,

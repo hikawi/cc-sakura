@@ -6,7 +6,8 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
-#include "render/renderer.h"
+#include "app.h"
+#include "engine/renderer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -124,9 +125,10 @@ void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
 
     // Load the texture needed.
     SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
+    SDL_free(img_data);
     SDL_Surface *surface = IMG_Load_IO(img_io, true);
     SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(get_current_renderer(), surface);
+        SDL_CreateTextureFromSurface(get_app_state()->renderer, surface);
     sprite->texture = texture;
 
     SDL_DestroySurface(surface);
@@ -253,11 +255,12 @@ void render_sprite(Sprite *spr, Vector2 pos)
     dstrect.h = srcrect.h;
     dstrect.w = srcrect.w;
 
-    RenderingOptions opts = create_default_rendering_options();
-    opts.align = RENDER_ORIGIN_MIDDLE_CENTER;
-    opts.texture = spr->texture;
-    opts.srcrect = &srcrect;
-    opts.dstrect = &dstrect;
+    RenderingOptions opts = {
+        .origin = RENDER_ORIGIN_MIDDLE_CENTER,
+        .texture = spr->texture,
+        .srcrect = &srcrect,
+        .dstrect = &dstrect,
+    };
     render_aligned_texture(opts);
 }
 

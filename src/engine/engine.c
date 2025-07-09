@@ -1,13 +1,13 @@
 #include "engine/engine.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
-#include "engine/collision.h"
+#include "app.h"
 #include "engine/events.h"
-#include "render/renderer.h"
-#include "spr/sakura.h"
+#include "engine/text.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +17,8 @@
  */
 void app_tick(AppState *app, double dt)
 {
-    update_sakura(app, dt);
+    (void)app;
+    (void)dt;
 }
 
 /**
@@ -26,33 +27,7 @@ void app_tick(AppState *app, double dt)
  */
 void app_fixed_tick(AppState *app)
 {
-    int w, h;
-    SDL_GetWindowSize(get_current_window(), &w, &h);
-
-    if (app->quadtree)
-        destroy_quadtree_node(app->quadtree);
-
-    // For each fixed tick, we create a quadtree to pass around.
-    // Populate and subdivide.
-    app->quadtree = create_quadtree_node(
-        (AABBCollider){w / 2.0, h / 2.0, (double)w, (double)h}, 0);
-    join_collider_lists(app->quadtree->colliders, app->floor_colliders);
-    add_collider_to_list(app->quadtree->colliders, get_sakura()->collider);
-    subdivide_quadtree(app->quadtree);
-
-    static bool movement = false;
-    if (app->floor_colliders->list[1]->aabb.x > 1000)
-        movement = false;
-    else if (app->floor_colliders->list[1]->aabb.x < 200)
-        movement = true;
-
-    if (movement)
-        app->floor_colliders->list[1]->aabb.x++;
-    else
-        app->floor_colliders->list[1]->aabb.x--;
-
-    // Call fixed updates.
-    fixed_update_sakura(app);
+    (void)app;
 }
 
 void engine_iterate(AppState *app)
@@ -102,6 +77,9 @@ void engine_handle_event(AppState *app, SDL_Event *event)
     // Handle the event itself.
     switch (event->type)
     {
+    case SDL_EVENT_WINDOW_RESIZED:
+        SDL_GetRenderOutputSize(app->renderer, &app->w, &app->h);
+        break;
     case SDL_EVENT_KEY_DOWN:
         handle_key_down_event(app, event->key);
         break;
@@ -109,4 +87,28 @@ void engine_handle_event(AppState *app, SDL_Event *event)
         handle_key_up_event(app, event->key);
         break;
     }
+}
+
+bool init_engine(AppState *app)
+{
+    bool success = true;
+
+    if (!init_font_engine(app))
+    {
+        success = false;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Failed to start font engine");
+    }
+
+    if (!success)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Some errors happened while initializing engine");
+    }
+    return success;
+}
+
+void destroy_engine(void)
+{
+    destroy_font_engine();
 }
