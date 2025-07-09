@@ -2,7 +2,10 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/renderer.h"
@@ -41,7 +44,8 @@ const char *get_font_file_name(FontFace face)
 
 bool init_font_engine(AppState *app)
 {
-    text_engine = TTF_CreateRendererTextEngine(app->renderer);
+    (void)app;
+    text_engine = TTF_CreateSurfaceTextEngine();
     return true;
 }
 
@@ -148,6 +152,7 @@ FontNode *get_or_create_font_node(Font font)
 
         put_font_node(font, ttf);
         node = get_font_node(font);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Cached a font style");
     }
 
     return node;
@@ -197,22 +202,34 @@ void destroy_font_node(FontNode *node)
 
 void render_text(FontRenderingOptions opts)
 {
+    AppState *state = get_app_state();
+
     FontNode *node = get_or_create_font_node(opts.font);
     SDL_assert(node != NULL);
 
     // Create the text.
-    TTF_Text *text = TTF_CreateText(text_engine, node->ttf_font, opts.text,
-                                    SDL_strlen(opts.text));
-    TTF_SetTextColor(text, opts.color.r, opts.color.g, opts.color.b,
-                     opts.color.a);
+    SDL_Surface *surface = TTF_RenderText_Solid(
+        node->ttf_font, opts.text, SDL_strlen(opts.text), opts.color);
 
     // Calculate the position for the text.
     double x = opts.x, y = opts.y;
-    int w, h;
-    TTF_GetTextSize(text, &w, &h);
+    int w = surface->w, h = surface->h;
     shift_position_to_origin(opts.origin, &x, &y, w, h);
-    TTF_DrawRendererText(text, (float)x, (float)y);
-    TTF_DestroyText(text);
+
+    // Create the surface to render.
+    SDL_Texture *texture =
+        SDL_CreateTextureFromSurface(state->renderer, surface);
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
+    SDL_FRect dstrect = {
+        .x = (float)x,
+        .y = (float)y,
+        .h = (float)h,
+        .w = (float)w,
+    };
+    SDL_RenderTexture(state->renderer, texture, NULL, &dstrect);
+
+    SDL_DestroySurface(surface);
+    SDL_DestroyTexture(texture);
 }
 
 void destroy_font_engine(void)

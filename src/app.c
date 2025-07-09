@@ -3,6 +3,7 @@
 #include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_filesystem.h"
+#include "SDL3/SDL_hints.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"

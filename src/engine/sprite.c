@@ -125,13 +125,13 @@ void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
 
     // Load the texture needed.
     SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
-    SDL_free(img_data);
     SDL_Surface *surface = IMG_Load_IO(img_io, true);
     SDL_Texture *texture =
         SDL_CreateTextureFromSurface(get_app_state()->renderer, surface);
     sprite->texture = texture;
 
     SDL_DestroySurface(surface);
+    SDL_free(img_data);
     *spr = sprite;
 }
 
@@ -139,13 +139,17 @@ Sprite *init_sprite_from_sheet(const char *sprite)
 {
     SDL_Log("Attempting to load sprite %s", sprite);
 
-    SDL_IOStream *io = SDL_IOFromFile(sprite, "r");
+    char buf[256] = "assets/spr/";
+    SDL_strlcat(buf, sprite, sizeof(buf));
+    SDL_strlcat(buf, ".sprite", sizeof(buf));
+
+    SDL_IOStream *io = SDL_IOFromFile(buf, "r");
     Sprite *spr = NULL;
 
     if (io == NULL)
     {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load sprite %s",
-                     sprite);
+                     buf);
         return NULL;
     }
 
@@ -165,12 +169,19 @@ Sprite *init_sprite_from_sheet(const char *sprite)
         break;
     }
 
+    SDL_SetTextureScaleMode(spr->texture, SDL_SCALEMODE_PIXELART);
     SDL_CloseIO(io);
     return spr;
 }
 
 bool set_sprite_animation(Sprite *spr, const char *name)
 {
+    if (name == NULL)
+    {
+        spr->sel_tag = -1;
+        return false;
+    }
+
     int idx = -1;
     for (Uint32 i = 0; i < spr->num_tags; i++)
     {

@@ -6,10 +6,14 @@
 #pragma once
 
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
+#include "engine/map.h"
+#include "engine/sprite.h"
+
 #define APPLICATION_NAME "Sakura and the Clow Cards"
 #define APPLICATION_VERSION "0.1.0"
-#define APPLICATION_IDENTIFIER "dev.frilly.ccsakuraclowcards"
+#define APPLICATION_IDENTIFIER "dev.frilly.ccsakura"
 
 #define APPLICATION_ORIGINAL_WIDTH 1600
 #define APPLICATION_ORIGINAL_HEIGHT 900
@@ -17,8 +21,9 @@
 #define APPLICATION_MAX_FPS 60
 #define APPLICATION_SCALE 2
 #define APPLICATION_SHOW_FPS 1
+#define APPLICATION_SHOW_COLLIDERS 1
 
-#include "SDL3/SDL_stdinc.h"
+#define APPLICATION_MAP_TILE 16
 
 /**
  * Represents the keyboard's key state.
@@ -59,6 +64,9 @@ typedef struct
     SDL_Renderer *renderer; // The renderer
     SDL_Window *window;     // The window
     int w, h;               // The window's height and width.
+
+    Sprite *test_spr;
+    Map *test_map;
 } AppState;
 
 /**

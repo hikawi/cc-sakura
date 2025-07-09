@@ -30,7 +30,12 @@ file(GLOB_RECURSE GAME_HEADERS CONFIGURE_DEPENDS include/*.h)
 # Create the game executable
 if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
-    add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
+    else()
+        add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
+    endif()
 elseif(WIN32)
     option(CMAKE_USE_WIN32_THREADS_INIT "using WIN32 threads" ON)
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
