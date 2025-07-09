@@ -6,6 +6,16 @@ A self-designed, built from the ground up 2D platformer game, using C and SDL3
 
 </div>
 
+## Table of Contents
+
+- [Sakura and the Clow Cards](#sakura-and-the-clow-cards)
+  - [Overview](#overview)
+  - [🚀 Getting Started](#---getting-started)
+  - [🖊️ Coding Conventions](#----coding-conventions)
+  - [Progress](#progress)
+    - [Week 1](#week-1)
+    - [Week 2](#week-2)
+
 ## Overview
 
 A passion project where Kinomoto Sakura (from Cardcaptor Sakura) traverses the 2D platforming world, collecting Clow Cards to unlock new platforming abilities. The game is inspired by popular platformer games such as Super Paper Mario, Celeste, Super Mario Bros. Wonder, etc. (even though I never played the latter two). The engine is inspired by my friend, who works in Graphics and Physics Programming, specializing in raytracing and sampling lighting systems.
@@ -53,3 +63,39 @@ To put it simply:
 - Make a comment block above each header file, to explain what this header file is responsible for.
 - Use `#pragma once` instead of `#ifndef #define`.
 - Functions are truly in the global namespace, make sure your function names reflect that specific function's actions, and be as detailed as possible without making the name too long. For example, prefer `normalize_vector2d(Vector2D)` over `normalize(Vector2D)`.
+
+## Progress
+
+This is to show videos, or screenshots of what is being done as days passed.
+
+### Week 1
+
+<details>
+    <summary>Day 3 (Sprite Rendering and Movement)</summary>
+
+    https://github.com/user-attachments/assets/1c4963c5-ea70-4501-96eb-e63d0a730627
+
+</details>
+
+<details>
+    <summary>Day 5 (Simple Collisions)</summary>
+
+    https://github.com/user-attachments/assets/6912306c-b8cf-4e80-ab8c-f68f80f74a85
+
+</details>
+
+<details>
+    <summary>Day 7 (Gravity)</summary>
+
+    https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
+
+</details>
+
+### Week 2
+
+<details>
+    <summary>Day 9 (Map Load and Autotile)</summary>
+
+<img width="1600" alt="Map loading from file" src="https://github.com/user-attachments/assets/7db2e674-697f-471b-ba8d-70075ed9586b" />
+
+</details>
