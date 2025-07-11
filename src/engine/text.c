@@ -38,6 +38,8 @@ const char *get_font_file_name(FontFace face)
         return "assets/font/rainyhearts.ttf";
     case FONT_FACE_UNIFONT:
         return "assets/font/unifont.ttf";
+    default:
+        return "";
     }
 }
 
