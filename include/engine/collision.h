@@ -119,34 +119,9 @@ typedef struct
 } Collision;
 
 /**
- * Represents a list of colliders. Meant to hold multiple colliders,
- * usually with the same collision type.
- */
-typedef struct
-{
-    Collider **list; // A list of pointers, since Collider should be held by the
-                     // actors themselves.
-    int length;
-    int capacity;
-} ColliderList;
-
-/**
- * Represents a quadtree of collider regions, meant to subdivide colliders
- * into small regions on the screen, so on one physical tick, it only has to
- * clash with objects in the region, not everywhere.
- */
-typedef struct QuadtreeNode
-{
-    AABBCollider bounds;            // Where the node surrounds.
-    int depth;                      // The current depth. 0 is on the root.
-    ColliderList *colliders;        // The list of colliders in this region.
-    struct QuadtreeNode **children; // The children, in order of TL, TR, BR, BL.
-} QuadtreeNode;
-
-/**
  * Retrieves the color needed to debug a collision type.
  */
-SDL_Color get_collision_type_debug_color(CollisionType type);
+SDL_Color collision_get_debug_color(CollisionType type);
 
 /**
  * Checks collisions of two colliders.
@@ -161,63 +136,4 @@ SDL_Color get_collision_type_debug_color(CollisionType type);
  * OUTWARDS from the surface that is being collided (c1). Applying this vector
  * to c2 at the length of "depth" would completely separate both objects.
  */
-Collision check_collision(Collider *c1, Collider *c2);
-
-/**
- * Creates a collider list.
- */
-ColliderList *create_collider_list(void);
-
-/**
- * Removes a collider from list.
- */
-void add_collider_to_list(ColliderList *list, Collider *collider);
-
-/**
- * Removes the collider at a certain index in the list.
- */
-void remove_collider_at_index(ColliderList *list, int idx);
-
-/**
- * Removes a collider by the pointer value. This removes only
- * the first instance.
- */
-void remove_collider_from_list(ColliderList *list, Collider *collider);
-
-/**
- * Removes a collider by the name of the collider. This removes only
- * the first instance.
- */
-void remove_collider_by_name(ColliderList *list, const char *name);
-
-/**
- * Copies all elements from the src collider list to the dst collider list
- * as new elements appending.
- */
-void join_collider_lists(ColliderList *dst, ColliderList *src);
-
-/**
- * Destroys the collider list. The pointer is now freed.
- */
-void destroy_collider_list(ColliderList *list);
-
-/**
- * Creates a new quadtree node.
- */
-QuadtreeNode *create_quadtree_node(AABBCollider bounds, int depth);
-
-/**
- * Looks for the nearest node that holds a collider in a quadtree.
- */
-void query_quadtree_node(QuadtreeNode *root, Collider *collider,
-                         ColliderList *list);
-
-/**
- * Populates the quadtree node after filling it with colliders.
- */
-void subdivide_quadtree(QuadtreeNode *node);
-
-/**
- * Destroys the populated quadtree node.
- */
-void destroy_quadtree_node(QuadtreeNode *node);
+Collision collision_check(Collider *c1, Collider *c2);

@@ -19,27 +19,27 @@ typedef struct
 /**
  * Makes a new 2D vector.
  */
-Vector2 make_vector2(double x, double y);
+Vector2 vector2_make(double x, double y);
 
 /**
  * Adds two vectors and returns the result as a newly created vector.
  */
-Vector2 add_vector2(Vector2 lhs, Vector2 rhs);
+Vector2 vector2_add(Vector2 lhs, Vector2 rhs);
 
 /**
  * Subtracts too vectors and returns the result as a newly created vector.
  */
-Vector2 subtract_vector2(Vector2 lhs, Vector2 rhs);
+Vector2 vector2_sub(Vector2 lhs, Vector2 rhs);
 
 /**
  * Negates a vector.
  */
-Vector2 negate_vector2(Vector2 vec);
+Vector2 vector2_neg(Vector2 vec);
 
 /**
  * Scales a 2D vector with a scalar.
  */
-Vector2 scale_vector2(Vector2 vec, double scalar);
+Vector2 vector2_scale(Vector2 vec, double scalar);
 
 /**
  * Rotates a 2D vector around the origin by an angle in radians.
@@ -48,7 +48,7 @@ Vector2 scale_vector2(Vector2 vec, double scalar);
  * stupid but last implementation I made needs to be normalized AFTER
  * rotation.
  */
-Vector2 rotate_vector2(Vector2 vec, double angle);
+Vector2 vector2_rot(Vector2 vec, double angle);
 
 /**
  * Rotates a 2D vector around the origin by an angle,
@@ -57,7 +57,7 @@ Vector2 rotate_vector2(Vector2 vec, double angle);
  * This is usually used when there is need to rotate multiple
  * vectors in the same angle.
  */
-Vector2 rotate_vector2_sincos(Vector2 vec, double sin, double cos);
+Vector2 vector2_rot_sincos(Vector2 vec, double sin, double cos);
 
 /**
  * On segment made by A->B, find an arbitrary point Q that is the closest
@@ -68,39 +68,39 @@ Vector2 closest_point_on_segment(Vector2 a, Vector2 b, Vector2 p);
 /**
  * Calculates the dot product of two vectors.
  */
-double dot_vector2(Vector2 a, Vector2 b);
+double vector2_dot(Vector2 a, Vector2 b);
 
 /**
  * Projects a vector `from` onto the vector `to`.
  */
-Vector2 project_vector2(Vector2 from, Vector2 to);
+Vector2 vector2_proj(Vector2 from, Vector2 to);
 
 /**
  * Finds the rotation of a vector compared to the X axis.
  */
-double get_rotation(Vector2 vec);
+double vector2_get_rot(Vector2 vec);
 
 /**
  * Calculates the length of a 2D vector.
  *
  * This uses some CPU cycles for sqrt, use sparingly.
  */
-double length_vector2(Vector2 vec);
+double vector2_len(Vector2 vec);
 
 /**
  * Calculates the length squared of a 2D vector.
  *
  * This is to mostly conserve CPU cycles for calculating the SQRT if not needed.
  */
-double length_squared_vector2(Vector2 vec);
+double vector2_lensqr(Vector2 vec);
 
 /**
  * Normalize a 2D vector. Does nothing if the vector is already length 1.
  */
-Vector2 normalize_vector2(Vector2 vec);
+Vector2 vector2_norm(Vector2 vec);
 
 /**
  * Checks if two vectors are equal. This uses epsilon for floating point
  * comparisons.
  */
-bool equal_vector2(Vector2 a, Vector2 b);
+bool vector2_eq(Vector2 a, Vector2 b);

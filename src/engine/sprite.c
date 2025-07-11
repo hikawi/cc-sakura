@@ -7,7 +7,6 @@
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
 #include "app.h"
-#include "engine/renderer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +14,7 @@
 /**
  * Version 1 of the sprite decoder tool.
  */
-void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
+void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
 {
     // First let's read the image first.
     // We start with the image length and then all the bytes of the image.
@@ -127,7 +126,7 @@ void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
     SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
     SDL_Surface *surface = IMG_Load_IO(img_io, true);
     SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(get_app_state()->window.renderer, surface);
+        SDL_CreateTextureFromSurface(app_get()->window.renderer, surface);
     sprite->texture = texture;
 
     SDL_DestroySurface(surface);
@@ -135,7 +134,7 @@ void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
     *spr = sprite;
 }
 
-Sprite *init_sprite_from_sheet(const char *sprite)
+Sprite *sprite_init(const char *sprite)
 {
     SDL_Log("Attempting to load sprite %s", sprite);
 
@@ -161,7 +160,7 @@ Sprite *init_sprite_from_sheet(const char *sprite)
     switch (version)
     {
     case 1:
-        init_sprite_v1(io, &spr);
+        sprite_init_v1(io, &spr);
         break;
     default:
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -174,7 +173,7 @@ Sprite *init_sprite_from_sheet(const char *sprite)
     return spr;
 }
 
-bool set_sprite_animation(Sprite *spr, const char *name)
+bool sprite_set_animation(Sprite *spr, const char *name)
 {
     if (name == NULL)
     {
@@ -200,20 +199,20 @@ bool set_sprite_animation(Sprite *spr, const char *name)
     }
     else
     {
-        reset_sprite_animation(spr);
+        sprite_reset_animation(spr);
     }
 
     return idx >= 0;
 }
 
-void reset_sprite_animation(Sprite *spr)
+void sprite_reset_animation(Sprite *spr)
 {
     spr->frame_idx = 0;
     spr->frame_accum = 0;
     spr->playing = false;
 }
 
-bool advance_sprite_animation(Sprite *spr, double dt)
+bool sprite_advance_animation(Sprite *spr, double dt)
 {
     spr->frame_accum += dt;
 
@@ -245,37 +244,7 @@ bool advance_sprite_animation(Sprite *spr, double dt)
     return false;
 }
 
-void render_sprite(Sprite *spr, Vector2 pos)
-{
-    // Get the current texture.
-    SpriteFrame *frame = NULL;
-    if (spr->sel_tag < 0)
-    {
-        frame = &spr->frames[spr->frame_idx];
-    }
-    else
-    {
-        FrameTag tag = spr->tags[spr->sel_tag];
-        frame = &spr->frames[spr->frame_idx + tag.from];
-    }
-
-    SDL_FRect srcrect, dstrect;
-    srcrect = frame->frame;
-    dstrect.x = (float)pos.x;
-    dstrect.y = (float)pos.y;
-    dstrect.h = srcrect.h;
-    dstrect.w = srcrect.w;
-
-    RenderingOptions opts = {
-        .origin = RENDER_ORIGIN_MIDDLE_CENTER,
-        .texture = spr->texture,
-        .srcrect = &srcrect,
-        .dstrect = &dstrect,
-    };
-    render_aligned_texture(opts);
-}
-
-void destroy_sprite(Sprite *spr)
+void sprite_destroy(Sprite *spr)
 {
     if (!spr)
         return;

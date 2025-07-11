@@ -16,7 +16,7 @@
 
 static AppState *appstate = NULL;
 
-AppState *init_app_state(void)
+AppState *app_init(void)
 {
     AppState *state = SDL_malloc(sizeof(AppState));
 
@@ -69,13 +69,13 @@ AppState *init_app_state(void)
     return state;
 }
 
-AppState *get_app_state(void)
+AppState *app_get(void)
 {
     SDL_assert(appstate != NULL);
     return appstate;
 }
 
-void destroy_app_state(AppState *state)
+void app_destroy(AppState *state)
 {
     if (!state)
         return;
@@ -101,7 +101,7 @@ void destroy_app_state(AppState *state)
     appstate = NULL;
 }
 
-char *get_resource_path(const char *subpath)
+char *app_res_path(const char *subpath)
 {
     char *path = SDL_calloc(1024, sizeof(char));
 

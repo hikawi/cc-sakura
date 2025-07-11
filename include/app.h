@@ -75,18 +75,18 @@ typedef struct
  * Initializes the first app state. The caller is responsible for handling
  * how to handle the pointer.
  */
-AppState *init_app_state(void);
+AppState *app_init(void);
 
 /**
  * Retrieves the app state, cached globally.
  */
-AppState *get_app_state(void);
+AppState *app_get(void);
 
 /**
  * Destroys the app state. This also frees up the AppState pointer itself.
  * Accessing the state after destroying is an undefined behavior.
  */
-void destroy_app_state(AppState *app);
+void app_destroy(AppState *app);
 
 /**
  * Computes the path needed to retrieve a certain resource. Mostly done as MacOS
@@ -94,4 +94,4 @@ void destroy_app_state(AppState *app);
  *
  * The pointer returned is handled by the user, and should be freed.
  */
-char *get_resource_path(const char *subpath);
+char *app_res_path(const char *subpath);

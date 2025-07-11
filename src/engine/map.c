@@ -4,7 +4,7 @@
 #include "SDL3/SDL_stdinc.h"
 #include "engine/sprite.h"
 
-int compute_index(Map *map, Uint32 x, Uint32 y)
+int map_compute_index(Map *map, Uint32 x, Uint32 y)
 {
     if (x >= map->w || y >= map->h)
         return -1;
@@ -14,17 +14,17 @@ int compute_index(Map *map, Uint32 x, Uint32 y)
 /**
  * Rescans the map tiles and checks for neighbors.
  */
-void rescan_map_tiles(Map *map)
+void map_autotile(Map *map)
 {
     for (Uint32 y = 0; y < map->h; y++)
     {
         for (Uint32 x = 0; x < map->w; x++)
         {
-            int idx = compute_index(map, x, y);
-            int north = compute_index(map, x, y - 1);
-            int south = compute_index(map, x, y + 1);
-            int east = compute_index(map, x + 1, y);
-            int west = compute_index(map, x - 1, y);
+            int idx = map_compute_index(map, x, y);
+            int north = map_compute_index(map, x, y - 1);
+            int south = map_compute_index(map, x, y + 1);
+            int east = map_compute_index(map, x + 1, y);
+            int west = map_compute_index(map, x - 1, y);
 
             MapTile val = map->tiles[idx].tile;
             map->tiles[idx].dir = 0;
@@ -52,7 +52,7 @@ void rescan_map_tiles(Map *map)
 /**
  * Initializes the map from the version 1 of the file.
  */
-Map *init_map_from_file_v1(SDL_IOStream *io)
+Map *map_init_v1(SDL_IOStream *io)
 {
     Map *map = SDL_malloc(sizeof(Map));
 
@@ -88,11 +88,11 @@ Map *init_map_from_file_v1(SDL_IOStream *io)
         map->tiles[y * map->w + x].tile = (MapTile)v;
     }
 
-    rescan_map_tiles(map);
+    map_autotile(map);
     return map;
 }
 
-Map *init_map_from_file(const char *name)
+Map *map_init(const char *name)
 {
     SDL_Log("Attempting to load map %s", name);
 
@@ -115,7 +115,7 @@ Map *init_map_from_file(const char *name)
     switch (version)
     {
     case 1:
-        map = init_map_from_file_v1(io);
+        map = map_init_v1(io);
         break;
     default:
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
@@ -127,20 +127,20 @@ Map *init_map_from_file(const char *name)
     return map;
 }
 
-void set_map_tile_sprite(Sprite *spr, MapTile tile)
+void map_tile_sprite(Sprite *spr, MapTile tile)
 {
     switch (tile)
     {
     case TILE_AIR:
-        set_sprite_animation(spr, NULL);
+        sprite_set_animation(spr, NULL);
         break;
     case TILE_WOOD:
-        set_sprite_animation(spr, "wood");
+        sprite_set_animation(spr, "wood");
         break;
     }
 }
 
-void destroy_map(Map *map)
+void map_destroy(Map *map)
 {
     if (!map)
         return;

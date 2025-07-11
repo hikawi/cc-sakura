@@ -117,7 +117,7 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
 {
     (void)mgr;
 
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     WindowStatus win = appstate->window;
     SDL_Texture *target = SDL_GetRenderTarget(win.renderer);
 
@@ -158,7 +158,7 @@ void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
 void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
                                       double progress)
 {
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
@@ -192,7 +192,7 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr,
                                             SceneTransition *trans,
                                             double progress)
 {
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
@@ -306,7 +306,7 @@ void scene_mgr_phys_tick(SceneManager *mgr)
 
 void scene_mgr_start_transition(SceneManager *mgr, SceneTransition transition)
 {
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     WindowStatus win = appstate->window;
 
     bool found = false;
@@ -378,7 +378,7 @@ SceneTransition *scene_get_active_transition(SceneManager *mgr, Scene *scene)
 
 void scene_mgr_draw(SceneManager *mgr)
 {
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     SDL_Renderer *renderer = appstate->window.renderer;
 
     // We're gonna go through each scene in the current active stack and render

@@ -62,14 +62,14 @@ typedef struct
 /**
  * Initializes a map from a provided .map file.
  */
-Map *init_map_from_file(const char *name);
+Map *map_init(const char *name);
 
 /**
  * Sets the tile used for the map.
  */
-void set_map_tile_sprite(Sprite *spr, MapTile tile);
+void map_tile_sprite(Sprite *spr, MapTile tile);
 
 /**
  * Destroys all memory used by the map.
  */
-void destroy_map(Map *map);
+void map_destroy(Map *map);

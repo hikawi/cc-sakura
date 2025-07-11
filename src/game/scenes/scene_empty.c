@@ -1,4 +1,3 @@
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
@@ -10,7 +9,6 @@ void scene_empty_ondraw(Scene *scene, SDL_Renderer *renderer)
     if (scene->id != SCENE_ID_EMPTY)
         return;
 
-    SDL_Log("Empty on draw");
     SDL_Color color = scene->data.empty.color;
 
     // Draw the rectangle with the specified color and alpha

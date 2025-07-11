@@ -12,8 +12,7 @@ void scene_fps_ondraw(Scene *scene, SDL_Renderer *renderer)
     if (scene->id != SCENE_ID_FPS)
         return;
 
-    SDL_Log("FPS on draw");
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
     WindowStatus win = appstate->window;
 
     char buf[10];

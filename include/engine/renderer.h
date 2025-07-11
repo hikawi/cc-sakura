@@ -47,6 +47,7 @@ void render_aligned_texture(RenderingOptions options);
 void render_map(Map *map, Sprite *spr);
 
 /**
- * Renders the current app state.
+ * Renders a sprite into the screen, at the exact center of the provided
+ * position.
  */
-void render_state(AppState *app);
+void render_sprite(Sprite *spr, Vector2 pos);

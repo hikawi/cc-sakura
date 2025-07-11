@@ -1,15 +1,12 @@
 #include "engine/engine.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "app.h"
 #include "engine/scene.h"
 #include "engine/text.h"
-#include "game/game_scenes.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +35,7 @@ void engine_iterate(AppState *app)
     // Tick every frame.
     scene_mgr_tick(&app->scene_mgr, dt);
 
-    // Before rendering, we update the FPS coutner.
+    // Before rendering, we update the FPS counter.
     app->frame_data.frame_time += dt;
     app->frame_data.frame_count++;
     if (app->frame_data.frame_time >= 1)
@@ -47,49 +44,10 @@ void engine_iterate(AppState *app)
         app->frame_data.frame_count = 0;
         app->frame_data.frame_time -= 1;
     }
-
-    static bool first_frame = true;
-    if (first_frame)
-    {
-        first_frame = false;
-
-        // Initialize first scene.
-        Scene *empty = scene_empty_init(
-            (SDL_Color){.r = 255, .g = 255, .b = 255, .a = 255},
-            (SDL_FRect){
-                .x = 0, .y = 0, .h = app->window.h, .w = app->window.w});
-        scene_mgr_push_scene(&app->scene_mgr, empty);
-
-        // Initialize testing scenes.
-        Scene *empty_fps = scene_empty_init(
-            (SDL_Color){.r = 50, .g = 50, .b = 50, .a = 100},
-            (SDL_FRect){.x = 0, .y = 0, .h = 100, .w = app->window.w});
-        scene_mgr_push_scene(&app->scene_mgr, empty_fps);
-
-        Scene *fps =
-            scene_fps_init((SDL_Color){.r = 50, .g = 50, .b = 255, .a = 255});
-        scene_mgr_start_transition(&app->scene_mgr,
-                                   (SceneTransition){
-                                       .from_scene = empty_fps,
-                                       .to_scene = fps,
-                                       .type = TRANSITION_SLIDE_LEFT,
-                                       .active = true,
-                                       .destroys_after = true,
-                                       .duration = 5,
-                                       .elapsed = 0,
-                                   });
-    }
 }
 
 void engine_handle_event(AppState *app, SDL_Event *event)
 {
-    // Retrieve the event data and log it out.
-    // int buflen = SDL_GetEventDescription(event, NULL, 0);
-    // char *buf = SDL_malloc(sizeof(char) * ((unsigned long)buflen + 1));
-    // SDL_GetEventDescription(event, buf, buflen);
-    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", buf);
-    // SDL_free(buf);
-
     // Handle the event itself.
     switch (event->type)
     {
@@ -113,7 +71,6 @@ void engine_render(AppState *app)
     SDL_RenderClear(app->window.renderer);
 
     // Render the scenes I guess
-    SDL_Log("Handling scene manager draw");
     scene_mgr_draw(&app->scene_mgr);
 
     // Present.

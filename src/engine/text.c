@@ -50,7 +50,7 @@ bool font_engine_init(AppState *app)
     return true;
 }
 
-bool equal_font(Font f1, Font f2)
+bool font_eq(Font f1, Font f2)
 {
     return f1.face == f2.face && feqf(f1.sp, f2.sp) && f1.style == f2.style;
 }
@@ -58,7 +58,7 @@ bool equal_font(Font f1, Font f2)
 /**
  * A simple, fast enough font hashing to index into the map.
  */
-int hash_font(Font font)
+int font_hash(Font font)
 {
     int hash = 17;
     hash = hash * 31 + (int)font.face;
@@ -70,7 +70,7 @@ int hash_font(Font font)
 /**
  * Initializes a new font node.
  */
-FontNode *init_font_node(Font font, TTF_Font *ttf)
+FontNode *font_node_init(Font font, TTF_Font *ttf)
 {
     FontNode *node = SDL_malloc(sizeof(FontNode));
     node->font = font;
@@ -82,13 +82,13 @@ FontNode *init_font_node(Font font, TTF_Font *ttf)
 /**
  * Retrieves a font node present within the map, if matched the provided font.
  */
-FontNode *get_font_node(Font font)
+FontNode *font_node_get(Font font)
 {
-    int idx = hash_font(font);
+    int idx = font_hash(font);
     FontNode *cur = font_nodes[idx];
     while (cur)
     {
-        if (equal_font(cur->font, font))
+        if (font_eq(cur->font, font))
             break;
         cur = cur->next;
     }
@@ -100,21 +100,21 @@ FontNode *get_font_node(Font font)
  * Puts a new font with a TTF font. This replaces the existing node if already
  * there.
  */
-void put_font_node(Font font, TTF_Font *ttf)
+void font_node_put(Font font, TTF_Font *ttf)
 {
-    int idx = hash_font(font);
+    int idx = font_hash(font);
 
     // Nothing in that bucket, just smash it in.
     if (!font_nodes[idx])
     {
-        font_nodes[idx] = init_font_node(font, ttf);
+        font_nodes[idx] = font_node_init(font, ttf);
         return;
     }
 
     FontNode *cur = font_nodes[idx];
     while (cur)
     {
-        if (equal_font(cur->font, font))
+        if (font_eq(cur->font, font))
         {
             TTF_CloseFont(cur->ttf_font);
             cur->ttf_font = ttf;
@@ -123,7 +123,7 @@ void put_font_node(Font font, TTF_Font *ttf)
 
         if (!cur->next)
         {
-            cur->next = init_font_node(font, ttf);
+            cur->next = font_node_init(font, ttf);
             break;
         }
 
@@ -131,9 +131,9 @@ void put_font_node(Font font, TTF_Font *ttf)
     }
 }
 
-FontNode *get_or_create_font_node(Font font)
+FontNode *font_node_get_or_create(Font font)
 {
-    FontNode *node = get_font_node(font);
+    FontNode *node = font_node_get(font);
 
     // No cache font. We start to create it.
     if (!node)
@@ -149,17 +149,17 @@ FontNode *get_or_create_font_node(Font font)
             return NULL;
         }
 
-        put_font_node(font, ttf);
-        node = get_font_node(font);
+        font_node_put(font, ttf);
+        node = font_node_get(font);
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Cached a font style");
     }
 
     return node;
 }
 
-void remove_font_node(Font font)
+void font_node_remove(Font font)
 {
-    int idx = hash_font(font);
+    int idx = font_hash(font);
 
     FontNode *prev = NULL;
     FontNode *cur = font_nodes[idx];
@@ -167,7 +167,7 @@ void remove_font_node(Font font)
     while (cur)
     {
         // We should remove here.
-        if (equal_font(cur->font, font))
+        if (font_eq(cur->font, font))
         {
             if (prev)
             {
@@ -189,21 +189,21 @@ void remove_font_node(Font font)
     }
 }
 
-void destroy_font_node(FontNode *node)
+void font_node_destroy(FontNode *node)
 {
     if (!node)
         return;
 
     TTF_CloseFont(node->ttf_font);
-    destroy_font_node(node->next);
+    font_node_destroy(node->next);
     SDL_free(node);
 }
 
 void font_engine_render_text(FontRenderingOptions opts)
 {
-    AppState *state = get_app_state();
+    AppState *state = app_get();
 
-    FontNode *node = get_or_create_font_node(opts.font);
+    FontNode *node = font_node_get_or_create(opts.font);
     SDL_assert(node != NULL);
 
     // Create the text.
@@ -237,7 +237,7 @@ void font_engine_destroy(void)
     {
         if (font_nodes[i])
         {
-            destroy_font_node(font_nodes[i]);
+            font_node_destroy(font_nodes[i]);
         }
     }
 

@@ -12,4 +12,4 @@ Write-Host "Copying libraries"
 Copy-Item -Path "./build/lib/*" -Destination "./CCSakura-Win/" -Recurse -Force -Verbose
 
 Write-Host "Archiving"
-Compress-Archive -Path "./CCSakura-Win/" -DestinationPath "./artifacts/CCSakura-Win.zip"
+Compress-Archive -Path "./CCSakura-Win/*" -DestinationPath "./artifacts/CCSakura-Win.zip"

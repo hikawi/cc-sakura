@@ -2,10 +2,8 @@
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
-#include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/map.h"
-#include "engine/text.h"
 
 void shift_position_to_origin(RenderingOriginType type, double *x, double *y,
                               double w, double h)
@@ -52,7 +50,7 @@ void render_map(Map *map, Sprite *spr)
     // Each map tile is a 16x16.
     // We need to figure out a way to translate map's local coords to the screen
     // coords.
-    AppState *appstate = get_app_state();
+    AppState *appstate = app_get();
 
     // Let's render (0, maxY) = bottom left. That means local_x * 16 = screen_x.
     // (0, maxY-1) = 1 off bottom => screen_y = win_y - (max_y - local_y) * 16.
@@ -71,7 +69,7 @@ void render_map(Map *map, Sprite *spr)
                 continue;
             }
 
-            set_map_tile_sprite(spr, node.tile);
+            map_tile_sprite(spr, node.tile);
 
             // Get the frame we're gonna draw.
             SDL_FRect srcrect, dstrect;
@@ -124,6 +122,36 @@ void render_aligned_texture(RenderingOptions options)
         .h = (float)h,
     };
 
-    SDL_RenderTexture(get_app_state()->window.renderer, options.texture,
+    SDL_RenderTexture(app_get()->window.renderer, options.texture,
                       options.srcrect, &true_dstrect);
+}
+
+void render_sprite(Sprite *spr, Vector2 pos)
+{
+    // Get the current texture.
+    SpriteFrame *frame = NULL;
+    if (spr->sel_tag < 0)
+    {
+        frame = &spr->frames[spr->frame_idx];
+    }
+    else
+    {
+        FrameTag tag = spr->tags[spr->sel_tag];
+        frame = &spr->frames[spr->frame_idx + tag.from];
+    }
+
+    SDL_FRect srcrect, dstrect;
+    srcrect = frame->frame;
+    dstrect.x = (float)pos.x;
+    dstrect.y = (float)pos.y;
+    dstrect.h = srcrect.h;
+    dstrect.w = srcrect.w;
+
+    RenderingOptions opts = {
+        .origin = RENDER_ORIGIN_MIDDLE_CENTER,
+        .texture = spr->texture,
+        .srcrect = &srcrect,
+        .dstrect = &dstrect,
+    };
+    render_aligned_texture(opts);
 }

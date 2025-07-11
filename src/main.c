@@ -15,6 +15,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static bool SDL_INIT_SUCCESS = false;
+static bool TTF_INIT_SUCCESS = false;
+static bool APP_INIT_SUCCESS = false;
+static bool ENGINE_INIT_SUCCESS = false;
+
 /**
  * Calls when the program starts.
  */
@@ -34,16 +39,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL.");
         return SDL_APP_FAILURE;
     }
+    SDL_INIT_SUCCESS = true;
 
     if (!TTF_Init())
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL_ttf.");
         return SDL_APP_FAILURE;
     }
+    TTF_INIT_SUCCESS = true;
 
-    *appstate = NULL;
-
-    AppState *app = init_app_state();
+    AppState *app = app_init();
     *appstate = app;
 
     if (app == NULL)
@@ -52,6 +57,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
                      "Unable to initialize window and renderer.");
         return SDL_APP_FAILURE;
     }
+    APP_INIT_SUCCESS = true;
 
     if (!engine_init(app))
     {
@@ -59,6 +65,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
                      "Unable to initialize game engine.");
         return SDL_APP_FAILURE;
     }
+    ENGINE_INIT_SUCCESS = true;
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                 "Bootstrapped application successfully.");
@@ -95,12 +102,25 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     AppState *app = (AppState *)appstate;
 
-    engine_destroy();
-    destroy_app_state(app);
+    if (ENGINE_INIT_SUCCESS)
+        engine_destroy();
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                "Closing application with result %d", result);
+    if (APP_INIT_SUCCESS)
+        app_destroy(app);
 
-    TTF_Quit();
-    SDL_Quit();
+    if (TTF_INIT_SUCCESS)
+        TTF_Quit();
+
+    if (SDL_INIT_SUCCESS)
+        SDL_Quit();
+
+    if (result == SDL_APP_SUCCESS)
+    {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                    "Application finished successfully");
+    }
+    else
+    {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Application failed");
+    }
 }

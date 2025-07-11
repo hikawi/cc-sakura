@@ -57,17 +57,17 @@ typedef struct
 /**
  * Loads a sprite from a sprite asset.
  */
-Sprite *init_sprite_from_sheet(const char *sprite);
+Sprite *sprite_init(const char *sprite);
 
 /**
  * Sets the sprite animation's currently selected tag.
  */
-bool set_sprite_animation(Sprite *spr, const char *name);
+bool sprite_set_animation(Sprite *spr, const char *name);
 
 /**
  * Resets a sprite's animation back to the default state.
  */
-void reset_sprite_animation(Sprite *spr);
+void sprite_reset_animation(Sprite *spr);
 
 /**
  * Advances a sprite's animation status by a deltatime amount.
@@ -75,15 +75,9 @@ void reset_sprite_animation(Sprite *spr);
  *
  * Returns true if the sprite was advanced a step.
  */
-bool advance_sprite_animation(Sprite *spr, double dt);
-
-/**
- * Renders a sprite into the screen, at the exact center of the provided
- * position.
- */
-void render_sprite(Sprite *spr, Vector2 pos);
+bool sprite_advance_animation(Sprite *spr, double dt);
 
 /**
  * Destroys a sprite.
  */
-void destroy_sprite(Sprite *spr);
+void sprite_destroy(Sprite *spr);
