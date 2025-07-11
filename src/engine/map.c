@@ -6,7 +6,7 @@
 
 int compute_index(Map *map, Uint32 x, Uint32 y)
 {
-    if (x < 0 || x >= map->w || y < 0 || y >= map->h)
+    if (x >= map->w || y >= map->h)
         return -1;
     return (int)(y * map->w + x);
 }

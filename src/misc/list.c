@@ -1,4 +1,5 @@
 #include "misc/list.h"
+#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
 List *list_init(void)
@@ -21,8 +22,18 @@ void list_shrink(List *list)
     if (list->capacity / 4 <= list->length)
         return;
 
-    list->items = SDL_realloc(list->items, sizeof(void *) * list->capacity / 2);
-    list->capacity /= 2;
+    Uint32 new_capacity = list->capacity / 2;
+    void **new_items = SDL_realloc(list->items, sizeof(void *) * new_capacity);
+    if (new_items)
+    {
+        list->items = new_items;
+        list->capacity = new_capacity;
+    }
+    else
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Reallocation for list failed.");
+    }
 }
 
 void list_add(List *list, void *item)
@@ -34,7 +45,7 @@ void list_add(List *list, void *item)
 
 void list_add_at(List *list, void *item, Uint32 k)
 {
-    if (k < 0 || k >= list->length)
+    if (k >= list->length)
         return;
     if (list->length + 1 <= list->capacity)
         list_expand(list);

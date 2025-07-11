@@ -99,3 +99,10 @@ https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
 <img width="1600" alt="Map loading from file" src="https://github.com/user-attachments/assets/7db2e674-697f-471b-ba8d-70075ed9586b" />
 
 </details>
+
+<details>
+    <summary>Day 11 (Scenes, Scene Manager & Scene Transitions)</summary>
+
+https://github.com/user-attachments/assets/402e0f31-4395-4e4f-8551-3bb3c04623b8
+
+</details>

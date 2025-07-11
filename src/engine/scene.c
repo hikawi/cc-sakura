@@ -1,5 +1,6 @@
 #include "engine/scene.h"
 #include "SDL3/SDL_assert.h"
+#include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_rect.h"
@@ -8,6 +9,7 @@
 #include "app.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
+#include "misc/stack.h"
 #include <string.h>
 
 #define SCENE_BLOCK_PHYSTICS_TICKS 1
@@ -18,7 +20,6 @@ Scene *scene_init(void)
 {
     Scene *scene = SDL_calloc(1, sizeof(Scene));
     scene->id = SCENE_ID_EMPTY;
-    scene->type = SCENE_TYPE_CONTROL;
     scene->colliders = hash_map_init();
     scene->sprites = hash_map_init();
     return scene;
@@ -93,7 +94,7 @@ void scene_mgr_purge_transitions(SceneManager *mgr)
     Uint32 i = 0;
     while (i < mgr->transitions->length)
     {
-        SceneTransition *trans = (SceneTransition *)mgr->transitions;
+        SceneTransition *trans = (SceneTransition *)mgr->transitions->items[i];
         if (!trans->active)
         {
             list_remove_at(mgr->transitions, i);
@@ -118,6 +119,7 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
 
     AppState *appstate = get_app_state();
     WindowStatus win = appstate->window;
+    SDL_Texture *target = SDL_GetRenderTarget(win.renderer);
 
     // Render the from scene first.
     SDL_SetRenderTarget(win.renderer, trans->from_txt);
@@ -133,7 +135,8 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
         trans->to_scene->ondraw(trans->to_scene, win.renderer);
     }
 
-    SDL_SetRenderTarget(win.renderer, NULL);
+    SDL_SetRenderTarget(win.renderer, target);
+    SDL_Log("Swapping render target back to %p", (void *)target);
 }
 
 /**
@@ -173,8 +176,12 @@ void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
         .w = win.w,
     };
 
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
     SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+
+    // Clean up after yourselves.
+    SDL_SetTextureAlphaModFloat(trans->from_txt, 1);
+    SDL_SetTextureAlphaModFloat(trans->to_txt, 1);
 }
 
 /**
@@ -237,7 +244,7 @@ void scene_mgr_handle_transition(SceneManager *mgr, SceneTransition *trans,
                 mgr->scenes->items[i] = trans->to_scene;
 
                 // Start the scene, the transition is finished.
-                if (trans->to_scene)
+                if (trans->to_scene->onstart)
                     trans->to_scene->onstart(trans->to_scene);
 
                 // Whether to free the "from_scene" after.
@@ -272,8 +279,8 @@ void scene_mgr_tick(SceneManager *mgr, double dt)
     for (int i = 0; i < mgr->scenes->length; i++)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
-        int flags = scene_query_status(mgr, scene);
-        if (!(flags & SCENE_BLOCK_TICKS) && scene->ontick)
+        if (scene && !(scene_query_status(mgr, scene) & SCENE_BLOCK_TICKS) &&
+            scene->ontick)
         {
             scene->ontick(scene, dt);
         }
@@ -323,14 +330,12 @@ void scene_mgr_start_transition(SceneManager *mgr, SceneTransition transition)
     SceneTransition *trans = SDL_malloc(sizeof(SceneTransition));
     *trans = transition;
 
-    trans->from_txt =
-        SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_STREAMING, win.w, win.h);
-    trans->to_txt =
-        SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
-                          SDL_TEXTUREACCESS_STREAMING, win.w, win.h);
+    trans->from_txt = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
+                                        SDL_TEXTUREACCESS_TARGET, win.w, win.h);
+    trans->to_txt = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
+                                      SDL_TEXTUREACCESS_TARGET, win.w, win.h);
 
-    if (!trans->from_txt || trans->to_txt)
+    if (!trans->from_txt || !trans->to_txt)
     {
         SDL_Log("Failed to create transition textures: %s", SDL_GetError());
         if (trans->from_txt)
@@ -342,12 +347,15 @@ void scene_mgr_start_transition(SceneManager *mgr, SceneTransition transition)
         return;
     }
 
+    SDL_SetTextureBlendMode(trans->from_txt, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(trans->to_txt, SDL_BLENDMODE_BLEND);
+
     // Initialize the to transition.
     if (transition.to_scene->oninit)
     {
         transition.to_scene->oninit(transition.to_scene);
     }
-    list_add(mgr->transitions, &trans);
+    list_add(mgr->transitions, trans);
 }
 
 /**
@@ -393,6 +401,20 @@ void scene_mgr_draw(SceneManager *mgr)
                 trans->duration == 0 ? 1 : trans->elapsed / trans->duration, 0,
                 1);
 
+            // Reset the renderer before starting
+            SDL_SetRenderTarget(renderer, mgr->target);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+
+            // Clear up transitioning targets also.
+            SDL_SetRenderTarget(renderer, trans->from_txt);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderTarget(renderer, trans->to_txt);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderTarget(renderer, mgr->target);
+
             // Depends on the transition type, we have to call each different
             // transition handler.
             switch (trans->type)
@@ -407,11 +429,31 @@ void scene_mgr_draw(SceneManager *mgr)
                 scene_mgr_transition_render_slide_left(mgr, trans, progress);
                 break;
             }
+
+            // Apply and clear for next frame.
+            SDL_SetRenderTarget(renderer, NULL);
+            SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
+
             continue;
         }
 
         // Otherwise, we let it draw normally.
         if (scene->ondraw)
+        {
+            SDL_SetRenderTarget(renderer, mgr->target);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
+
             scene->ondraw(scene, renderer);
+
+            // Draw on the scene and reset.
+            SDL_SetRenderTarget(renderer, NULL);
+            SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
+        }
     }
+}
+
+bool scene_mgr_push_scene(SceneManager *mgr, Scene *scene)
+{
+    return stack_push(mgr->scenes, scene);
 }

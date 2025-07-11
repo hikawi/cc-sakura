@@ -4,10 +4,12 @@
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
+#include "engine/scene.h"
 #include "misc/list.h"
 #include "misc/stack.h"
 #include <string.h>
@@ -44,6 +46,21 @@ AppState *init_app_state(void)
     SDL_GetRenderOutputSize(state->window.renderer, &state->window.w,
                             &state->window.h);
 
+    // Create the texture to render into.
+    state->scene_mgr.target = SDL_CreateTexture(
+        state->window.renderer, SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_TARGET, state->window.w, state->window.h);
+    if (!state->scene_mgr.target)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER,
+                     "Can't create scene rendering target.");
+        SDL_DestroyWindow(state->window.window);
+        SDL_DestroyRenderer(state->window.renderer);
+        SDL_free(state);
+        return NULL;
+    }
+    SDL_SetTextureBlendMode(state->scene_mgr.target, SDL_BLENDMODE_BLEND);
+
     // Create scene manager.
     state->scene_mgr.scenes = stack_init(APPLICATION_MAX_SCENE_COUNT);
     state->scene_mgr.transitions = list_init();
@@ -63,7 +80,19 @@ void destroy_app_state(AppState *state)
     if (!state)
         return;
 
+    for (int i = 0; i < state->scene_mgr.scenes->length; i++)
+    {
+        scene_destroy(state->scene_mgr.scenes->items[i]);
+    }
     stack_destroy(state->scene_mgr.scenes);
+
+    for (int i = 0; i < (int)state->scene_mgr.transitions->length; i++)
+    {
+        SceneTransition *trans = state->scene_mgr.transitions->items[i];
+        SDL_DestroyTexture(trans->from_txt);
+        SDL_DestroyTexture(trans->to_txt);
+        SDL_free(trans);
+    }
     list_destroy(state->scene_mgr.transitions);
 
     SDL_DestroyWindow(state->window.window);

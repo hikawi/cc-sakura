@@ -52,14 +52,14 @@ typedef struct
 /**
  * Initializes the engine needed to create fonts.
  */
-bool init_font_engine(AppState *app);
+bool font_engine_init(AppState *app);
 
 /**
  * Renders a text.
  */
-void render_text(FontRenderingOptions opts);
+void font_engine_render_text(FontRenderingOptions opts);
 
 /**
  * Destroys the initialized font engines.
  */
-void destroy_font_engine(void);
+void font_engine_destroy(void);

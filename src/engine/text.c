@@ -41,7 +41,7 @@ const char *get_font_file_name(FontFace face)
     }
 }
 
-bool init_font_engine(AppState *app)
+bool font_engine_init(AppState *app)
 {
     (void)app;
     text_engine = TTF_CreateSurfaceTextEngine();
@@ -197,7 +197,7 @@ void destroy_font_node(FontNode *node)
     SDL_free(node);
 }
 
-void render_text(FontRenderingOptions opts)
+void font_engine_render_text(FontRenderingOptions opts)
 {
     AppState *state = get_app_state();
 
@@ -229,7 +229,7 @@ void render_text(FontRenderingOptions opts)
     SDL_DestroyTexture(texture);
 }
 
-void destroy_font_engine(void)
+void font_engine_destroy(void)
 {
     for (int i = 0; i < MAX_FONT_NODES; i++)
     {

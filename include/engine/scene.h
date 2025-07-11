@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "engine/signal.h"
 #include "misc/hashmap.h"
@@ -17,6 +19,7 @@ typedef enum
 {
     // Special case scene. This scene holds only transparent pixels.
     SCENE_ID_EMPTY = 0,
+    SCENE_ID_FPS,
     SCENE_ID_LOADING,
     SCENE_ID_MAIN_MENU,
 
@@ -24,24 +27,29 @@ typedef enum
 } SceneId;
 
 /**
- * Represents the type of scene a scene can be. Each scene should have some
- * different data types to accommodate for that type. But all scenes share some
- * lifecycle hooks.
+ * Represents internal data for an empty scene.
  */
-typedef enum
+typedef struct
 {
-    SCENE_TYPE_CONTROL,
-    SCENE_TYPE_GAMEPLAY,
-} SceneType;
+    SDL_Color color;
+    SDL_FRect frect;
+} SceneEmpty;
+
+/**
+ * Represents internal data for an FPS scene.
+ */
+typedef struct
+{
+    SDL_Color color;
+} SceneFPS;
 
 /**
  * Represents a scene in the game.
  */
 typedef struct Scene
 {
-    SceneId id;     // The ID of the scene. Used for querying.
-    SceneType type; // The type of the scene.
-    int zindex;     // The order to render the scene in.
+    SceneId id; // The ID of the scene. Used for querying.
+    int zindex; // The order to render the scene in.
 
     // Lifecycle of a scene:
     //
@@ -89,6 +97,13 @@ typedef struct Scene
     bool accepting_signals;
     bool captures_focus;
     bool stops_propagation;
+
+    // The scene's private data
+    union SceneData
+    {
+        SceneEmpty empty;
+        SceneFPS fps;
+    } data;
 } Scene;
 
 /**
@@ -130,6 +145,7 @@ typedef struct
 {
     Stack *scenes;
     List *transitions;
+    SDL_Texture *target;
 } SceneManager;
 
 /**

@@ -2,6 +2,7 @@ name: Release Build
 
 on:
   push:
+    branches: ["main"]
     tags:
       - "v*" # Trigger on semantic version tags (v1.0.0, etc.)
 
