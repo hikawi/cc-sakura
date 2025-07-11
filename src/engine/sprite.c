@@ -127,7 +127,7 @@ void init_sprite_v1(SDL_IOStream *io, Sprite **spr)
     SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
     SDL_Surface *surface = IMG_Load_IO(img_io, true);
     SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(get_app_state()->renderer, surface);
+        SDL_CreateTextureFromSurface(get_app_state()->window.renderer, surface);
     sprite->texture = texture;
 
     SDL_DestroySurface(surface);

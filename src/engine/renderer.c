@@ -1,5 +1,4 @@
 #include "engine/renderer.h"
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
@@ -91,9 +90,9 @@ void render_map(Map *map, Sprite *spr)
             srcrect = frame.frame;
 
             dstrect.x = x * APPLICATION_MAP_TILE * APPLICATION_SCALE;
-            dstrect.y = (Uint32)appstate->h - (map->h - y - 1) *
-                                                  APPLICATION_MAP_TILE *
-                                                  APPLICATION_SCALE;
+            dstrect.y = (Uint32)appstate->window.h - (map->h - y - 1) *
+                                                         APPLICATION_MAP_TILE *
+                                                         APPLICATION_SCALE;
             dstrect.w = APPLICATION_MAP_TILE * APPLICATION_SCALE;
             dstrect.h = APPLICATION_MAP_TILE * APPLICATION_SCALE;
 
@@ -125,39 +124,6 @@ void render_aligned_texture(RenderingOptions options)
         .h = (float)h,
     };
 
-    SDL_RenderTexture(get_app_state()->renderer, options.texture,
+    SDL_RenderTexture(get_app_state()->window.renderer, options.texture,
                       options.srcrect, &true_dstrect);
-}
-
-void render_state(AppState *app)
-{
-    SDL_SetRenderDrawColor(app->renderer, 255, 255, 255, 255);
-    SDL_RenderClear(app->renderer);
-
-    if (APPLICATION_SHOW_FPS)
-    {
-        char buffer[256] = {0};
-        SDL_snprintf(buffer, 256, "%d FPS", app->frame_data.fps);
-
-        render_text((FontRenderingOptions){
-            .text = buffer,
-            .x = app->w - 10,
-            .y = 10,
-            .origin = RENDER_ORIGIN_TOP_RIGHT,
-            .font =
-                (Font){
-                    .face = FONT_FACE_DAYDREAM,
-                    .sp = 24,
-                    .style = TTF_STYLE_NORMAL,
-                    .hint = TTF_HINTING_LIGHT_SUBPIXEL,
-                },
-            .color = {.r = 22, .g = 22, .b = 255, .a = 255},
-        });
-    }
-
-    // Render test map and sprite.
-    render_map(app->test_map, app->test_spr);
-
-    // Final present from the renderer.
-    SDL_RenderPresent(app->renderer);
 }

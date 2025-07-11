@@ -2,7 +2,6 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
@@ -51,8 +50,7 @@ bool init_font_engine(AppState *app)
 
 bool equal_font(Font f1, Font f2)
 {
-    return f1.face == f2.face && f1.hint == f2.hint && feqf(f1.sp, f2.sp) &&
-           f1.style == f2.style;
+    return f1.face == f2.face && feqf(f1.sp, f2.sp) && f1.style == f2.style;
 }
 
 /**
@@ -63,7 +61,6 @@ int hash_font(Font font)
     int hash = 17;
     hash = hash * 31 + (int)font.face;
     hash = hash * 31 + (int)font.style;
-    hash = hash * 31 + (int)font.hint;
     hash = hash * 31 + (int)font.sp;
     return hash % MAX_FONT_NODES;
 }
@@ -140,7 +137,7 @@ FontNode *get_or_create_font_node(Font font)
     if (!node)
     {
         TTF_Font *ttf = TTF_OpenFont(get_font_file_name(font.face), font.sp);
-        TTF_SetFontHinting(ttf, font.hint);
+        TTF_SetFontHinting(ttf, TTF_HINTING_LIGHT_SUBPIXEL);
         TTF_SetFontStyle(ttf, font.style);
 
         if (!ttf)
@@ -218,7 +215,7 @@ void render_text(FontRenderingOptions opts)
 
     // Create the surface to render.
     SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(state->renderer, surface);
+        SDL_CreateTextureFromSurface(state->window.renderer, surface);
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     SDL_FRect dstrect = {
         .x = (float)x,
@@ -226,7 +223,7 @@ void render_text(FontRenderingOptions opts)
         .h = (float)h,
         .w = (float)w,
     };
-    SDL_RenderTexture(state->renderer, texture, NULL, &dstrect);
+    SDL_RenderTexture(state->window.renderer, texture, NULL, &dstrect);
 
     SDL_DestroySurface(surface);
     SDL_DestroyTexture(texture);

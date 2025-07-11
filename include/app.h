@@ -6,10 +6,10 @@
 #pragma once
 
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
-#include "engine/map.h"
-#include "engine/sprite.h"
+#include "engine/scene.h"
 
 #define APPLICATION_NAME "Sakura and the Clow Cards"
 #define APPLICATION_VERSION "0.1.0"
@@ -24,18 +24,7 @@
 #define APPLICATION_SHOW_COLLIDERS 1
 
 #define APPLICATION_MAP_TILE 16
-
-/**
- * Represents the keyboard's key state.
- */
-typedef struct
-{
-    bool key_a;
-    bool key_d;
-    bool key_s;
-    bool key_w;
-    bool key_space;
-} KeyboardStatus;
+#define APPLICATION_MAX_SCENE_COUNT 16
 
 /**
  * A special struct for holding a few necessary values for computing when to
@@ -54,19 +43,32 @@ typedef struct
 } FrameData;
 
 /**
+ * Represents the app's current input status.
+ */
+typedef struct
+{
+    bool keyboard[SDL_SCANCODE_COUNT];
+} InputStatus;
+
+/**
+ * Represents SDL's current window and renderer status.
+ */
+typedef struct
+{
+    SDL_Renderer *renderer; // The renderer
+    SDL_Window *window;     // The window
+    int w, h;               // The window's height and width.
+} WindowStatus;
+
+/**
  * Represents a struct that holds the main information about the game.
  */
 typedef struct
 {
-    FrameData frame_data; // Frames data for calculating FPS and update ticks.
-    KeyboardStatus keyboard; // The keyboard struct for querying keys.
-
-    SDL_Renderer *renderer; // The renderer
-    SDL_Window *window;     // The window
-    int w, h;               // The window's height and width.
-
-    Sprite *test_spr;
-    Map *test_map;
+    FrameData frame_data;   // Frames data for calculating FPS and update ticks.
+    InputStatus input;      // The input status data for keyboard.
+    WindowStatus window;    // The SDL's window.
+    SceneManager scene_mgr; // Scene manager.
 } AppState;
 
 /**

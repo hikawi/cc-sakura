@@ -34,7 +34,6 @@ typedef struct
     FontFace face;
     float sp;
     TTF_FontStyleFlags style;
-    TTF_HintingFlags hint;
 } Font;
 
 /**

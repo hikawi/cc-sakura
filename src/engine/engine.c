@@ -4,31 +4,12 @@
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
-#include "SDL3/SDL_video.h"
 #include "app.h"
-#include "engine/events.h"
+#include "engine/scene.h"
 #include "engine/text.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-/**
- * Calls every frame.
- */
-void app_tick(AppState *app, double dt)
-{
-    (void)app;
-    (void)dt;
-}
-
-/**
- * Calls every fixed tick. Mainly n times per second,
- * based on the fps cap.
- */
-void app_fixed_tick(AppState *app)
-{
-    (void)app;
-}
 
 void engine_iterate(AppState *app)
 {
@@ -48,11 +29,11 @@ void engine_iterate(AppState *app)
     while (app->frame_data.frame_accum >= (1.0 / APPLICATION_MAX_FPS))
     {
         app->frame_data.frame_accum -= (1.0 / APPLICATION_MAX_FPS);
-        app_fixed_tick(app);
+        scene_mgr_phys_tick(&app->scene_mgr);
     }
 
     // Tick every frame.
-    app_tick(app, dt);
+    scene_mgr_tick(&app->scene_mgr, dt);
 
     // Before rendering, we update the FPS coutner.
     app->frame_data.frame_time += dt;
@@ -69,27 +50,41 @@ void engine_handle_event(AppState *app, SDL_Event *event)
 {
     // Retrieve the event data and log it out.
     int buflen = SDL_GetEventDescription(event, NULL, 0);
-    char *buf = malloc(sizeof(char) * ((unsigned long)buflen + 1));
+    char *buf = SDL_malloc(sizeof(char) * ((unsigned long)buflen + 1));
     SDL_GetEventDescription(event, buf, buflen);
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%s", buf);
-    free(buf);
+    SDL_free(buf);
 
     // Handle the event itself.
     switch (event->type)
     {
     case SDL_EVENT_WINDOW_RESIZED:
-        SDL_GetRenderOutputSize(app->renderer, &app->w, &app->h);
+        SDL_GetRenderOutputSize(app->window.renderer, &app->window.w,
+                                &app->window.h);
         break;
     case SDL_EVENT_KEY_DOWN:
-        handle_key_down_event(app, event->key);
+        app->input.keyboard[event->key.scancode] = true;
         break;
     case SDL_EVENT_KEY_UP:
-        handle_key_up_event(app, event->key);
+        app->input.keyboard[event->key.scancode] = false;
         break;
     }
 }
 
-bool init_engine(AppState *app)
+void engine_render(AppState *app)
+{
+    // Clear the renderer.
+    SDL_SetRenderDrawColor(app->window.renderer, 255, 255, 255, 255);
+    SDL_RenderClear(app->window.renderer);
+
+    // Render the scenes I guess
+    scene_mgr_draw(&app->scene_mgr);
+
+    // Present.
+    SDL_RenderPresent(app->window.renderer);
+}
+
+bool engine_init(AppState *app)
 {
     bool success = true;
 
@@ -108,7 +103,7 @@ bool init_engine(AppState *app)
     return success;
 }
 
-void destroy_engine(void)
+void engine_destroy(void)
 {
     destroy_font_engine();
 }

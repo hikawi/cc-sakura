@@ -12,9 +12,6 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/engine.h"
-#include "engine/map.h"
-#include "engine/renderer.h"
-#include "engine/sprite.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -56,7 +53,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         return SDL_APP_FAILURE;
     }
 
-    if (!init_engine(app))
+    if (!engine_init(app))
     {
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
                      "Unable to initialize game engine.");
@@ -66,15 +63,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                 "Bootstrapped application successfully.");
 
-    app->test_map = init_map_from_file("level0");
-    app->test_spr = init_sprite_from_sheet("tile");
-
-    if (!app->test_map || !app->test_spr)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load assets");
-        return SDL_APP_FAILURE;
-    }
-
     return SDL_APP_CONTINUE;
 }
 
@@ -83,7 +71,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     AppState *state = (AppState *)appstate;
 
     engine_iterate(state);
-    render_state(state);
+    engine_render(state);
 
     return SDL_APP_CONTINUE;
 }
@@ -107,10 +95,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     AppState *app = (AppState *)appstate;
 
-    destroy_engine();
-
-    destroy_map(app->test_map);
-    destroy_sprite(app->test_spr);
+    engine_destroy();
     destroy_app_state(app);
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
