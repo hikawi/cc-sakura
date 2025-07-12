@@ -82,13 +82,16 @@ void engine_handle_event(AppState *app, SDL_Event *event)
 void engine_render(AppState *app)
 {
     // Clear the renderer.
-    SDL_SetRenderDrawColor(app->window.renderer, 255, 255, 255, 255);
+    SDL_SetRenderTarget(app->window.renderer, NULL);
+    SDL_SetRenderDrawColor(app->window.renderer, 255, 255, 255, 0);
     SDL_RenderClear(app->window.renderer);
 
     // Render the scenes I guess
+    SDL_SetRenderTarget(app->window.renderer, app->scene_mgr.target);
     scene_mgr_draw(&app->scene_mgr);
 
     // Present.
+    SDL_SetRenderTarget(app->window.renderer, NULL);
     SDL_RenderPresent(app->window.renderer);
 }
 

@@ -1,20 +1,7 @@
 Write-Host "Building CMake files"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_CXX_FLAGS="-Wa,-mbig-obj" -DCMAKE_TOOLCHAIN_FILE="$Env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake"
-
-if($? -ne 0)
-{
-    Write-Host "CMake build failed. Aborting..."
-    exit(1)
-}
-
 Write-Host "Building binary files"
 cmake --build build
-
-if($? -ne 0)
-{
-    Write-Host "Binary build failed. Aborting..."
-    exit(1)
-}
 
 mkdir -p artifacts
 mkdir -p CCSakura-Win

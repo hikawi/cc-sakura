@@ -1,6 +1,5 @@
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include "app.h"
 #include "engine/scene.h"
 #include "game/game_scenes.h"
@@ -20,39 +19,44 @@ void scene_setup(void)
 
     AppState *app = app_get();
 
-    SDL_Color white = {
-        .r = 255,
-        .g = 255,
-        .b = 255,
+    // Here we want to setup a few scenes.
+    // Let's setup some scenes to move out of the way.
+    SDL_Color black = {
+        .r = 0,
+        .g = 0,
+        .b = 0,
         .a = 255,
     };
-    SDL_FRect frect = {
-        .x = 0,
-        .y = 0,
-        .w = app->window.w,
-        .h = app->window.h,
-    };
-
-    // Here we want to setup a few scenes.
-    Scene *empty = scene_empty_init(white, frect);
-    scene_mgr_push_scene(&app->scene_mgr, empty);
-
-    // The placeholder to push fps in.
-    Scene *empty2 = scene_empty_init(white, frect);
-    scene_mgr_push_scene(&app->scene_mgr, empty2);
+    Scene *black_scr = scene_empty_init(black);
 
     // The FPS scene.
     Scene *fps =
         scene_fps_init((SDL_Color){.r = 50, .g = 50, .b = 200, .a = 255});
+    Scene *fps2 =
+        scene_fps_init((SDL_Color){.r = 50, .g = 200, .b = 50, .a = 255});
+    fps2->zindex = 1000;
 
-    SceneTransition trans = {
-        .from_scene = empty2,
-        .to_scene = fps,
-        .active = true,
-        .destroys_after = true,
+    SceneTransitionInfo info = {
+        .scene = black_scr,
+        .entry = true,
+        .type = TRANSITION_SPLIT_HORIZONTAL,
         .duration = 2,
-        .elapsed = 0,
-        .type = TRANSITION_PUSH_LEFT,
     };
-    scene_mgr_start_transition(&app->scene_mgr, trans);
+    scene_mgr_start_transition(&app->scene_mgr, info);
+
+    info.scene = fps;
+    info.type = TRANSITION_SLIDE_LEFT;
+    info.duration = 2;
+    scene_mgr_start_transition(&app->scene_mgr, info);
+
+    info.scene = fps2;
+    info.type = TRANSITION_SLIDE_RIGHT;
+    info.duration = 4;
+    scene_mgr_start_transition(&app->scene_mgr, info);
+
+    // info.scene = black_scr;
+    // info.entry = false;
+    // info.type = TRANSITION_SPLIT_HORIZONTAL;
+    // info.duration = 2;
+    // scene_mgr_start_transition(&app->scene_mgr, info);
 }

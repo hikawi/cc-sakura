@@ -69,6 +69,14 @@ void list_join(List *list, List *src);
 void list_clear(List *list);
 
 /**
+ * Sorts a list of items based on the comparator function.
+ *
+ * Uses a comparator that returns a negative value if l < p, 0 if l = p and
+ * positive value if l > p.
+ */
+void list_sort(List *list, int (*comparator)(void *l, void *r));
+
+/**
  * Destroys a list and reclaims memory.
  */
 void list_destroy(List *list);

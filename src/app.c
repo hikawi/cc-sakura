@@ -11,7 +11,6 @@
 #include "SDL3/SDL_video.h"
 #include "engine/scene.h"
 #include "misc/list.h"
-#include "misc/stack.h"
 #include <string.h>
 
 static AppState *appstate = NULL;
@@ -62,7 +61,7 @@ AppState *app_init(void)
     SDL_SetTextureBlendMode(state->scene_mgr.target, SDL_BLENDMODE_BLEND);
 
     // Create scene manager.
-    state->scene_mgr.scenes = stack_init(APPLICATION_MAX_SCENE_COUNT);
+    state->scene_mgr.scenes = list_init();
     state->scene_mgr.transitions = list_init();
 
     appstate = state;
@@ -80,21 +79,7 @@ void app_destroy(AppState *state)
     if (!state)
         return;
 
-    for (int i = 0; i < state->scene_mgr.scenes->length; i++)
-    {
-        scene_destroy(state->scene_mgr.scenes->items[i]);
-    }
-    stack_destroy(state->scene_mgr.scenes);
-
-    for (int i = 0; i < (int)state->scene_mgr.transitions->length; i++)
-    {
-        SceneTransition *trans = state->scene_mgr.transitions->items[i];
-        SDL_DestroyTexture(trans->from_txt);
-        SDL_DestroyTexture(trans->to_txt);
-        SDL_free(trans);
-    }
-    list_destroy(state->scene_mgr.transitions);
-
+    scene_mgr_destroy(state->scene_mgr);
     SDL_DestroyWindow(state->window.window);
     SDL_DestroyRenderer(state->window.renderer);
     SDL_free(state);

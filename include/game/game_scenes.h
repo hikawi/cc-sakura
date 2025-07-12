@@ -5,7 +5,6 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include "engine/scene.h"
 
 /**
@@ -16,7 +15,7 @@ void scene_setup(void);
 /**
  * Initializes an empty scene with the render draw color.
  */
-Scene *scene_empty_init(SDL_Color color, SDL_FRect rect);
+Scene *scene_empty_init(SDL_Color color);
 
 /**
  * Initializes the FPS scene.

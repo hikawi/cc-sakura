@@ -1,25 +1,37 @@
 #include "engine/scene.h"
-#include "SDL3/SDL_assert.h"
-#include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "app.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
-#include "misc/stack.h"
 #include <string.h>
 
 #define SCENE_BLOCK_PHYSTICS_TICKS 1
 #define SCENE_BLOCK_TICKS 2
 #define SCENE_BLOCK_SIGNALS 4
 
+/**
+ * Define the scene transition here to hide it away from engine users (me).
+ */
+struct SceneTransition
+{
+    SceneTransitionInfo info;
+    SDL_Texture *texture;
+    double elapsed;
+    bool active;
+};
+
 Scene *scene_init(void)
 {
     Scene *scene = SDL_calloc(1, sizeof(Scene));
-    scene->id = SCENE_ID_EMPTY;
+    scene->zindex = 0;
+    scene->data = NULL;
+    scene->enabled = true;
+    scene->accepting_signals = true;
+    scene->captures_focus = false;
+    scene->stops_propagation = false;
     scene->colliders = hash_map_init();
     scene->sprites = hash_map_init();
     return scene;
@@ -38,21 +50,29 @@ void scene_destroy(Scene *scene)
     SDL_free(scene);
 }
 
+void scene_transition_destroy(SceneTransition *trans)
+{
+    if (!trans)
+        return;
+
+    SDL_DestroyTexture(trans->texture);
+    SDL_free(trans);
+}
+
 /**
  * Purges all inactive transitions.
  */
 void scene_mgr_purge_transitions(SceneManager *mgr)
 {
     Uint32 i = 0;
+
     while (i < mgr->transitions->length)
     {
         SceneTransition *trans = (SceneTransition *)mgr->transitions->items[i];
         if (!trans->active)
         {
             list_remove_at(mgr->transitions, i);
-            SDL_DestroyTexture(trans->from_txt);
-            SDL_DestroyTexture(trans->to_txt);
-            SDL_free(trans);
+            scene_transition_destroy(trans);
         }
         else
         {
@@ -71,22 +91,14 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
 
     AppState *appstate = app_get();
     WindowStatus win = appstate->window;
+
+    // Render it to the texture layer.
     SDL_Texture *target = SDL_GetRenderTarget(win.renderer);
-
-    // Render the from scene first.
-    SDL_SetRenderTarget(win.renderer, trans->from_txt);
-    if (trans->from_scene->ondraw)
+    SDL_SetRenderTarget(win.renderer, trans->texture);
+    if (trans->info.scene->ondraw)
     {
-        trans->from_scene->ondraw(trans->from_scene, win.renderer);
+        trans->info.scene->ondraw(trans->info.scene, win.renderer);
     }
-
-    // Render the to scene then.
-    SDL_SetRenderTarget(win.renderer, trans->to_txt);
-    if (trans->to_scene->ondraw)
-    {
-        trans->to_scene->ondraw(trans->to_scene, win.renderer);
-    }
-
     SDL_SetRenderTarget(win.renderer, target);
 }
 
@@ -96,11 +108,17 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
 void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
                                       double progress)
 {
-    (void)mgr;
     (void)progress;
 
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+    scene_mgr_transition_render(mgr, trans);
+
     // Instantly end the transition.
-    trans->elapsed = trans->duration;
+    trans->elapsed = trans->info.duration + 1;
+
+    // Render once.
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, NULL);
 }
 
 /**
@@ -113,31 +131,28 @@ void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
-    // Then we start the fade out based on the progress.
-    // progress = 0 means from is fully visible
-    // progress = 1 means to is fully visible
-    SDL_SetTextureAlphaModFloat(trans->from_txt, 1 - (float)progress);
-    SDL_SetTextureAlphaModFloat(trans->to_txt, (float)progress);
+    // Then we start the fading based on the progress.
+    // progress = 0 is full opacity if it is an exit transition,
+    // otherwise no opacity if it is an entry transition.
+    if (trans->info.entry)
+    {
+        SDL_SetTextureAlphaModFloat(trans->texture, (float)progress);
+    }
+    else
+    {
+        SDL_SetTextureAlphaModFloat(trans->texture, 1 - (float)progress);
+    }
 
-    // Get the dstrect for full screen.
-    SDL_FRect dstrect = {
-        .x = 0,
-        .y = 0,
-        .h = win.h,
-        .w = win.w,
-    };
-
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+    // Render it to the target.
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, NULL);
 
     // Clean up after yourselves.
-    SDL_SetTextureAlphaModFloat(trans->from_txt, 1);
-    SDL_SetTextureAlphaModFloat(trans->to_txt, 1);
+    SDL_SetTextureAlphaModFloat(trans->texture, 1);
 }
 
 /**
- * Animates the sliding left transition. This will makes it so the first scene
- * moves left to reveal the second scene underneath.
+ * Animates the sliding left transition. This will animate the scene sliding to
+ * move out of the screen or the scene sliding in to move inside of the screen.
  */
 void scene_mgr_transition_render_slide_left(SceneManager *mgr,
                                             SceneTransition *trans,
@@ -147,106 +162,69 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr,
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
-    // We render the to_scene first, to make it appear underneath.
+    // Render the scene in an offset to animate it moving, depending on the
+    // transition type.
     SDL_FRect dstrect = {
-        .x = 0,
+        .x = trans->info.entry ? win.w : 0,
         .y = 0,
         .h = win.h,
         .w = win.w,
     };
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
-
-    // Then render the from_scene above, but offset by a slight amount.
     dstrect.x -= (float)(progress * win.w);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
 }
 
 /**
- * Animates the pushing up transition. The after scene would push the before
- * scene upwards.
+ * Animates the sliding right transition. This will animate the scene sliding to
+ * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_push_up(SceneManager *mgr,
-                                         SceneTransition *trans,
-                                         double progress)
+void scene_mgr_transition_render_slide_right(SceneManager *mgr,
+                                             SceneTransition *trans,
+                                             double progress)
 {
     AppState *appstate = app_get();
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
-    // Calculate the offset (up) needed to render from_scene.
+    // Render the scene in an offset to animate it moving, depending on the
+    // transition type.
     SDL_FRect dstrect = {
-        .x = 0,
+        .x = trans->info.entry ? -win.w : 0,
         .y = 0,
         .h = win.h,
         .w = win.w,
     };
-    dstrect.y -= (float)(win.h * progress);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
-
-    // Render the to_scene.
-    dstrect.y += dstrect.h;
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+    dstrect.x += (float)(progress * win.w);
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
 }
-
 /**
- * Animates the pushing down transition. The after scene would push the before
- * scene downwards.
+ * Animates the sliding up transition. This will animate the scene sliding to
+ * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_push_down(SceneManager *mgr,
-                                           SceneTransition *trans,
-                                           double progress)
+void scene_mgr_transition_render_slide_up(SceneManager *mgr,
+                                          SceneTransition *trans,
+                                          double progress)
 {
     AppState *appstate = app_get();
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
-    // Calculate the offset needed to render from_scene.
+    // Render the scene in an offset to animate it moving, depending on the
+    // transition type.
     SDL_FRect dstrect = {
         .x = 0,
-        .y = 0,
+        .y = trans->info.entry ? win.h : 0,
         .h = win.h,
         .w = win.w,
     };
-    dstrect.y += (float)(win.h * progress);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
-
-    // Render the to_scene.
-    dstrect.y -= dstrect.h;
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+    dstrect.y -= (float)(progress * win.h);
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
 }
-
 /**
- * Animates the pushing left transition. The after scene would push the before
- * scene left.
+ * Animates the sliding down transition. This will animate the scene sliding to
+ * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_push_left(SceneManager *mgr,
-                                           SceneTransition *trans,
-                                           double progress)
-{
-    AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
-    scene_mgr_transition_render(mgr, trans);
-
-    // Calculate the offset needed to render from_scene.
-    SDL_FRect dstrect = {
-        .x = 0,
-        .y = 0,
-        .h = win.h,
-        .w = win.w,
-    };
-    dstrect.x -= (float)(win.w * progress);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
-
-    // Render the to_scene.
-    dstrect.x += dstrect.w;
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
-}
-
-/**
- * Animates the pushing right transition. The after scene would push the before
- * scene right.
- */
-void scene_mgr_transition_render_push_right(SceneManager *mgr,
+void scene_mgr_transition_render_slide_down(SceneManager *mgr,
                                             SceneTransition *trans,
                                             double progress)
 {
@@ -254,19 +232,69 @@ void scene_mgr_transition_render_push_right(SceneManager *mgr,
     WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
-    // Calculate the offset needed to render from_scene.
+    // Render the scene in an offset to animate it moving, depending on the
+    // transition type.
     SDL_FRect dstrect = {
         .x = 0,
-        .y = 0,
+        .y = trans->info.entry ? -win.h : 0,
         .h = win.h,
         .w = win.w,
     };
-    dstrect.x += (float)(win.w * progress);
-    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+    dstrect.y += (float)(progress * win.h);
+    SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
+}
 
-    // Render the to_scene.
-    dstrect.x -= dstrect.w;
-    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+/**
+ * Animates the sequence of splitting horizontally.
+ */
+void scene_mgr_transition_render_split_horiz(SceneManager *mgr,
+                                             SceneTransition *trans,
+                                             double progress)
+{
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+
+    scene_mgr_transition_render(mgr, trans);
+
+    // Split the texture into two.
+    SDL_FRect topsrc = {
+        .x = 0,
+        .y = 0,
+        .h = win.h / 2.0f,
+        .w = win.w,
+    };
+    SDL_FRect btmsrc = {
+        .x = 0,
+        .y = win.h / 2.0f,
+        .h = win.h / 2.0f,
+        .w = win.w,
+    };
+
+    // If it's an entry then the split should close in, otherwise it should
+    // split outwards. Either way, we need to render each half at different
+    // offsets.
+    SDL_FRect topdst = topsrc;
+    SDL_FRect btmdst = btmsrc;
+
+    if (trans->info.entry)
+    {
+        // Close in.
+        topdst.y = -win.h / 2.0f;
+        topdst.y += (float)progress * topdst.h;
+        btmdst.y = win.h;
+        btmdst.y -= (float)progress * topdst.h;
+    }
+    else
+    {
+        // Recede.
+        topdst.y = 0;
+        topdst.y -= (float)progress * topdst.h;
+        btmdst.y = win.h / 2.0f;
+        btmdst.y += (float)progress * topdst.h;
+    }
+
+    SDL_RenderTexture(win.renderer, trans->texture, &topsrc, &topdst);
+    SDL_RenderTexture(win.renderer, trans->texture, &btmsrc, &btmdst);
 }
 
 /**
@@ -283,37 +311,25 @@ void scene_mgr_handle_transition(SceneManager *mgr, SceneTransition *trans,
     }
 
     // Here the transition is still in play.
-
     // Handle the transition ending.
-    if (trans->elapsed > trans->duration)
+    if (trans->elapsed > trans->info.duration)
     {
         trans->active = false; // Mark for deletion.
-        SDL_assert(trans->from_scene != NULL && trans->to_scene != NULL);
 
-        // Do the actual scene swapping.
-        // Since the scene being swapped may not be on top of the stack, we want
-        // to swap in place.
-        for (int i = 0; i < mgr->scenes->length; i++)
+        // Do the actual scene bootstrapping or ending.
+        // If it is an entry transition, then we want to start it. Otherwise, we
+        // want to destroy it.
+        if (trans->info.entry)
         {
-            if (mgr->scenes->items[i] == trans->from_scene)
+            if (trans->info.scene->onstart)
             {
-                if (trans->from_scene->ondestroy)
-                    trans->from_scene->ondestroy(trans->from_scene);
-
-                mgr->scenes->items[i] = trans->to_scene;
-
-                // Start the scene, the transition is finished.
-                if (trans->to_scene->onstart)
-                    trans->to_scene->onstart(trans->to_scene);
-
-                // Whether to free the "from_scene" after.
-                if (trans->destroys_after)
-                {
-                    scene_destroy(trans->from_scene);
-                }
-
-                break;
+                trans->info.scene->onstart(trans->info.scene);
             }
+        }
+        else
+        {
+            list_remove(mgr->scenes, trans->info.scene);
+            scene_destroy(trans->info.scene);
         }
 
         return;
@@ -336,7 +352,7 @@ void scene_mgr_tick(SceneManager *mgr, double dt)
     // We want to let top scenes capture focus if needed. So we iterate from top
     // to bottom.
     bool focus_captured = false;
-    for (int i = mgr->scenes->length - 1; i >= 0; i--)
+    for (int i = (int)mgr->scenes->length - 1; i >= 0; i--)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
         if (!scene)
@@ -359,7 +375,7 @@ void scene_mgr_phys_tick(SceneManager *mgr)
     // The scene is a stack emplaced at back. Therefore running 1 -> length is a
     // bottom to top approach.
     bool focus_captured = false;
-    for (int i = mgr->scenes->length - 1; i >= 0; i--)
+    for (int i = (int)mgr->scenes->length - 1; i >= 0; i--)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
         if (!scene)
@@ -375,56 +391,47 @@ void scene_mgr_phys_tick(SceneManager *mgr)
     }
 }
 
-void scene_mgr_start_transition(SceneManager *mgr, SceneTransition transition)
+void scene_mgr_start_transition(SceneManager *mgr, SceneTransitionInfo info)
 {
     AppState *appstate = app_get();
     WindowStatus win = appstate->window;
 
-    bool found = false;
-    for (int i = 0; i < mgr->scenes->length; i++)
+    if (info.duration < 0)
     {
-        if (mgr->scenes->items[i] == transition.from_scene)
-        {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found)
-    {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_APPLICATION,
-            "Scene Transition called with a scene that does not exist yet.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Can't have a negative duration transition.");
         return;
     }
 
-    SceneTransition *trans = SDL_malloc(sizeof(SceneTransition));
-    *trans = transition;
-
-    trans->from_txt = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
-                                        SDL_TEXTUREACCESS_TARGET, win.w, win.h);
-    trans->to_txt = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
-                                      SDL_TEXTUREACCESS_TARGET, win.w, win.h);
-
-    if (!trans->from_txt || !trans->to_txt)
+    if (!info.scene)
     {
-        SDL_Log("Failed to create transition textures: %s", SDL_GetError());
-        if (trans->from_txt)
-            SDL_DestroyTexture(trans->from_txt);
-        if (trans->to_txt)
-            SDL_DestroyTexture(trans->to_txt);
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Can't have a transition with a null scene.");
+        return;
+    }
 
+    SceneTransition *trans = SDL_calloc(1, sizeof(SceneTransition));
+    trans->info = info;
+    trans->elapsed = 0;
+    trans->active = true;
+    trans->texture = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
+                                       SDL_TEXTUREACCESS_TARGET, win.w, win.h);
+
+    if (!trans->texture)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Unable to allocate texture for transition");
         SDL_free(trans);
         return;
     }
 
-    SDL_SetTextureBlendMode(trans->from_txt, SDL_BLENDMODE_BLEND);
-    SDL_SetTextureBlendMode(trans->to_txt, SDL_BLENDMODE_BLEND);
-
-    // Initialize the to transition.
-    if (transition.to_scene->oninit)
+    // If it is an inward transitioning, we initialize it.
+    if (info.entry)
     {
-        transition.to_scene->oninit(transition.to_scene);
+        if (info.scene->oninit)
+            info.scene->oninit(info.scene);
+        list_add(mgr->scenes, info.scene);
+        scene_mgr_reorder(mgr);
     }
     list_add(mgr->transitions, trans);
 }
@@ -440,11 +447,23 @@ SceneTransition *scene_get_active_transition(SceneManager *mgr, Scene *scene)
     for (int i = 0; i < (int)mgr->transitions->length; i++)
     {
         SceneTransition *trans = (SceneTransition *)mgr->transitions->items[i];
-        if (trans->active && trans->from_scene == scene)
+        if (trans->active && trans->info.scene == scene)
             return trans;
     }
 
     return NULL;
+}
+
+int scene_comparator(void *a, void *b)
+{
+    Scene *l = (Scene *)a;
+    Scene *r = (Scene *)b;
+    return l->zindex - r->zindex;
+}
+
+void scene_mgr_reorder(SceneManager *mgr)
+{
+    list_sort(mgr->scenes, scene_comparator);
 }
 
 void scene_mgr_draw(SceneManager *mgr)
@@ -453,19 +472,19 @@ void scene_mgr_draw(SceneManager *mgr)
     SDL_Renderer *renderer = appstate->window.renderer;
 
     // We're gonna go through each scene in the current active stack and render
-    // them.
-    for (int i = 0; i < mgr->scenes->length; i++)
+    // them. We assume it's in correct scenes.
+    for (int i = 0; i < (int)mgr->scenes->length; i++)
     {
         Scene *scene = mgr->scenes->items[i];
-
-        // Reset the renderer before starting
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-        SDL_SetRenderTarget(renderer, mgr->target);
-        SDL_RenderClear(renderer);
 
         // If a scene is not enabled, we don't render them anyway.
         if (!scene || !scene->enabled)
             continue;
+
+        // Reset the renderer before starting
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_SetRenderTarget(renderer, mgr->target);
+        SDL_RenderClear(renderer);
 
         // If a scene is within a transition, we ignore their draws.
         SceneTransition *trans = scene_get_active_transition(mgr, scene);
@@ -473,20 +492,19 @@ void scene_mgr_draw(SceneManager *mgr)
         {
             // Make sure these are rendered.
             // We can add interpolation functions here after.
-            double progress = SDL_clamp(
-                trans->duration == 0 ? 1 : trans->elapsed / trans->duration, 0,
-                1);
+            double progress = trans->info.duration == 0
+                                  ? 1
+                                  : trans->elapsed / trans->info.duration;
+            progress = SDL_clamp(progress, 0, 1);
 
             // Clear up transitioning targets also.
-            SDL_SetRenderTarget(renderer, trans->from_txt);
-            SDL_RenderClear(renderer);
-            SDL_SetRenderTarget(renderer, trans->to_txt);
+            SDL_SetRenderTarget(renderer, trans->texture);
             SDL_RenderClear(renderer);
             SDL_SetRenderTarget(renderer, mgr->target);
 
             // Depends on the transition type, we have to call each different
             // transition handler.
-            switch (trans->type)
+            switch (trans->info.type)
             {
             case TRANSITION_NONE:
                 scene_mgr_transition_render_none(mgr, trans, progress);
@@ -497,56 +515,33 @@ void scene_mgr_draw(SceneManager *mgr)
             case TRANSITION_SLIDE_LEFT:
                 scene_mgr_transition_render_slide_left(mgr, trans, progress);
                 break;
-            case TRANSITION_PUSH_UP:
-                scene_mgr_transition_render_push_up(mgr, trans, progress);
+            case TRANSITION_SLIDE_RIGHT:
+                scene_mgr_transition_render_slide_right(mgr, trans, progress);
                 break;
-            case TRANSITION_PUSH_DOWN:
-                scene_mgr_transition_render_push_down(mgr, trans, progress);
+            case TRANSITION_SLIDE_UP:
+                scene_mgr_transition_render_slide_up(mgr, trans, progress);
                 break;
-            case TRANSITION_PUSH_LEFT:
-                scene_mgr_transition_render_push_left(mgr, trans, progress);
+            case TRANSITION_SLIDE_DOWN:
+                scene_mgr_transition_render_slide_down(mgr, trans, progress);
                 break;
-            case TRANSITION_PUSH_RIGHT:
-                scene_mgr_transition_render_push_right(mgr, trans, progress);
+            case TRANSITION_SPLIT_HORIZONTAL:
+                scene_mgr_transition_render_split_horiz(mgr, trans, progress);
                 break;
             }
-
-            // Apply and clear for next frame.
-            SDL_SetRenderTarget(renderer, NULL);
-            SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
-
-            continue;
         }
-
-        // Otherwise, we let it draw normally.
-        if (scene->ondraw)
+        else if (scene->ondraw)
         {
             scene->ondraw(scene, renderer);
-
-            // Draw on the scene and reset.
-            SDL_SetRenderTarget(renderer, NULL);
-            SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
         }
-    }
-}
 
-bool scene_mgr_push_scene(SceneManager *mgr, Scene *scene)
-{
-    if (stack_push(mgr->scenes, scene))
-    {
-        if (scene->oninit)
-            scene->oninit(scene);
-        if (scene->onstart)
-            scene->onstart(scene);
-        return true;
+        SDL_SetRenderTarget(renderer, NULL);
+        SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
     }
-
-    return false;
 }
 
 void scene_mgr_on_signal(SceneManager *mgr, Signal *signal)
 {
-    for (int i = 0; i < mgr->scenes->length; i++)
+    for (int i = (int)mgr->scenes->length - 1; i >= 0; i--)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
         if (scene->accepting_signals && scene->onsignal)
@@ -556,5 +551,31 @@ void scene_mgr_on_signal(SceneManager *mgr, Signal *signal)
 
         if (scene->stops_propagation)
             break;
+    }
+}
+
+void scene_mgr_destroy(SceneManager mgr)
+{
+    if (mgr.scenes)
+    {
+        for (int i = 0; i < (int)mgr.scenes->length; i++)
+        {
+            scene_destroy(mgr.scenes->items[i]);
+        }
+        list_destroy(mgr.scenes);
+    }
+
+    if (mgr.target)
+    {
+        SDL_DestroyTexture(mgr.target);
+    }
+
+    if (mgr.transitions)
+    {
+        for (int i = 0; i < (int)mgr.transitions->length; i++)
+        {
+            scene_transition_destroy(mgr.transitions->items[i]);
+        }
+        list_destroy(mgr.transitions);
     }
 }

@@ -4,51 +4,17 @@
 
 #pragma once
 
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "engine/signal.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
-#include "misc/stack.h"
-
-/**
- * Represents the enumeration type IDs for various scene types.
- */
-typedef enum
-{
-    // Special case scene. This scene holds only transparent pixels.
-    SCENE_ID_EMPTY = 0,
-    SCENE_ID_FPS,
-    SCENE_ID_LOADING,
-    SCENE_ID_MAIN_MENU,
-
-    NUM_SCENE_IDS,
-} SceneId;
-
-/**
- * Represents internal data for an empty scene.
- */
-typedef struct
-{
-    SDL_Color color;
-    SDL_FRect frect;
-} SceneEmpty;
-
-/**
- * Represents internal data for an FPS scene.
- */
-typedef struct
-{
-    SDL_Color color;
-} SceneFPS;
 
 /**
  * Represents a scene in the game.
  */
 typedef struct Scene
 {
-    SceneId id; // The ID of the scene. Used for querying.
+    int zindex;
 
     // Lifecycle of a scene:
     //
@@ -98,11 +64,7 @@ typedef struct Scene
     bool stops_propagation;
 
     // The scene's private data
-    union SceneData
-    {
-        SceneEmpty empty;
-        SceneFPS fps;
-    } data;
+    void *data;
 } Scene;
 
 /**
@@ -113,40 +75,46 @@ typedef enum
     TRANSITION_NONE,
     TRANSITION_FADE,
     TRANSITION_SLIDE_LEFT,
-    TRANSITION_PUSH_DOWN,
-    TRANSITION_PUSH_UP,
-    TRANSITION_PUSH_LEFT,
-    TRANSITION_PUSH_RIGHT,
+    TRANSITION_SLIDE_RIGHT,
+    TRANSITION_SLIDE_UP,
+    TRANSITION_SLIDE_DOWN,
+    TRANSITION_SPLIT_HORIZONTAL,
 } TransitionType;
+
+/**
+ * The animation curve meant to animate the transition with.
+ */
+typedef enum
+{
+    ANIMATION_CURVE_LINEAR,
+    ANIMATION_CURVE_EASE_IN,
+    ANIMATION_CURVE_EASE_OUT,
+    ANIMATION_CURVE_EASE_IN_OUT,
+} AnimationCurve;
 
 /**
  * Represents data for the scene transition.
  */
 typedef struct
 {
-    TransitionType type;
-    double duration;
-    double elapsed;
+    TransitionType type;  // The transition animation type.
+    AnimationCurve curve; // How to smooth out that animation.
+    bool entry;      // Whether it's an entrance animation or an exit animation.
+    double duration; // The duration of the animation. Must be greater than 0.
+    Scene *scene;    // The scene responsible for the animation.
+} SceneTransitionInfo;
 
-    Scene *from_scene;
-    Scene *to_scene;
-
-    bool active;
-    bool destroys_after; // Whether to destroy from_scene after transitioning.
-    bool stops_physics;  // Whether to stop physics during transitioning.
-    bool stops_signals; // Whether to stop passing signals during transitioning.
-
-    // Rendering primitives.
-    SDL_Texture *from_txt;
-    SDL_Texture *to_txt;
-} SceneTransition;
+/**
+ * Opaque handle for a scene transition.
+ */
+typedef struct SceneTransition SceneTransition;
 
 /**
  * Represents the manager of scene.
  */
 typedef struct
 {
-    Stack *scenes;
+    List *scenes;
     List *transitions;
     SDL_Texture *target;
 } SceneManager;
@@ -163,16 +131,20 @@ Scene *scene_init(void);
 void scene_destroy(Scene *scene);
 
 /**
+ * Destroys a scene transition.
+ */
+void scene_transition_destroy(SceneTransition *trans);
+
+/**
  * Ticks the scene manager at a variable rate.
  */
 void scene_mgr_tick(SceneManager *mgr, double dt);
 
 /**
- * Pushes a scene unconditionally to the stack. This returns false if the stack
- * is full. This is mainly used to setup starting scenes that do not need
- * transitions.
+ * Requests the scene manager to reorder its scenes based on the z-index. For
+ * use when you change the z-index at runtime.
  */
-bool scene_mgr_push_scene(SceneManager *mgr, Scene *scene);
+void scene_mgr_reorder(SceneManager *mgr);
 
 /**
  * Starts a new transition from a scene to another.
@@ -180,7 +152,7 @@ bool scene_mgr_push_scene(SceneManager *mgr, Scene *scene);
  * The caller should not allocate any transitions and let the scene manager
  * handle it.
  */
-void scene_mgr_start_transition(SceneManager *mgr, SceneTransition transition);
+void scene_mgr_start_transition(SceneManager *mgr, SceneTransitionInfo info);
 
 /**
  * Ticks the scene manager physically. Only at a rate of 16ms per tick.
@@ -197,3 +169,8 @@ void scene_mgr_on_signal(SceneManager *mgr, Signal *signal);
  * Renders the current scene manager.
  */
 void scene_mgr_draw(SceneManager *mgr);
+
+/**
+ * Destroys the inner of a scene manager.
+ */
+void scene_mgr_destroy(SceneManager mgr);

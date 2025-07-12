@@ -120,6 +120,45 @@ void list_clear(List *list)
     list_shrink(list);
 }
 
+void quick_sort(void **array, int start, int end,
+                int (*comparator)(void *, void *))
+{
+    if (start >= end - 1)
+        return;
+
+    // Partition.
+    void *pivot = array[start];
+    int i = start - 1, j = end;
+    while (true)
+    {
+        do
+        {
+            i++;
+        } while (comparator(array[i], pivot) < 0);
+        do
+        {
+            j--;
+        } while (comparator(array[j], pivot) > 0);
+
+        if (i >= j)
+            break;
+
+        void *tmp = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+    }
+
+    // Conquer
+    quick_sort(array, start, j, comparator);
+    quick_sort(array, j + 1, end, comparator);
+}
+
+void list_sort(List *list, int (*comparator)(void *, void *))
+{
+    // Ig we use quick sort?
+    quick_sort(list->items, 0, (int)list->length, comparator);
+}
+
 void list_destroy(List *list)
 {
     SDL_free(list->items);
