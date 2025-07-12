@@ -49,7 +49,6 @@ typedef struct
 typedef struct Scene
 {
     SceneId id; // The ID of the scene. Used for querying.
-    int zindex; // The order to render the scene in.
 
     // Lifecycle of a scene:
     //
@@ -114,6 +113,10 @@ typedef enum
     TRANSITION_NONE,
     TRANSITION_FADE,
     TRANSITION_SLIDE_LEFT,
+    TRANSITION_PUSH_DOWN,
+    TRANSITION_PUSH_UP,
+    TRANSITION_PUSH_LEFT,
+    TRANSITION_PUSH_RIGHT,
 } TransitionType;
 
 /**

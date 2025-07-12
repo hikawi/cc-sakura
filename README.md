@@ -4,14 +4,18 @@
 
 A self-designed, built from the ground up 2D platformer game, using C and SDL3
 
+![GitHub top language](https://img.shields.io/github/languages/top/hikawi/cc-sakura?logo=c&label=C)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/hikawi/cc-sakura/main)
+![GitHub Tag](https://img.shields.io/github/v/tag/hikawi/cc-sakura)
+
 </div>
 
 ## Table of Contents
 
 - [Sakura and the Clow Cards](#sakura-and-the-clow-cards)
   - [Overview](#overview)
-  - [🚀 Getting Started](#---getting-started)
-  - [🖊️ Coding Conventions](#----coding-conventions)
+  - [Getting Started](#getting-started)
+  - [Coding Conventions](#coding-conventions)
   - [Progress](#progress)
     - [Week 1](#week-1)
     - [Week 2](#week-2)
@@ -24,7 +28,7 @@ A passion project where Kinomoto Sakura (from Cardcaptor Sakura) traverses the 2
 - **Custom Collision System** – Supports AABB, OBB, Circle, and Capsule colliders, partially.
 - **Fixed & Variable Tick System** – Smooth physics (60 FPS) + flexible animations.
 
-## 🚀 Getting Started
+## Getting Started
 
 Prerequisites
 
@@ -52,7 +56,7 @@ cmake --build build --target run
 
 Or you can run it directly (via double-clicking the binary file or through the command line), on the binary file generated in `build/bin`.
 
-## 🖊️ Coding Conventions
+## Coding Conventions
 
 To put it simply:
 

@@ -12,6 +12,7 @@
 #include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/engine.h"
+#include "game/game_scenes.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -67,9 +68,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     }
     ENGINE_INIT_SUCCESS = true;
 
+    scene_setup();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
                 "Bootstrapped application successfully.");
-
     return SDL_APP_CONTINUE;
 }
 

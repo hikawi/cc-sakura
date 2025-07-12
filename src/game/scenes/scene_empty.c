@@ -13,7 +13,7 @@ void scene_empty_ondraw(Scene *scene, SDL_Renderer *renderer)
 
     // Draw the rectangle with the specified color and alpha
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &scene->data.empty.frect);
+    SDL_RenderClear(renderer);
 }
 
 Scene *scene_empty_init(SDL_Color color, SDL_FRect frect)

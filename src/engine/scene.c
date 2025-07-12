@@ -27,63 +27,15 @@ Scene *scene_init(void)
 
 void scene_destroy(Scene *scene)
 {
+    if (!scene)
+        return;
+
+    if (scene->ondestroy)
+        scene->ondestroy(scene);
+
     hash_map_destroy(scene->colliders);
     hash_map_destroy(scene->sprites);
     SDL_free(scene);
-}
-
-/**
- * Queries a scene status based on the scene manager.
- */
-int scene_query_status(SceneManager *mgr, Scene *scene)
-{
-    int ret = 0;
-
-    // Check all transitions.
-    for (int i = 0; i < (int)mgr->transitions->length; i++)
-    {
-        SceneTransition *trans = (SceneTransition *)mgr->transitions->items[i];
-        if (!trans->active ||
-            (trans->from_scene != scene && trans->to_scene != scene))
-            continue;
-
-        if (trans->stops_physics)
-            ret |= SCENE_BLOCK_PHYSTICS_TICKS;
-        if (trans->stops_signals)
-            ret |= SCENE_BLOCK_SIGNALS;
-    }
-
-    // Check all scenes above it.
-    bool checking = false;
-    for (int i = 0; i < mgr->scenes->length; i++)
-    {
-        Scene *other = mgr->scenes->items[i];
-        if (other == scene)
-        {
-            checking = true;
-            continue;
-        }
-
-        if (!checking)
-        {
-            continue;
-        }
-
-        if (other->stops_propagation)
-            ret |= SCENE_BLOCK_SIGNALS;
-        if (other->captures_focus)
-            ret |= SCENE_BLOCK_PHYSTICS_TICKS; // Animation can play but physics
-                                               // can't move.
-    }
-
-    // Check the scene itself.
-    if (!scene->accepting_signals)
-        ret |= SCENE_BLOCK_SIGNALS;
-    if (!scene->enabled)
-        ret |= SCENE_BLOCK_SIGNALS | SCENE_BLOCK_PHYSTICS_TICKS |
-               SCENE_BLOCK_TICKS;
-
-    return ret;
 }
 
 /**
@@ -136,7 +88,6 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
     }
 
     SDL_SetRenderTarget(win.renderer, target);
-    SDL_Log("Swapping render target back to %p", (void *)target);
 }
 
 /**
@@ -211,6 +162,114 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr,
 }
 
 /**
+ * Animates the pushing up transition. The after scene would push the before
+ * scene upwards.
+ */
+void scene_mgr_transition_render_push_up(SceneManager *mgr,
+                                         SceneTransition *trans,
+                                         double progress)
+{
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+    scene_mgr_transition_render(mgr, trans);
+
+    // Calculate the offset (up) needed to render from_scene.
+    SDL_FRect dstrect = {
+        .x = 0,
+        .y = 0,
+        .h = win.h,
+        .w = win.w,
+    };
+    dstrect.y -= (float)(win.h * progress);
+    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+
+    // Render the to_scene.
+    dstrect.y += dstrect.h;
+    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+}
+
+/**
+ * Animates the pushing down transition. The after scene would push the before
+ * scene downwards.
+ */
+void scene_mgr_transition_render_push_down(SceneManager *mgr,
+                                           SceneTransition *trans,
+                                           double progress)
+{
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+    scene_mgr_transition_render(mgr, trans);
+
+    // Calculate the offset needed to render from_scene.
+    SDL_FRect dstrect = {
+        .x = 0,
+        .y = 0,
+        .h = win.h,
+        .w = win.w,
+    };
+    dstrect.y += (float)(win.h * progress);
+    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+
+    // Render the to_scene.
+    dstrect.y -= dstrect.h;
+    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+}
+
+/**
+ * Animates the pushing left transition. The after scene would push the before
+ * scene left.
+ */
+void scene_mgr_transition_render_push_left(SceneManager *mgr,
+                                           SceneTransition *trans,
+                                           double progress)
+{
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+    scene_mgr_transition_render(mgr, trans);
+
+    // Calculate the offset needed to render from_scene.
+    SDL_FRect dstrect = {
+        .x = 0,
+        .y = 0,
+        .h = win.h,
+        .w = win.w,
+    };
+    dstrect.x -= (float)(win.w * progress);
+    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+
+    // Render the to_scene.
+    dstrect.x += dstrect.w;
+    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+}
+
+/**
+ * Animates the pushing right transition. The after scene would push the before
+ * scene right.
+ */
+void scene_mgr_transition_render_push_right(SceneManager *mgr,
+                                            SceneTransition *trans,
+                                            double progress)
+{
+    AppState *appstate = app_get();
+    WindowStatus win = appstate->window;
+    scene_mgr_transition_render(mgr, trans);
+
+    // Calculate the offset needed to render from_scene.
+    SDL_FRect dstrect = {
+        .x = 0,
+        .y = 0,
+        .h = win.h,
+        .w = win.w,
+    };
+    dstrect.x += (float)(win.w * progress);
+    SDL_RenderTexture(win.renderer, trans->from_txt, NULL, &dstrect);
+
+    // Render the to_scene.
+    dstrect.x -= dstrect.w;
+    SDL_RenderTexture(win.renderer, trans->to_txt, NULL, &dstrect);
+}
+
+/**
  * Applies a transition effect on the renderer.
  */
 void scene_mgr_handle_transition(SceneManager *mgr, SceneTransition *trans,
@@ -274,16 +333,22 @@ void scene_mgr_tick(SceneManager *mgr, double dt)
         scene_mgr_handle_transition(mgr, trans, dt);
     }
 
-    // The scene is a stack emplaced at back. Therefore running 1 -> length is a
-    // bottom to top approach.
-    for (int i = 0; i < mgr->scenes->length; i++)
+    // We want to let top scenes capture focus if needed. So we iterate from top
+    // to bottom.
+    bool focus_captured = false;
+    for (int i = mgr->scenes->length - 1; i >= 0; i--)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
-        if (scene && !(scene_query_status(mgr, scene) & SCENE_BLOCK_TICKS) &&
-            scene->ontick)
+        if (!scene)
+            continue;
+
+        // A scene only receives a tick if focus is not captured yet, and it is
+        // enabled.
+        if (scene->enabled && !focus_captured && scene->ontick)
         {
             scene->ontick(scene, dt);
         }
+        focus_captured = focus_captured || scene->captures_focus;
     }
 
     scene_mgr_purge_transitions(mgr);
@@ -293,14 +358,20 @@ void scene_mgr_phys_tick(SceneManager *mgr)
 {
     // The scene is a stack emplaced at back. Therefore running 1 -> length is a
     // bottom to top approach.
-    for (int i = 0; i < mgr->scenes->length; i++)
+    bool focus_captured = false;
+    for (int i = mgr->scenes->length - 1; i >= 0; i--)
     {
         Scene *scene = (Scene *)mgr->scenes->items[i];
-        int flags = scene_query_status(mgr, scene);
-        if (!(flags & SCENE_BLOCK_PHYSTICS_TICKS) && scene->onphystick)
+        if (!scene)
+            return;
+
+        // A scene gets a physical tick if focus is not captured and the scene
+        // is enabled.
+        if (scene->enabled && scene->onphystick && !focus_captured)
         {
             scene->onphystick(scene);
         }
+        focus_captured = focus_captured || scene->captures_focus;
     }
 }
 
@@ -387,6 +458,11 @@ void scene_mgr_draw(SceneManager *mgr)
     {
         Scene *scene = mgr->scenes->items[i];
 
+        // Reset the renderer before starting
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+        SDL_SetRenderTarget(renderer, mgr->target);
+        SDL_RenderClear(renderer);
+
         // If a scene is not enabled, we don't render them anyway.
         if (!scene || !scene->enabled)
             continue;
@@ -401,17 +477,10 @@ void scene_mgr_draw(SceneManager *mgr)
                 trans->duration == 0 ? 1 : trans->elapsed / trans->duration, 0,
                 1);
 
-            // Reset the renderer before starting
-            SDL_SetRenderTarget(renderer, mgr->target);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-            SDL_RenderClear(renderer);
-
             // Clear up transitioning targets also.
             SDL_SetRenderTarget(renderer, trans->from_txt);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
             SDL_RenderClear(renderer);
             SDL_SetRenderTarget(renderer, trans->to_txt);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
             SDL_RenderClear(renderer);
             SDL_SetRenderTarget(renderer, mgr->target);
 
@@ -428,6 +497,18 @@ void scene_mgr_draw(SceneManager *mgr)
             case TRANSITION_SLIDE_LEFT:
                 scene_mgr_transition_render_slide_left(mgr, trans, progress);
                 break;
+            case TRANSITION_PUSH_UP:
+                scene_mgr_transition_render_push_up(mgr, trans, progress);
+                break;
+            case TRANSITION_PUSH_DOWN:
+                scene_mgr_transition_render_push_down(mgr, trans, progress);
+                break;
+            case TRANSITION_PUSH_LEFT:
+                scene_mgr_transition_render_push_left(mgr, trans, progress);
+                break;
+            case TRANSITION_PUSH_RIGHT:
+                scene_mgr_transition_render_push_right(mgr, trans, progress);
+                break;
             }
 
             // Apply and clear for next frame.
@@ -440,10 +521,6 @@ void scene_mgr_draw(SceneManager *mgr)
         // Otherwise, we let it draw normally.
         if (scene->ondraw)
         {
-            SDL_SetRenderTarget(renderer, mgr->target);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-            SDL_RenderClear(renderer);
-
             scene->ondraw(scene, renderer);
 
             // Draw on the scene and reset.
@@ -455,5 +532,29 @@ void scene_mgr_draw(SceneManager *mgr)
 
 bool scene_mgr_push_scene(SceneManager *mgr, Scene *scene)
 {
-    return stack_push(mgr->scenes, scene);
+    if (stack_push(mgr->scenes, scene))
+    {
+        if (scene->oninit)
+            scene->oninit(scene);
+        if (scene->onstart)
+            scene->onstart(scene);
+        return true;
+    }
+
+    return false;
+}
+
+void scene_mgr_on_signal(SceneManager *mgr, Signal *signal)
+{
+    for (int i = 0; i < mgr->scenes->length; i++)
+    {
+        Scene *scene = (Scene *)mgr->scenes->items[i];
+        if (scene->accepting_signals && scene->onsignal)
+        {
+            scene->onsignal(scene, signal);
+        }
+
+        if (scene->stops_propagation)
+            break;
+    }
 }

@@ -12,7 +12,7 @@
 #include "engine/scene.h"
 
 #define APPLICATION_NAME "Sakura and the Clow Cards"
-#define APPLICATION_VERSION "0.1.0"
+#define APPLICATION_VERSION "0.2.0"
 #define APPLICATION_IDENTIFIER "dev.frilly.ccsakura"
 
 #define APPLICATION_ORIGINAL_WIDTH 1600

@@ -1,6 +1,8 @@
 #include "engine/engine.h"
+#include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
@@ -54,6 +56,19 @@ void engine_handle_event(AppState *app, SDL_Event *event)
     case SDL_EVENT_WINDOW_RESIZED:
         SDL_GetRenderOutputSize(app->window.renderer, &app->window.w,
                                 &app->window.h);
+        SDL_DestroyTexture(app->scene_mgr.target);
+        app->scene_mgr.target = SDL_CreateTexture(
+            app->window.renderer, SDL_PIXELFORMAT_RGBA8888,
+            SDL_TEXTUREACCESS_TARGET, app->window.w, app->window.h);
+
+        // Reapply render target.
+        if (SDL_GetRenderTarget(app->window.renderer) != NULL)
+            SDL_SetRenderTarget(app->window.renderer, app->scene_mgr.target);
+        else
+            SDL_SetRenderTarget(app->window.renderer, NULL);
+        SDL_SetTextureBlendMode(app->scene_mgr.target, SDL_BLENDMODE_BLEND);
+
+        SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Resized rendering target.");
         break;
     case SDL_EVENT_KEY_DOWN:
         app->input.keyboard[event->key.scancode] = true;
