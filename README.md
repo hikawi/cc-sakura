@@ -4,9 +4,9 @@
 
 A self-designed, built from the ground up 2D platformer game, using C and SDL3
 
-![GitHub top language](https://img.shields.io/github/languages/top/hikawi/cc-sakura?logo=c&label=C)
+![GitHub repo size](https://img.shields.io/github/repo-size/hikawi/cc-sakura)
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/hikawi/cc-sakura/main)
-![GitHub Tag](https://img.shields.io/github/v/tag/hikawi/cc-sakura)
+![](https://tokei.rs/b1/github/hikawi/cc-sakura)
 
 </div>
 
@@ -75,21 +75,21 @@ This is to show videos, or screenshots of what is being done as days passed.
 ### Week 1
 
 <details>
-    <summary>Day 3 (Sprite Rendering and Movement)</summary>
+    <summary>Day 3 - July 2, 2025 (Sprite Rendering and Movement)</summary>
 
 https://github.com/user-attachments/assets/1c4963c5-ea70-4501-96eb-e63d0a730627
 
 </details>
 
 <details>
-    <summary>Day 5 (Simple Collisions)</summary>
+    <summary>Day 5 - July 4, 2025 (Simple Collisions)</summary>
 
 https://github.com/user-attachments/assets/6912306c-b8cf-4e80-ab8c-f68f80f74a85
 
 </details>
 
 <details>
-    <summary>Day 7 (Gravity)</summary>
+    <summary>Day 7 - July 6, 2025 (Gravity)</summary>
 
 https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
 
@@ -98,15 +98,22 @@ https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
 ### Week 2
 
 <details>
-    <summary>Day 9 (Map Load and Autotile)</summary>
+    <summary>Day 10 - July 9, 2025 (Map Load and Autotile)</summary>
 
 <img width="1600" alt="Map loading from file" src="https://github.com/user-attachments/assets/7db2e674-697f-471b-ba8d-70075ed9586b" />
 
 </details>
 
 <details>
-    <summary>Day 11 (Scenes, Scene Manager & Scene Transitions)</summary>
+    <summary>Day 12 - July 11, 2025 (Scenes, Scene Manager & Scene Transitions)</summary>
 
 https://github.com/user-attachments/assets/402e0f31-4395-4e4f-8551-3bb3c04623b8
+
+</details>
+
+<details>
+    <summary>Day 14 - July 13, 2025 (Revamped scenes manager)</summary>
+
+https://github.com/user-attachments/assets/89be68a7-c340-4a58-99b9-2672e3a3a4fe
 
 </details>
