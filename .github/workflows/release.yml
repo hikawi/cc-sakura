@@ -14,7 +14,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout with Submodules
@@ -34,23 +34,6 @@ jobs:
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev nasm
 
-      - name: Install Dependencies (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install pkg-config
-
-      - name: Install Dependencies (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-          choco install -y ninja
-          refreshenv
-
-          git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.bat -disableMetrics
-          ./vcpkg/vcpkg.exe integrate install
-          ./vcpkg/vcpkg.exe install freetype harfbuzz
-
       - name: Build (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
@@ -64,7 +47,7 @@ jobs:
           ./scripts/build-ubuntu.sh
 
       - name: Build (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2025'
         run: |
           ./scripts/build-windows.ps1
         env:
@@ -100,5 +83,5 @@ jobs:
         with:
           files: |
             downloaded-artifacts/ccsakura-Linux/CCSakura-linux.tar.gz
-            downloaded-artifacts/ccsakura-macOS/CCSakura.zip
+            downloaded-artifacts/ccsakura-macOS/CCSakura-MacOS.zip
             downloaded-artifacts/ccsakura-Windows/CCSakura-Win.zip

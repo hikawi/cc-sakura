@@ -1,7 +1,7 @@
 Write-Host "Building CMake files"
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_CXX_FLAGS="-Wa,-mbig-obj" -DCMAKE_TOOLCHAIN_FILE="$Env:GITHUB_WORKSPACE\vcpkg\scripts\buildsystems\vcpkg.cmake"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="C:\Program Files\LLVM\bin\clang.exe"
 Write-Host "Building binary files"
-cmake --build build
+cmake --build build --config Release
 
 mkdir -p artifacts
 mkdir -p CCSakura-Win

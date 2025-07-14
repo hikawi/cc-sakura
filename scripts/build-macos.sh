@@ -21,5 +21,5 @@ echo "Install name tool"
 install_name_tool -add_rpath "@executable_path/../Frameworks" "artifacts/CCSakura.app/Contents/MacOS/CCSakura"
 
 echo "Archiving MacOS"
-zip -r ./artifacts/CCSakura.zip ./artifacts/CCSakura.app
+zip -r ./artifacts/CCSakura-MacOS.zip ./artifacts/CCSakura.app
 mv -v ./artifacts/CCSakura.app CCSakura.app

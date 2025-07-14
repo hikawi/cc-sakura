@@ -6,7 +6,7 @@ A self-designed, built from the ground up 2D platformer game, using C and SDL3
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/hikawi/cc-sakura)
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/hikawi/cc-sakura/main)
-![](https://tokei.rs/b1/github/hikawi/cc-sakura)
+![](https://tokei.rs/b1/github/hikawi//cc-sakura?category=code)
 
 </div>
 

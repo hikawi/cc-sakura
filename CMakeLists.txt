@@ -9,15 +9,15 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(PROJECT_VERSION "0.1.0")
+set(PROJECT_VERSION "0.2.0")
 
 # Output directories
-set(SDLTTF_VENDORED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Add SDL3 and related libraries
+set(SDLTTF_VENDORED ON)
 add_subdirectory(vendored/SDL      EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
@@ -33,7 +33,6 @@ if(APPLE)
 
     add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
 elseif(WIN32)
-    option(CMAKE_USE_WIN32_THREADS_INIT "using WIN32 threads" ON)
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
 else()
     add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
