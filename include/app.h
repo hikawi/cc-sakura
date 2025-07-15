@@ -9,10 +9,11 @@
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
+#include "engine/collision.h"
 #include "engine/scene.h"
 
 #define APPLICATION_NAME "Sakura and the Clow Cards"
-#define APPLICATION_VERSION "0.2.0"
+#define APPLICATION_VERSION "0.3.0"
 #define APPLICATION_IDENTIFIER "dev.frilly.ccsakura"
 
 #define APPLICATION_ORIGINAL_WIDTH 1600
@@ -48,6 +49,7 @@ typedef struct
 typedef struct
 {
     bool keyboard[SDL_SCANCODE_COUNT];
+    Collider mouse;
 } InputStatus;
 
 /**
@@ -69,6 +71,8 @@ typedef struct
     InputStatus input;      // The input status data for keyboard.
     WindowStatus window;    // The SDL's window.
     SceneManager scene_mgr; // Scene manager.
+
+    bool running;
 } AppState;
 
 /**
@@ -81,6 +85,12 @@ AppState *app_init(void);
  * Retrieves the app state, cached globally.
  */
 AppState *app_get(void);
+
+/**
+ * Panics and logs a last error message to the application before it quits on
+ * the next frame.
+ */
+void app_panic(const char *errmsg);
 
 /**
  * Destroys the app state. This also frees up the AppState pointer itself.

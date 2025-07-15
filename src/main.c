@@ -78,6 +78,11 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 {
     AppState *state = (AppState *)appstate;
 
+    if (!state->running)
+    {
+        return SDL_APP_FAILURE;
+    }
+
     engine_iterate(state);
     engine_render(state);
 

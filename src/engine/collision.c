@@ -383,13 +383,8 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
     Collision info = {.is_colliding = false, .depth = 0};
 
     // Step 1. Find the closest point on the capsule to the AABB center.
-    // Before doing that we would like to find the true segment (the one at the
-    // shaft) not the ones that cover the entire capsule.
-    Vector2 segment = vector2_norm(vector2_sub(c2.p1, c2.p2));
-    Vector2 new_p1 = vector2_add(c2.p1, vector2_scale(segment, -c2.r));
-    Vector2 new_p2 = vector2_add(c2.p2, vector2_scale(segment, c2.r));
-    Vector2 p = closest_point_on_segment(new_p1, new_p2,
-                                         (Vector2){.x = c1.x, .y = c1.y});
+    Vector2 p =
+        closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
 
     // Step 2. Find the closest point on the AABB that is the closest to
     // that representative point.
@@ -496,10 +491,9 @@ Collision collision_obb_capsule(OBBCollider c1, CapsuleCollider c2)
 Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
 {
     Collision info = {.is_colliding = false, .depth = 0};
-    Vector2 in = vector2_sub(c2.p1, c2.p2);
 
     // Special case: degenerate capsule
-    if (vector2_len(in) <= c2.r * 2)
+    if (vector2_eq(c2.p1, c2.p2))
     {
         CircleCollider c3 = {
             .x = (c2.p1.x + c2.p2.x) / 2,
@@ -511,8 +505,6 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
 
     // Step 1. Find the closest point on the capsule closest to the circle's
     // center.
-    c2.p1 = vector2_add(c2.p1, vector2_scale(in, -c2.r));
-    c2.p2 = vector2_add(c2.p2, vector2_scale(in, c2.r));
     Vector2 p =
         closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
 
@@ -528,6 +520,7 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
     {
         // If length is close enough to 0, the center of the circle is on
         // the capsule's segment.
+        Vector2 in = vector2_sub(c2.p1, c2.p2);
         info.normal = vector2_norm(vector2_rot(in, -M_PI_2));
         info.depth = c1.r + c2.r;
     }
@@ -695,4 +688,134 @@ Collision collision_check(Collider *c1, Collider *c2)
                  "unimplemented.",
                  c1->name, c2->name);
     return info;
+}
+
+Collider collision_convert_to_aabb(Collider *collider)
+{
+    Collider val;
+    val.collider_type = COLLIDER_TYPE_AABB;
+    val.collision_type = COLLISION_GHOST;
+    val.name = "tmp_aabb";
+    val.aabb = (AABBCollider){
+        .h = 0,
+        .w = 0,
+        .x = 0,
+        .y = 0,
+    };
+
+    if (!collider)
+    {
+        return val;
+    }
+
+    val.collision_type = collider->collision_type;
+    switch (collider->collider_type)
+    {
+    case COLLIDER_TYPE_AABB:
+        val.aabb = collider->aabb;
+        break;
+    case COLLIDER_TYPE_CIRCLE:
+        val.aabb.h = collider->circle.r * 2;
+        val.aabb.w = collider->circle.r * 2;
+        val.aabb.x = collider->circle.x;
+        val.aabb.y = collider->circle.y;
+        break;
+    case COLLIDER_TYPE_OBB:
+    {
+        // The algorithm to convert an OBB to an AABB is that:
+        // - Write the coords in the OBB's coord space.
+        // - Transform it to the world space.
+        // - Take the minimum and maximum of all values.
+
+        Vector2 points[4];
+
+        points[0] =
+            (Vector2){.x = -collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[1] =
+            (Vector2){.x = collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[2] =
+            (Vector2){.x = collider->obb.w / 2, .y = collider->obb.h / 2};
+        points[3] =
+            (Vector2){.x = -collider->obb.w / 2, .y = collider->obb.h / 2};
+        Vector2 center = {.x = collider->obb.x, .y = collider->obb.y};
+
+        // Rotation values
+        double rot_sin = SDL_sin(collider->obb.angle);
+        double rot_cos = SDL_cos(collider->obb.angle);
+
+        for (int i = 0; i < 4; i++)
+        {
+            points[i] = vector2_rot_sincos(points[i], rot_sin, rot_cos);
+            points[i] = vector2_add(points[i], center);
+        }
+
+        // Retrieve max and min.
+        Vector2 min = {.x = points[0].x, .y = points[0].y};
+        Vector2 max = {.x = points[0].x, .y = points[0].y};
+        for (int i = 0; i < 4; i++)
+        {
+            min.x = SDL_min(min.x, points[i].x);
+            min.y = SDL_min(min.y, points[i].y);
+            max.x = SDL_max(max.x, points[i].x);
+            max.y = SDL_max(max.y, points[i].y);
+        }
+
+        val.aabb.w = max.x - min.x;
+        val.aabb.h = max.y - min.y;
+        val.aabb.x = (min.x + max.x) / 2;
+        val.aabb.y = (min.y + max.y) / 2;
+    }
+    break;
+    case COLLIDER_TYPE_CAPSULE:
+    {
+        CapsuleCollider cap;
+
+        // I have no clue how this works.
+
+        Vector2 min;
+        min.x = SDL_min(cap.p1.x - cap.r, cap.p2.x - cap.r);
+        min.y = SDL_min(cap.p1.y - cap.r, cap.p2.y - cap.r);
+
+        Vector2 max;
+        max.x = SDL_max(cap.p1.x + cap.r, cap.p2.x + cap.r);
+        max.y = SDL_max(cap.p1.y + cap.r, cap.p2.y + cap.r);
+
+        val.aabb.x = (min.x + max.x) / 2;
+        val.aabb.y = (min.y + max.y) / 2;
+        val.aabb.w = max.x - min.x;
+        val.aabb.h = max.y - min.y;
+    }
+    break;
+    }
+
+    return val;
+}
+
+bool collision_is_fully_enclosed(Collider *outer, Collider *inner)
+{
+    if (!outer || !inner || outer->collider_type != COLLIDER_TYPE_AABB ||
+        inner->collider_type != COLLIDER_TYPE_AABB)
+    {
+        return false;
+    }
+
+    Vector2 minout = {
+        .x = outer->aabb.x - outer->aabb.w / 2,
+        .y = outer->aabb.y - outer->aabb.h / 2,
+    };
+    Vector2 maxout = {
+        .x = outer->aabb.x + outer->aabb.w / 2,
+        .y = outer->aabb.y + outer->aabb.h / 2,
+    };
+    Vector2 minin = {
+        .x = inner->aabb.x - inner->aabb.w / 2,
+        .y = inner->aabb.y - inner->aabb.h / 2,
+    };
+    Vector2 maxin = {
+        .x = inner->aabb.x + inner->aabb.w / 2,
+        .y = inner->aabb.y + inner->aabb.h / 2,
+    };
+
+    return minin.x >= minout.x && maxin.x <= maxout.x && minin.y >= minout.y &&
+           maxin.y <= maxout.y;
 }

@@ -4,14 +4,19 @@
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_messagebox.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
+#include "engine/collision.h"
 #include "engine/scene.h"
 #include "misc/list.h"
+#include <stdlib.h>
 #include <string.h>
+
+#define APP_MOUSE_DIMENSION 5
 
 static AppState *appstate = NULL;
 
@@ -28,6 +33,17 @@ AppState *app_init(void)
 
     // Memset keyboard state to all 0, since it's only bools.
     SDL_memset(&state->input, 0, sizeof(state->input));
+
+    // Setup mouse.
+    state->input.mouse.collider_type = COLLIDER_TYPE_AABB;
+    state->input.mouse.collision_type = COLLISION_GHOST;
+    state->input.mouse.name = "mouse";
+    state->input.mouse.aabb = (AABBCollider){
+        .x = 0,
+        .y = 0,
+        .w = APP_MOUSE_DIMENSION,
+        .h = APP_MOUSE_DIMENSION,
+    };
 
     // Create window and renderer.
     if (!SDL_CreateWindowAndRenderer(
@@ -64,6 +80,8 @@ AppState *app_init(void)
     state->scene_mgr.scenes = list_init();
     state->scene_mgr.transitions = list_init();
 
+    state->running = true;
+
     appstate = state;
     return state;
 }
@@ -72,6 +90,14 @@ AppState *app_get(void)
 {
     SDL_assert(appstate != NULL);
     return appstate;
+}
+
+void app_panic(const char *errmsg)
+{
+    AppState *state = app_get();
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, APPLICATION_NAME, errmsg,
+                             state->window.window);
+    state->running = false;
 }
 
 void app_destroy(AppState *state)

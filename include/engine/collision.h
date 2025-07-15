@@ -124,6 +124,17 @@ typedef struct
 SDL_Color collision_get_debug_color(CollisionType type);
 
 /**
+ * Converts a collider into an AABB collider for much faster checking.
+ */
+Collider collision_convert_to_aabb(Collider *collider);
+
+/**
+ * Checks if the outer collider fully encloses the inner collider. This only
+ * works with AABB colliders.
+ */
+bool collision_is_fully_enclosed(Collider *outer, Collider *inner);
+
+/**
  * Checks collisions of two colliders.
  *
  * This is important, a collision happens when one object tries to "go inside"
