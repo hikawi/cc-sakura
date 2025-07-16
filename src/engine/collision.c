@@ -819,3 +819,11 @@ bool collision_is_fully_enclosed(Collider *outer, Collider *inner)
     return minin.x >= minout.x && maxin.x <= maxout.x && minin.y >= minout.y &&
            maxin.y <= maxout.y;
 }
+
+Collision collision_partial_check(Collider *c1, Collider *c2)
+{
+    Collider new_c1 = collision_convert_to_aabb(c1);
+    Collider new_c2 = collision_convert_to_aabb(c2);
+
+    return collision_check(&new_c1, &new_c2);
+}

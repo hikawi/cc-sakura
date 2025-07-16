@@ -13,7 +13,7 @@ Write-Host "Viewing the directories of build\lib\"
 Get-ChildItem -Recurse ".\build\lib\"
 
 Write-Host "Copying assets"
-Copy-Item -Path ".\build\bin\*" -Destination ".\CCSakura-Win\" -Recurse -Force -Verbose
+Copy-Item -Path ".\build\bin\Release\*" -Destination ".\CCSakura-Win\" -Recurse -Force -Verbose
 Copy-Item -Path ".\assets" -Destination ".\CCSakura-Win\assets" -Recurse -Force -Verbose
 
 Write-Host "Copying libraries"

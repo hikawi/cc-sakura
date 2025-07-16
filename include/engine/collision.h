@@ -119,6 +119,15 @@ typedef struct
 } Collision;
 
 /**
+ * Holds data for a potential collision pair for broad-range checking.
+ */
+typedef struct
+{
+    Collider *a;
+    Collider *b;
+} PotentialCollisionPair;
+
+/**
  * Retrieves the color needed to debug a collision type.
  */
 SDL_Color collision_get_debug_color(CollisionType type);
@@ -148,3 +157,9 @@ bool collision_is_fully_enclosed(Collider *outer, Collider *inner);
  * to c2 at the length of "depth" would completely separate both objects.
  */
 Collision collision_check(Collider *c1, Collider *c2);
+
+/**
+ * Runs a partial collision check by approximating the closest AABB on both
+ * colliders and compare the AABBs instead.
+ */
+Collision collision_partial_check(Collider *c1, Collider *c2);

@@ -2,6 +2,8 @@
 //
 // Represents a Quadtree data structure to handle separating collisions.
 
+#pragma once
+
 #include "engine/collision.h"
 #include "misc/list.h"
 
@@ -44,7 +46,7 @@ bool quadtree_remove(QuadtreeNode *root, Collider *item);
  * Checks the quadtree for any items that may collide with the provided
  * collider.
  */
-List *quadtree_query(QuadtreeNode *root, Collider *collider);
+void quadtree_query(QuadtreeNode *root, Collider *collider, List *list);
 
 /**
  * Destroys a quadtree recursively.

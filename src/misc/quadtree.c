@@ -229,6 +229,43 @@ bool quadtree_remove(QuadtreeNode *root, Collider *item)
     return quadtree_remove_recur(root, NULL, item);
 }
 
+void quadtree_query(QuadtreeNode *root, Collider *collider, List *list)
+{
+    if (!root || !collider || !list)
+    {
+        return;
+    }
+
+    Collider node;
+    node.collider_type = COLLIDER_TYPE_AABB;
+    node.aabb = root->region;
+
+    Collider target = collision_convert_to_aabb(collider);
+
+    if (!collision_check(&node, &target).is_colliding)
+    {
+        // There is absolutely no chance anyone here collides.
+        return;
+    }
+
+    // Check all current colliders.
+    for (int i = 0; i < (int)root->colliders->length; i++)
+    {
+        Collider *potential = root->colliders->items[i];
+        if (potential != collider &&
+            collision_partial_check(&target, potential).is_colliding)
+        {
+            list_add(list, potential);
+        }
+    }
+
+    // Recurse
+    for (int i = 0; i < 4; i++)
+    {
+        quadtree_query(root->children[i], collider, list);
+    }
+}
+
 void quadtree_destroy(QuadtreeNode *root)
 {
     if (!root)

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "SDL3/SDL_render.h"
-#include "app.h"
 #include "engine/map.h"
 #include "engine/sprite.h"
 

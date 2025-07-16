@@ -8,6 +8,7 @@
 #include "engine/signal.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
+#include "misc/quadtree.h"
 
 /**
  * Represents a scene in the game.
@@ -15,6 +16,7 @@
 typedef struct Scene
 {
     int zindex;
+    QuadtreeNode *quadtree;
 
     // Lifecycle of a scene:
     //
