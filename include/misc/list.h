@@ -12,7 +12,7 @@
  */
 typedef struct
 {
-    void **items;
+    const void **items;
     Uint32 length;
     Uint32 capacity;
 } List;
@@ -25,43 +25,43 @@ List *list_init(void);
 /**
  * Adds an item to the list, expands if necessary.
  */
-void list_add(List *list, void *item);
+void list_add(List *list, const void *item);
 
 /**
  * Adds an item at a specified index. Expands if necessary.
  */
-void list_add_at(List *list, void *item, Uint32 k);
+void list_add_at(List *list, const void *item, const Uint32 k);
 
 /**
  * Removes an item from the list at the specified index. Shrinks if necessary.
  */
-void list_remove_at(List *list, Uint32 idx);
+void list_remove_at(List *list, const Uint32 idx);
 
 /**
  * Removes an item. Shrinks if necessary.
  */
-void list_remove(List *list, void *item);
+void list_remove(List *list, const void *item);
 
 /**
  * Retrieves an item at the specified index. NULL if out of bounds.
  */
-void *list_get(List *list, int index);
+const void *list_get(const List *list, const int index);
 
 /**
  * Finds an item. Returns -1 if not found.
  */
-int list_find(List *list, void *item);
+int list_find(const List *list, const void *item);
 
 /**
  * Does a linear search on if the list has the specified item.
  */
-bool list_has(List *list, void *item);
+bool list_has(const List *list, const void *item);
 
 /**
  * Joins items from the source list to the first list. This does not check for
  * duplicate items.
  */
-void list_join(List *list, List *src);
+void list_join(List *list, const List *src);
 
 /**
  * Clears all items in a list. Shrinks if necessary.
@@ -74,7 +74,8 @@ void list_clear(List *list);
  * Uses a comparator that returns a negative value if l < p, 0 if l = p and
  * positive value if l > p.
  */
-void list_sort(List *list, int (*comparator)(void *l, void *r));
+void list_sort(List *list,
+               int (*const comparator)(const void *l, const void *r));
 
 /**
  * Destroys a list and reclaims memory.

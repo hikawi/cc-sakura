@@ -23,7 +23,8 @@ void list_shrink(List *list)
         return;
 
     Uint32 new_capacity = list->capacity / 2;
-    void **new_items = SDL_realloc(list->items, sizeof(void *) * new_capacity);
+    const void **new_items =
+        SDL_realloc(list->items, sizeof(void *) * new_capacity);
     if (new_items)
     {
         list->items = new_items;
@@ -36,14 +37,14 @@ void list_shrink(List *list)
     }
 }
 
-void list_add(List *list, void *item)
+void list_add(List *list, const void *item)
 {
     if (list->length + 1 <= list->capacity)
         list_expand(list);
     list->items[list->length++] = item;
 }
 
-void list_add_at(List *list, void *item, Uint32 k)
+void list_add_at(List *list, const void *item, const Uint32 k)
 {
     if (k >= list->length)
         return;
@@ -57,14 +58,14 @@ void list_add_at(List *list, void *item, Uint32 k)
     list->length++;
 }
 
-void list_remove(List *list, void *item)
+void list_remove(List *list, const void *item)
 {
     int idx = list_find(list, item);
     if (idx >= 0)
         list_remove_at(list, (Uint32)idx);
 }
 
-void list_remove_at(List *list, Uint32 idx)
+void list_remove_at(List *list, const Uint32 idx)
 {
     if (idx >= list->length)
         return;
@@ -78,14 +79,14 @@ void list_remove_at(List *list, Uint32 idx)
     list_shrink(list);
 }
 
-void *list_get(List *list, int index)
+const void *list_get(const List *list, const int index)
 {
     if (index < 0 || index >= (int)list->length)
         return NULL;
     return list->items[index];
 }
 
-int list_find(List *list, void *item)
+int list_find(const List *list, const void *item)
 {
     for (Uint32 i = 0; i < list->length; i++)
     {
@@ -97,12 +98,12 @@ int list_find(List *list, void *item)
     return -1;
 }
 
-bool list_has(List *list, void *item)
+bool list_has(const List *list, const void *item)
 {
     return list_find(list, item) >= 0;
 }
 
-void list_join(List *list, List *src)
+void list_join(List *list, const List *src)
 {
     if (src == NULL || src->length == 0)
         return;
@@ -120,14 +121,14 @@ void list_clear(List *list)
     list_shrink(list);
 }
 
-void quick_sort(void **array, int start, int end,
-                int (*comparator)(void *, void *))
+void quick_sort(const void **array, int start, int end,
+                int (*comparator)(const void *, const void *))
 {
     if (start >= end - 1)
         return;
 
     // Partition.
-    void *pivot = array[start];
+    const void *pivot = array[start];
     int i = start - 1, j = end;
     while (true)
     {
@@ -143,7 +144,7 @@ void quick_sort(void **array, int start, int end,
         if (i >= j)
             break;
 
-        void *tmp = array[i];
+        const void *tmp = array[i];
         array[i] = array[j];
         array[j] = tmp;
     }
@@ -153,7 +154,7 @@ void quick_sort(void **array, int start, int end,
     quick_sort(array, j + 1, end, comparator);
 }
 
-void list_sort(List *list, int (*comparator)(void *, void *))
+void list_sort(List *list, int (*const comparator)(const void *, const void *))
 {
     // Ig we use quick sort?
     quick_sort(list->items, 0, (int)list->length, comparator);

@@ -14,7 +14,7 @@
  */
 typedef struct HashSetNode
 {
-    void *item;
+    const void *item;
     struct HashSetNode *next;
 } HashSetNode;
 
@@ -25,8 +25,8 @@ typedef struct
 {
     HashSetNode *buckets[HASH_SET_MAX_BUCKETS];
     int length;
-    bool (*compare)(void *a, void *b);
-    Uint32 (*hash)(void *item);
+    bool (*compare)(const void *a, const void *b);
+    Uint64 (*hash)(const void *item);
 } HashSet;
 
 /**
@@ -38,17 +38,23 @@ HashSet *hash_set_init(void);
  * Adds an item to a hash set. Returns true if it was added and false if it was
  * not added, maybe it already existed.
  */
-bool hash_set_add(HashSet *set, void *item);
+bool hash_set_add(HashSet *set, const void *item);
 
 /**
  * Removes an item from a hash set.
  */
-bool hash_set_remove(HashSet *set, void *item);
+bool hash_set_remove(HashSet *set, const void *item);
 
 /**
  * Checks if a hash set contains an item.
  */
-bool hash_set_has(HashSet *set, void *item);
+bool hash_set_has(const HashSet *set, const void *item);
+
+/**
+ * Iterates through the hash set and collects all elements into the provided
+ * pointer. If the pointer is null, it will be created for you.
+ */
+void hash_set_iterate(const HashSet *set, int *length, const void ***items);
 
 /**
  * Clears all elements from a hash set.

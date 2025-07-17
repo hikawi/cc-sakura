@@ -54,7 +54,7 @@ void quadtree_subdivide(QuadtreeNode *node)
     }
 }
 
-bool quadtree_add(QuadtreeNode *root, Collider *item)
+bool quadtree_add(QuadtreeNode *root, const Collider *item)
 {
     if (!root || !item)
     {
@@ -164,7 +164,7 @@ bool quadtree_add(QuadtreeNode *root, Collider *item)
  * Recursively looks for an item and delete it from a quadtree.
  */
 bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent,
-                           Collider *item)
+                           const Collider *item)
 {
     if (!cur)
     {
@@ -224,12 +224,13 @@ bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent,
     return false;
 }
 
-bool quadtree_remove(QuadtreeNode *root, Collider *item)
+bool quadtree_remove(QuadtreeNode *root, const Collider *item)
 {
     return quadtree_remove_recur(root, NULL, item);
 }
 
-void quadtree_query(QuadtreeNode *root, Collider *collider, List *list)
+void quadtree_query(const QuadtreeNode *root, const Collider *collider,
+                    List *list)
 {
     if (!root || !collider || !list)
     {
@@ -251,7 +252,7 @@ void quadtree_query(QuadtreeNode *root, Collider *collider, List *list)
     // Check all current colliders.
     for (int i = 0; i < (int)root->colliders->length; i++)
     {
-        Collider *potential = root->colliders->items[i];
+        const Collider *potential = root->colliders->items[i];
         if (potential != collider &&
             collision_partial_check(&target, potential).is_colliding)
         {

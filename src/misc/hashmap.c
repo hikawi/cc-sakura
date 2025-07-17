@@ -129,7 +129,7 @@ void hash_map_iterate(HashMap *map, Uint32 *keys, void **values)
     Uint32 idx = 0;
     for (int i = 0; i < HASH_MAP_MAX_BUCKETS; i++)
     {
-        HashMapNode *node = map->nodes[idx];
+        HashMapNode *node = map->nodes[i];
         while (node)
         {
             keys[idx] = node->key;

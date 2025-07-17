@@ -8,7 +8,7 @@ HashSet *hash_set_init(void)
     return set;
 }
 
-bool hash_set_add(HashSet *set, void *item)
+bool hash_set_add(HashSet *set, const void *item)
 {
     if (!set || !item)
     {
@@ -58,7 +58,7 @@ bool hash_set_add(HashSet *set, void *item)
     return true;
 }
 
-bool hash_set_remove(HashSet *set, void *item)
+bool hash_set_remove(HashSet *set, const void *item)
 {
     if (!set || !item)
     {
@@ -104,7 +104,7 @@ bool hash_set_remove(HashSet *set, void *item)
     return false;
 }
 
-bool hash_set_has(HashSet *set, void *item)
+bool hash_set_has(const HashSet *set, const void *item)
 {
     if (!set || !item)
     {
@@ -156,6 +156,23 @@ void hash_set_clear(HashSet *set)
     }
 
     set->length = 0;
+}
+
+void hash_set_iterate(const HashSet *set, int *length, const void ***items)
+{
+    *items = SDL_calloc((size_t)set->length, sizeof(void *));
+    *length = set->length;
+
+    int len = 0;
+    for (int i = 0; i < HASH_SET_MAX_BUCKETS; i++)
+    {
+        HashSetNode *cur = set->buckets[i];
+        while (cur)
+        {
+            (*items)[len++] = cur->item;
+            cur = cur->next;
+        }
+    }
 }
 
 void hash_set_destroy(HashSet *set)

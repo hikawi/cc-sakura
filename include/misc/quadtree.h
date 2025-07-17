@@ -32,7 +32,7 @@ QuadtreeNode *quadtree_init(void);
  * Returns true if it was added successfully, false if it can't add or can't
  * allocate memory for the collider.
  */
-bool quadtree_add(QuadtreeNode *root, Collider *item);
+bool quadtree_add(QuadtreeNode *root, const Collider *item);
 
 /**
  * Removes a node from a quadtree.
@@ -40,13 +40,14 @@ bool quadtree_add(QuadtreeNode *root, Collider *item);
  * Returns true if it was removed, false if it failed to remove, error merging
  * nodes, etc.
  */
-bool quadtree_remove(QuadtreeNode *root, Collider *item);
+bool quadtree_remove(QuadtreeNode *root, const Collider *item);
 
 /**
  * Checks the quadtree for any items that may collide with the provided
  * collider.
  */
-void quadtree_query(QuadtreeNode *root, Collider *collider, List *list);
+void quadtree_query(const QuadtreeNode *root, const Collider *collider,
+                    List *list);
 
 /**
  * Destroys a quadtree recursively.
