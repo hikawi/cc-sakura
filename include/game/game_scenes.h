@@ -12,12 +12,7 @@
  */
 void scene_setup(void);
 
-/**
- * Initializes an empty scene with the render draw color.
- */
 Scene *scene_empty_init(SDL_Color color);
-
-/**
- * Initializes the FPS scene.
- */
 Scene *scene_fps_init(SDL_Color color);
+
+Scene *scene_000_main(void);

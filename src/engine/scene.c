@@ -27,11 +27,13 @@ Scene *scene_init(void)
 {
     Scene *scene = SDL_calloc(1, sizeof(Scene));
     scene->zindex = 0;
+    scene->quadtree = NULL;
     scene->data = NULL;
     scene->enabled = true;
     scene->accepting_signals = true;
     scene->captures_focus = false;
     scene->stops_propagation = false;
+    scene->moved_colliders = list_init();
     scene->colliders = hash_map_init();
     scene->sprites = hash_map_init();
     return scene;
@@ -44,6 +46,8 @@ void scene_destroy(Scene *scene)
 
     if (scene->ondestroy)
         scene->ondestroy(scene);
+    if (scene->quadtree)
+        quadtree_destroy(scene->quadtree);
 
     hash_map_destroy(scene->colliders);
     hash_map_destroy(scene->sprites);
@@ -454,7 +458,7 @@ SceneTransition *scene_get_active_transition(SceneManager *mgr, Scene *scene)
     return NULL;
 }
 
-int scene_comparator(void *a, void *b)
+int scene_comparator(const void *a, const void *b)
 {
     Scene *l = (Scene *)a;
     Scene *r = (Scene *)b;
@@ -475,7 +479,7 @@ void scene_mgr_draw(SceneManager *mgr)
     // them. We assume it's in correct scenes.
     for (int i = 0; i < (int)mgr->scenes->length; i++)
     {
-        Scene *scene = mgr->scenes->items[i];
+        Scene *scene = (Scene *)mgr->scenes->items[i];
 
         // If a scene is not enabled, we don't render them anyway.
         if (!scene || !scene->enabled)
@@ -560,7 +564,7 @@ void scene_mgr_destroy(SceneManager mgr)
     {
         for (int i = 0; i < (int)mgr.scenes->length; i++)
         {
-            scene_destroy(mgr.scenes->items[i]);
+            scene_destroy((void *)mgr.scenes->items[i]);
         }
         list_destroy(mgr.scenes);
     }
@@ -574,7 +578,7 @@ void scene_mgr_destroy(SceneManager mgr)
     {
         for (int i = 0; i < (int)mgr.transitions->length; i++)
         {
-            scene_transition_destroy(mgr.transitions->items[i]);
+            scene_transition_destroy((void *)mgr.transitions->items[i]);
         }
         list_destroy(mgr.transitions);
     }

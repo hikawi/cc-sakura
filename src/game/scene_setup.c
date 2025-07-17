@@ -28,35 +28,27 @@ void scene_setup(void)
         .a = 255,
     };
     Scene *black_scr = scene_empty_init(black);
+    black_scr->zindex = 1;
 
-    // The FPS scene.
-    Scene *fps =
-        scene_fps_init((SDL_Color){.r = 50, .g = 50, .b = 200, .a = 255});
-    Scene *fps2 =
-        scene_fps_init((SDL_Color){.r = 50, .g = 200, .b = 50, .a = 255});
-    fps2->zindex = 1000;
-
+    // Force the black screen in.
     SceneTransitionInfo info = {
         .scene = black_scr,
         .entry = true,
-        .type = TRANSITION_SPLIT_HORIZONTAL,
+        .type = TRANSITION_NONE,
         .duration = 2,
     };
     scene_mgr_start_transition(&app->scene_mgr, info);
 
-    info.scene = fps;
-    info.type = TRANSITION_SLIDE_LEFT;
-    info.duration = 2;
+    // Force the main screen in.
+    Scene *main_000_sc = scene_000_main();
+    info.scene = main_000_sc;
+    info.entry = true;
+    info.type = TRANSITION_NONE;
     scene_mgr_start_transition(&app->scene_mgr, info);
 
-    info.scene = fps2;
-    info.type = TRANSITION_SLIDE_RIGHT;
-    info.duration = 4;
+    // Animate the black screen out.
+    info.entry = false;
+    info.type = TRANSITION_SPLIT_HORIZONTAL;
+    info.scene = black_scr;
     scene_mgr_start_transition(&app->scene_mgr, info);
-
-    // info.scene = black_scr;
-    // info.entry = false;
-    // info.type = TRANSITION_SPLIT_HORIZONTAL;
-    // info.duration = 2;
-    // scene_mgr_start_transition(&app->scene_mgr, info);
 }

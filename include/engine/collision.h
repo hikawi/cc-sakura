@@ -98,6 +98,7 @@ typedef struct
     ColliderType collider_type;
     CollisionType collision_type;
     const char *name;
+    bool dirty;
     union
     {
         CapsuleCollider capsule;
@@ -123,9 +124,9 @@ typedef struct
  */
 typedef struct
 {
-    Collider *a;
-    Collider *b;
-} PotentialCollisionPair;
+    const Collider *a;
+    const Collider *b;
+} CollisionPair;
 
 /**
  * Retrieves the color needed to debug a collision type.
@@ -135,13 +136,13 @@ SDL_Color collision_get_debug_color(CollisionType type);
 /**
  * Converts a collider into an AABB collider for much faster checking.
  */
-Collider collision_convert_to_aabb(Collider *collider);
+Collider collision_convert_to_aabb(const Collider *collider);
 
 /**
  * Checks if the outer collider fully encloses the inner collider. This only
  * works with AABB colliders.
  */
-bool collision_is_fully_enclosed(Collider *outer, Collider *inner);
+bool collision_is_fully_enclosed(const Collider *outer, const Collider *inner);
 
 /**
  * Checks collisions of two colliders.
@@ -156,10 +157,20 @@ bool collision_is_fully_enclosed(Collider *outer, Collider *inner);
  * OUTWARDS from the surface that is being collided (c1). Applying this vector
  * to c2 at the length of "depth" would completely separate both objects.
  */
-Collision collision_check(Collider *c1, Collider *c2);
+Collision collision_check(const Collider *c1, const Collider *c2);
 
 /**
  * Runs a partial collision check by approximating the closest AABB on both
  * colliders and compare the AABBs instead.
  */
-Collision collision_partial_check(Collider *c1, Collider *c2);
+Collision collision_partial_check(const Collider *c1, const Collider *c2);
+
+/**
+ * Hashes a collision pair.
+ */
+Uint64 collision_pair_hash(const void *pair);
+
+/**
+ * Compares two collision pairs.
+ */
+bool collision_pair_eq(const void *a, const void *b);

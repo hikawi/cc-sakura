@@ -14,6 +14,11 @@
 bool engine_init(AppState *app);
 
 /**
+ * Pushes a signal to the engine to be handled on the next frame.
+ */
+void engine_push_signal(Signal *signal);
+
+/**
  * Parses the event the application caught.
  */
 void engine_handle_event(AppState *app, SDL_Event *event);

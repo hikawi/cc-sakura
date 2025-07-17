@@ -4,6 +4,7 @@
 #include "misc/mathex.h"
 #include "misc/vector.h"
 #include <math.h>
+#include <stdint.h>
 
 /**
  * GPT-generated for different colors based on collision types.
@@ -603,7 +604,7 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
 //   return info;
 // }
 
-Collision collision_check(Collider *c1, Collider *c2)
+Collision collision_check(const Collider *c1, const Collider *c2)
 {
     // NOTE:
     // c1 is the COLLIDED OBJECT.
@@ -690,7 +691,7 @@ Collision collision_check(Collider *c1, Collider *c2)
     return info;
 }
 
-Collider collision_convert_to_aabb(Collider *collider)
+Collider collision_convert_to_aabb(const Collider *collider)
 {
     Collider val;
     val.collider_type = COLLIDER_TYPE_AABB;
@@ -791,7 +792,7 @@ Collider collision_convert_to_aabb(Collider *collider)
     return val;
 }
 
-bool collision_is_fully_enclosed(Collider *outer, Collider *inner)
+bool collision_is_fully_enclosed(const Collider *outer, const Collider *inner)
 {
     if (!outer || !inner || outer->collider_type != COLLIDER_TYPE_AABB ||
         inner->collider_type != COLLIDER_TYPE_AABB)
@@ -820,10 +821,35 @@ bool collision_is_fully_enclosed(Collider *outer, Collider *inner)
            maxin.y <= maxout.y;
 }
 
-Collision collision_partial_check(Collider *c1, Collider *c2)
+Collision collision_partial_check(const Collider *c1, const Collider *c2)
 {
     Collider new_c1 = collision_convert_to_aabb(c1);
     Collider new_c2 = collision_convert_to_aabb(c2);
 
     return collision_check(&new_c1, &new_c2);
+}
+
+Uint64 collision_pair_hash(const void *pair)
+{
+    CollisionPair *p = (CollisionPair *)pair;
+
+    uintptr_t a = (uintptr_t)p->a;
+    uintptr_t b = (uintptr_t)p->b;
+    if (b > a)
+    {
+        uintptr_t tmp = b;
+        b = a;
+        a = tmp;
+    }
+
+    return a * 31 ^ b;
+}
+
+bool collision_pair_eq(const void *a, const void *b)
+{
+    CollisionPair *pa = (CollisionPair *)a;
+    CollisionPair *pb = (CollisionPair *)b;
+
+    return pa == pb || (pa->a == pb->a && pa->b == pb->b) ||
+           (pa->a == pb->b && pa->b == pb->a);
 }

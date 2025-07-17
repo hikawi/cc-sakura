@@ -41,6 +41,7 @@ typedef struct Scene
     // scenes.
     HashMap *colliders;
     HashMap *sprites;
+    List *moved_colliders;
 
     // Scene's flags.
     //
