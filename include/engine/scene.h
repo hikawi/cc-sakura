@@ -43,27 +43,25 @@ typedef struct Scene
     HashMap *sprites;
     List *moved_colliders;
 
-    // Scene's flags.
-    //
     // enabled
     // -- If false, tick, draw, phystick won't get called.
     // -- If true, it's a normal working scene.
-    //
+    bool enabled;
+
     // accepting_signals
     // -- If false, onsignal won't get called.
     // -- If true, onsignal is passed the signal caught.
-    //
+    bool accepting_signals;
+
     // captures_focus
     // -- If false, this does nothing.
     // -- If true, scenes below this in the stack won't have tick and phystick
     // called. Esentially paused.
-    //
+    bool captures_focus;
+
     // stops_propagation
     // -- If false, this does nothing.
     // -- If true, all scenes below don't get signals passed to them.
-    bool enabled;
-    bool accepting_signals;
-    bool captures_focus;
     bool stops_propagation;
 
     // The scene's private data

@@ -27,6 +27,10 @@ typedef struct
     SDL_Texture *texture;
     SDL_FRect *srcrect;
     SDL_FRect *dstrect;
+
+    double rotation;
+    bool flip_hori;
+    bool flip_vert;
 } RenderingOptions;
 
 /**

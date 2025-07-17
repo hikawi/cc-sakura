@@ -274,7 +274,10 @@ void quadtree_destroy(QuadtreeNode *root)
         return;
     }
 
-    list_destroy(root->colliders);
+    if (root->colliders)
+    {
+        list_destroy(root->colliders);
+    }
     for (int i = 0; i < 4; i++)
     {
         if (root->children[i])

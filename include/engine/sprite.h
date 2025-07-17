@@ -52,6 +52,9 @@ typedef struct
     Uint32 frame_idx;   // The current frame index of the sprite.
     double frame_accum; // The accumulator for frames to decide when we should
                         // move on to next frame.
+
+    double scale;    // How the sprite will be scaled when render.
+    double rotation; // How the sprite will be rotated when render.
 } Sprite;
 
 /**

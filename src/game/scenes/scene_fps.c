@@ -8,7 +8,7 @@
 typedef struct
 {
     SDL_Color color;
-} SceneFPSData;
+} SceneFPS;
 
 void scene_fps_ondraw(Scene *scene, SDL_Renderer *renderer)
 {
@@ -17,7 +17,7 @@ void scene_fps_ondraw(Scene *scene, SDL_Renderer *renderer)
     AppState *appstate = app_get();
     WindowStatus win = appstate->window;
 
-    SceneFPSData *data = (SceneFPSData *)scene->data;
+    SceneFPS *data = (SceneFPS *)scene->data;
 
     char buf[10];
     SDL_snprintf(buf, 10, "%d FPS", appstate->frame_data.fps);
@@ -36,20 +36,14 @@ void scene_fps_ondraw(Scene *scene, SDL_Renderer *renderer)
     });
 }
 
-void scene_fps_ondestroy(Scene *scene)
-{
-    SDL_free(scene->data);
-}
-
-Scene *scene_fps_init(SDL_Color color)
+Scene *scene_fps(const SDL_Color color)
 {
     Scene *scene = scene_init();
 
     scene->zindex = 999;
     scene->ondraw = scene_fps_ondraw;
-    scene->ondestroy = scene_fps_ondestroy;
 
-    SceneFPSData *data = SDL_malloc(sizeof(SceneFPSData));
+    SceneFPS *data = SDL_malloc(sizeof(SceneFPS));
     data->color = color;
     scene->data = data;
 

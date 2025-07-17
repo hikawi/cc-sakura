@@ -7,31 +7,25 @@
 typedef struct
 {
     SDL_Color color;
-} SceneEmptyData;
+} SceneEmpty;
 
 void scene_empty_ondraw(Scene *scene, SDL_Renderer *renderer)
 {
-    SceneEmptyData *data = (SceneEmptyData *)scene->data;
-    SDL_Color color = data->color;
+    SceneEmpty *data = (SceneEmpty *)scene->data;
+    const SDL_Color color = data->color;
 
     // Draw the rectangle with the specified color and alpha
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderClear(renderer);
 }
 
-void scene_empty_ondestroy(Scene *scene)
-{
-    SDL_free(scene->data);
-}
-
-Scene *scene_empty_init(SDL_Color color)
+Scene *scene_empty(const SDL_Color color)
 {
     Scene *scene = scene_init();
 
     scene->ondraw = scene_empty_ondraw;
-    scene->ondestroy = scene_empty_ondestroy;
 
-    SceneEmptyData *data = SDL_malloc(sizeof(SceneEmptyData));
+    SceneEmpty *data = SDL_malloc(sizeof(SceneEmpty));
     data->color = color;
     scene->data = data;
 

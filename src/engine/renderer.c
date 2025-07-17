@@ -2,8 +2,11 @@
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_surface.h"
 #include "app.h"
 #include "engine/map.h"
+#include "misc/mathex.h"
+#include <string.h>
 
 void shift_position_to_origin(RenderingOriginType type, double *x, double *y,
                               double w, double h)
@@ -122,8 +125,27 @@ void render_aligned_texture(RenderingOptions options)
         .h = (float)h,
     };
 
-    SDL_RenderTexture(app_get()->window.renderer, options.texture,
-                      options.srcrect, &true_dstrect);
+    if (feq(options.rotation, 0) && !options.flip_hori && !options.flip_vert)
+    {
+        SDL_RenderTexture(app_get()->window.renderer, options.texture,
+                          options.srcrect, &true_dstrect);
+    }
+    else
+    {
+        SDL_FlipMode flags = 0;
+        if (options.flip_hori)
+        {
+            flags |= SDL_FLIP_HORIZONTAL;
+        }
+        if (options.flip_vert)
+        {
+            flags |= SDL_FLIP_VERTICAL;
+        }
+
+        SDL_RenderTextureRotated(app_get()->window.renderer, options.texture,
+                                 options.srcrect, &true_dstrect,
+                                 options.rotation, NULL, flags);
+    }
 }
 
 void render_sprite(Sprite *spr, Vector2 pos)
@@ -144,14 +166,17 @@ void render_sprite(Sprite *spr, Vector2 pos)
     srcrect = frame->frame;
     dstrect.x = (float)pos.x;
     dstrect.y = (float)pos.y;
-    dstrect.h = srcrect.h;
-    dstrect.w = srcrect.w;
+    dstrect.h = srcrect.h * (float)spr->scale;
+    dstrect.w = srcrect.w * (float)spr->scale;
 
     RenderingOptions opts = {
         .origin = RENDER_ORIGIN_MIDDLE_CENTER,
         .texture = spr->texture,
         .srcrect = &srcrect,
         .dstrect = &dstrect,
+        .flip_hori = false,
+        .flip_vert = false,
+        .rotation = spr->rotation,
     };
     render_aligned_texture(opts);
 }

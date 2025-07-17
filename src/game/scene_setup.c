@@ -1,11 +1,43 @@
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_mutex.h"
+#include "SDL3/SDL_thread.h"
+#include "SDL3/SDL_timer.h"
 #include "app.h"
 #include "engine/scene.h"
 #include "game/game_scenes.h"
+#include "misc/threading.h"
 
 // Only sets up the first time.
 static bool setup = false;
+
+int fake_thread_busy(void *lol)
+{
+    ThreadData *data = (ThreadData *)lol;
+
+    SDL_LockMutex(data->mutex);
+    SDL_Log("Starting thread");
+
+    SDL_LockMutex(data->started_mutex);
+    SDL_BroadcastCondition(data->started);
+    SDL_UnlockMutex(data->started_mutex);
+
+    for (int i = 0; i < 100; i++)
+    {
+        SDL_Delay(100);
+        SDL_Log("Logging from fake thread: %d", i);
+    }
+
+    // First we unlock the mutex. Now the loading scene should know that the
+    // mutex is now available.
+    SDL_UnlockMutex(data->mutex);
+
+    // The thread has the responsibility to clean up when done.
+    // But the mutex is destroyed by the scene_loading, so we don't do it here.
+    SDL_DestroyCondition(data->started);
+    SDL_DestroyMutex(data->started_mutex);
+    SDL_free(data);
+    return 0;
+}
 
 void scene_setup(void)
 {
@@ -19,36 +51,21 @@ void scene_setup(void)
 
     AppState *app = app_get();
 
-    // Here we want to setup a few scenes.
-    // Let's setup some scenes to move out of the way.
-    SDL_Color black = {
-        .r = 0,
-        .g = 0,
-        .b = 0,
-        .a = 255,
-    };
-    Scene *black_scr = scene_empty_init(black);
-    black_scr->zindex = 1;
+    // Test loading screen.
+    ThreadData td =
+        thread_background_init(fake_thread_busy, "fakethread", NULL);
 
-    // Force the black screen in.
+    SDL_DetachThread(td.thread);
+    SDL_LockMutex(td.started_mutex);
+    SDL_WaitCondition(td.started, td.started_mutex);
+    SDL_UnlockMutex(td.started_mutex);
+
     SceneTransitionInfo info = {
-        .scene = black_scr,
+        .scene = scene_loading(td.mutex),
         .entry = true,
         .type = TRANSITION_NONE,
         .duration = 2,
+        .curve = ANIMATION_CURVE_LINEAR,
     };
-    scene_mgr_start_transition(&app->scene_mgr, info);
-
-    // Force the main screen in.
-    Scene *main_000_sc = scene_000_main();
-    info.scene = main_000_sc;
-    info.entry = true;
-    info.type = TRANSITION_NONE;
-    scene_mgr_start_transition(&app->scene_mgr, info);
-
-    // Animate the black screen out.
-    info.entry = false;
-    info.type = TRANSITION_SPLIT_HORIZONTAL;
-    info.scene = black_scr;
     scene_mgr_start_transition(&app->scene_mgr, info);
 }

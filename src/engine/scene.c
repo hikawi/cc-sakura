@@ -4,13 +4,30 @@
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "app.h"
+#include "engine/sprite.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
 #include <string.h>
 
-#define SCENE_BLOCK_PHYSTICS_TICKS 1
-#define SCENE_BLOCK_TICKS 2
-#define SCENE_BLOCK_SIGNALS 4
+/**
+ * Calculate the progress based on the curve.
+ *
+ * Thanks https://easings.net.
+ */
+double animation_curve_calc(const AnimationCurve curve, const double progress)
+{
+    switch (curve)
+    {
+    case ANIMATION_CURVE_LINEAR:
+        return progress;
+    case ANIMATION_CURVE_EASE_IN:
+        return 1 - SDL_cos((progress * SDL_PI_D) / 2);
+    case ANIMATION_CURVE_EASE_OUT:
+        return SDL_sin((progress * SDL_PI_D) / 2);
+    case ANIMATION_CURVE_EASE_IN_OUT:
+        return -(SDL_cos(SDL_PI_D * progress) - 1) / 2;
+    }
+}
 
 /**
  * Define the scene transition here to hide it away from engine users (me).
@@ -45,12 +62,58 @@ void scene_destroy(Scene *scene)
         return;
 
     if (scene->ondestroy)
+    {
         scene->ondestroy(scene);
+    }
     if (scene->quadtree)
+    {
         quadtree_destroy(scene->quadtree);
+        scene->quadtree = NULL;
+    }
+    if (scene->data)
+    {
+        SDL_free(scene->data);
+        scene->data = NULL;
+    }
 
-    hash_map_destroy(scene->colliders);
-    hash_map_destroy(scene->sprites);
+    if (scene->colliders)
+    {
+        Uint32 *keys = SDL_malloc(sizeof(Uint32) * scene->colliders->size);
+        void **vals = SDL_malloc(sizeof(void *) * scene->colliders->size);
+        hash_map_iterate(scene->colliders, keys, vals);
+
+        for (int i = 0; i < (int)scene->colliders->size; i++)
+        {
+            SDL_free(vals[i]);
+        }
+        SDL_free(keys);
+        SDL_free(vals);
+        hash_map_destroy(scene->colliders);
+        scene->colliders = NULL;
+    }
+
+    if (scene->sprites)
+    {
+        Uint32 *keys = SDL_malloc(sizeof(Uint32) * scene->sprites->size);
+        void **vals = SDL_malloc(sizeof(void *) * scene->sprites->size);
+        hash_map_iterate(scene->sprites, keys, vals);
+
+        for (int i = 0; i < (int)scene->sprites->size; i++)
+        {
+            sprite_destroy(vals[i]);
+        }
+        SDL_free(keys);
+        SDL_free(vals);
+        hash_map_destroy(scene->sprites);
+        scene->sprites = NULL;
+    }
+
+    if (scene->moved_colliders)
+    {
+        list_destroy(scene->moved_colliders);
+        scene->moved_colliders = NULL;
+    }
+
     SDL_free(scene);
 }
 
@@ -500,6 +563,7 @@ void scene_mgr_draw(SceneManager *mgr)
                                   ? 1
                                   : trans->elapsed / trans->info.duration;
             progress = SDL_clamp(progress, 0, 1);
+            progress = animation_curve_calc(trans->info.curve, progress);
 
             // Clear up transitioning targets also.
             SDL_SetRenderTarget(renderer, trans->texture);

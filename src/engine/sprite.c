@@ -168,6 +168,9 @@ Sprite *sprite_init(const char *sprite)
         break;
     }
 
+    spr->rotation = 0;
+    spr->scale = 1;
+
     SDL_SetTextureScaleMode(spr->texture, SDL_SCALEMODE_PIXELART);
     SDL_CloseIO(io);
     return spr;

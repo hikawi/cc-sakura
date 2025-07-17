@@ -2,7 +2,6 @@
 //
 // This is to hold data for the main scenes of the main menu.
 
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "app.h"
@@ -183,6 +182,7 @@ void scene_000_ondestroy(Scene *s)
     SDL_free(hash_map_get(s->colliders, SCENE_000_BTN_LEFT));
     SDL_free(hash_map_get(s->colliders, SCENE_000_BTN_MID));
     SDL_free(hash_map_get(s->colliders, SCENE_000_BTN_RIGHT));
+    SDL_free(s->data);
 }
 
 Scene *scene_000_main(void)
