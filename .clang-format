@@ -2,6 +2,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 UseTab: Never
 ColumnLimit: 80
+BreakAdjacentStringLiterals: true
 
 # Braces
 BreakBeforeBraces: Allman

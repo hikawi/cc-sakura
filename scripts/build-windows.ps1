@@ -1,5 +1,5 @@
 Write-Host "Building CMake files"
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="C:\Program Files\LLVM\bin\clang.exe"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 Write-Host "Building binary files"
 cmake --build build --config Release
 
@@ -15,9 +15,3 @@ Get-ChildItem -Recurse ".\build\lib\"
 Write-Host "Copying assets"
 Copy-Item -Path ".\build\bin\Release\*" -Destination ".\CCSakura-Win\" -Recurse -Force -Verbose
 Copy-Item -Path ".\assets" -Destination ".\CCSakura-Win\assets" -Recurse -Force -Verbose
-
-Write-Host "Copying libraries"
-Copy-Item -Path ".\build\lib\*" -Destination ".\CCSakura-Win\" -Recurse -Force -Verbose
-
-Write-Host "Archiving"
-Compress-Archive -Path ".\CCSakura-Win\*" -DestinationPath ".\artifacts\CCSakura-Win.zip"

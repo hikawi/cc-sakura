@@ -10,6 +10,7 @@
 - Added option to render a sprite scaled and rotated.
 - Added a loading scene.
 - Added a simple threading helper functions file.
+- Added a logging to file mechanism.
 
 ### Removals
 

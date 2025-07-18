@@ -2,7 +2,6 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_error.h"
-#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_messagebox.h"
 #include "SDL3/SDL_pixels.h"
@@ -11,6 +10,7 @@
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
 #include "engine/collision.h"
+#include "engine/logger.h"
 #include "engine/scene.h"
 #include "misc/list.h"
 #include <stdlib.h>
@@ -23,6 +23,7 @@ static AppState *appstate = NULL;
 AppState *app_init(void)
 {
     AppState *state = SDL_malloc(sizeof(AppState));
+    appstate = state;
 
     // Setup frames data
     state->frame_data.frame_count = 0;
@@ -82,7 +83,15 @@ AppState *app_init(void)
 
     state->running = true;
 
-    appstate = state;
+    // Initialize logger.
+    if (!logger_init(state))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Couldn't initialize a logger file.");
+        app_destroy(appstate);
+        return NULL;
+    }
+
     return state;
 }
 
@@ -105,20 +114,10 @@ void app_destroy(AppState *state)
     if (!state)
         return;
 
+    logger_destroy(state);
     scene_mgr_destroy(state->scene_mgr);
     SDL_DestroyWindow(state->window.window);
     SDL_DestroyRenderer(state->window.renderer);
     SDL_free(state);
     appstate = NULL;
-}
-
-char *app_res_path(const char *subpath)
-{
-    char *path = SDL_calloc(1024, sizeof(char));
-
-    SDL_strlcat(path, SDL_GetBasePath(), 1024);
-    SDL_strlcat(path, "/", 1024);
-    SDL_strlcat(path, subpath, 1024);
-
-    return path;
 }

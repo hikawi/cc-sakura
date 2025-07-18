@@ -1,4 +1,5 @@
 #include "engine/map.h"
+#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
@@ -96,9 +97,9 @@ Map *map_init(const char *name)
 {
     SDL_Log("Attempting to load map %s", name);
 
-    char buf[256] = "assets/map/";
-    SDL_strlcat(buf, name, sizeof(buf));
-    SDL_strlcat(buf, ".map", sizeof(buf));
+    char buf[1024] = {0};
+    size_t buf_size = sizeof(buf);
+    SDL_snprintf(buf, buf_size, "%sassets/map/%s.map", SDL_GetBasePath(), name);
 
     SDL_IOStream *io = SDL_IOFromFile(buf, "rb");
     if (io == NULL)

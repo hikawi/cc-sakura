@@ -26,7 +26,3 @@ chmod +x CCSakura-linux/CCSakura.sh
 
 echo "Archiving package"
 tar -czvf CCSakura-linux.tar.gz CCSakura-linux/
-
-echo "Moving to artifacts for distribution"
-mkdir -p artifacts
-mv -v CCSakura-linux.tar.gz artifacts/CCSakura-linux.tar.gz

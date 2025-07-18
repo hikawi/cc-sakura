@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
@@ -14,7 +15,9 @@
 
 #define APPLICATION_NAME "Sakura and the Clow Cards"
 #define APPLICATION_VERSION "0.3.0"
-#define APPLICATION_IDENTIFIER "dev.frilly.ccsakura"
+#define APPLICATION_IDENTIFIER "dev.luny.ccsakura"
+#define APPLICATION_ORGANIZATION "Luny"
+#define APPLICATION_APP_NAME "Cardcaptor Sakura"
 
 #define APPLICATION_ORIGINAL_WIDTH 1600
 #define APPLICATION_ORIGINAL_HEIGHT 900
@@ -62,6 +65,11 @@ typedef struct
     int w, h;               // The window's height and width.
 } WindowStatus;
 
+typedef struct
+{
+    SDL_IOStream *logio;
+} Logger;
+
 /**
  * Represents a struct that holds the main information about the game.
  */
@@ -71,6 +79,7 @@ typedef struct
     InputStatus input;      // The input status data for keyboard.
     WindowStatus window;    // The SDL's window.
     SceneManager scene_mgr; // Scene manager.
+    Logger logger;          // The logger.
 
     bool running;
 } AppState;
@@ -97,11 +106,3 @@ void app_panic(const char *errmsg);
  * Accessing the state after destroying is an undefined behavior.
  */
 void app_destroy(AppState *app);
-
-/**
- * Computes the path needed to retrieve a certain resource. Mostly done as MacOS
- * app bundles have a weird ass layout.
- *
- * The pointer returned is handled by the user, and should be freed.
- */
-char *app_res_path(const char *subpath);

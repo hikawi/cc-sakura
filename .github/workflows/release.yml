@@ -56,10 +56,12 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ccsakura-${{ runner.os }}
+          name: CCSakura-${{ runner.os }}
           path: |
-            artifacts/*
-          retention-days: 7
+            ./CCSakura-Win/
+            ./CCSakura.app/
+            ./CCSakura-linux.tar.gz
+          retention-days: 30
 
   release:
     name: Create GitHub Release
@@ -71,17 +73,18 @@ jobs:
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: downloaded-artifacts
+          path: downloaded
+          pattern: "CCSakura-*"
+          merge-multiples: true
 
       - name: List Downloaded Artifacts
-        run: ls -R downloaded-artifacts
+        run: ls -R downloaded
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          body_path: CHANGELOG.md
           files: |
-            downloaded-artifacts/ccsakura-Linux/CCSakura-linux.tar.gz
-            downloaded-artifacts/ccsakura-macOS/CCSakura-MacOS.zip
-            downloaded-artifacts/ccsakura-Windows/CCSakura-Win.zip
+            downloaded/*

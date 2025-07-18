@@ -1,4 +1,5 @@
 #include "engine/sprite.h"
+#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_rect.h"
@@ -138,9 +139,9 @@ Sprite *sprite_init(const char *sprite)
 {
     SDL_Log("Attempting to load sprite %s", sprite);
 
-    char buf[256] = "assets/spr/";
-    SDL_strlcat(buf, sprite, sizeof(buf));
-    SDL_strlcat(buf, ".sprite", sizeof(buf));
+    char buf[1024] = {0};
+    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(),
+                 sprite);
 
     SDL_IOStream *io = SDL_IOFromFile(buf, "r");
     Sprite *spr = NULL;
