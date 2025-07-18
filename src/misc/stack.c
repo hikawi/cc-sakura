@@ -1,12 +1,13 @@
 #include "misc/stack.h"
+
 #include "SDL3/SDL_stdinc.h"
 
 Stack *stack_init(int capacity)
 {
-    Stack *stack = SDL_malloc(sizeof(Stack));
-    stack->items = SDL_calloc((Uint32)capacity, sizeof(void *));
+    Stack *stack    = SDL_malloc(sizeof(Stack));
+    stack->items    = SDL_calloc((Uint32)capacity, sizeof(void *));
     stack->capacity = capacity;
-    stack->length = 0;
+    stack->length   = 0;
     return stack;
 }
 

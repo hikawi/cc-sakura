@@ -1,11 +1,8 @@
+---
 BasedOnStyle: LLVM
 IndentWidth: 4
 UseTab: Never
-ColumnLimit: 80
-BreakAdjacentStringLiterals: true
-
-# Braces
-BreakBeforeBraces: Allman
+ColumnLimit: 120
 
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
@@ -15,20 +12,15 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 
 PointerAlignment: Right
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveMacros: AcrossEmptyLines
+ContinuationIndentWidth: 4
+BracedInitializerIndentWidth: 4
+Cpp11BracedListStyle: true
 
-# Always indent inside braces
-BraceWrapping:
-  AfterClass: true
-  AfterControlStatement: Always
-  AfterEnum: true
-  AfterFunction: true
-  AfterStruct: true
-  AfterUnion: true
-  BeforeCatch: true
-  BeforeElse: true
-  IndentBraces: false
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
-
+BreakBeforeBraces: Allman
 SpaceBeforeParens: ControlStatements
+IncludeBlocks: Regroup
+InsertNewlineAtEOF: true
+SortIncludes: CaseInsensitive
+---

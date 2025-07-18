@@ -1,11 +1,11 @@
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_mutex.h"
-#include "SDL3/SDL_thread.h"
-#include "SDL3/SDL_timer.h"
 #include "app.h"
 #include "engine/scene.h"
 #include "game/game_scenes.h"
 #include "misc/threading.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_mutex.h"
+#include "SDL3/SDL_thread.h"
+#include "SDL3/SDL_timer.h"
 
 // Only sets up the first time.
 static bool setup = false;
@@ -43,8 +43,7 @@ void scene_setup(void)
 {
     if (setup)
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                    "First scenes already set up. Ignoring...");
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "First scenes already set up. Ignoring...");
         return;
     }
     setup = true;
@@ -52,8 +51,7 @@ void scene_setup(void)
     AppState *app = app_get();
 
     // Test loading screen.
-    ThreadData td =
-        thread_background_init(fake_thread_busy, "fakethread", NULL);
+    ThreadData td = thread_background_init(fake_thread_busy, "fakethread", NULL);
 
     SDL_DetachThread(td.thread);
     SDL_LockMutex(td.started_mutex);
@@ -61,11 +59,11 @@ void scene_setup(void)
     SDL_UnlockMutex(td.started_mutex);
 
     SceneTransitionInfo info = {
-        .scene = scene_loading(td.mutex),
-        .entry = true,
-        .type = TRANSITION_NONE,
+        .scene    = scene_loading(td.mutex),
+        .entry    = true,
+        .type     = TRANSITION_NONE,
         .duration = 2,
-        .curve = ANIMATION_CURVE_LINEAR,
+        .curve    = ANIMATION_CURVE_LINEAR,
     };
     scene_mgr_start_transition(&app->scene_mgr, info);
 }

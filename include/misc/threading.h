@@ -23,5 +23,4 @@ typedef struct
  * should be casted to (ThreadData *). The thread has the responsibility to
  * notify conditions properly, and free up the data after use.
  */
-ThreadData thread_background_init(SDL_ThreadFunction fn, const char *name,
-                                  void *data);
+ThreadData thread_background_init(SDL_ThreadFunction fn, const char *name, void *data);

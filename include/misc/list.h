@@ -74,8 +74,7 @@ void list_clear(List *list);
  * Uses a comparator that returns a negative value if l < p, 0 if l = p and
  * positive value if l > p.
  */
-void list_sort(List *list,
-               int (*const comparator)(const void *l, const void *r));
+void list_sort(List *list, int (*const comparator)(const void *l, const void *r));
 
 /**
  * Destroys a list and reclaims memory.

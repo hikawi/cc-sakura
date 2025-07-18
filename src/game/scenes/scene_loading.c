@@ -2,17 +2,17 @@
 //
 // Represents the loading scene with a mutex.
 
-#include "SDL3/SDL_assert.h"
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_mutex.h"
-#include "SDL3/SDL_render.h"
-#include "SDL3/SDL_stdinc.h"
 #include "app.h"
 #include "engine/renderer.h"
 #include "engine/scene.h"
 #include "engine/sprite.h"
 #include "game/game_scenes.h"
 #include "misc/hashmap.h"
+#include "SDL3/SDL_assert.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_mutex.h"
+#include "SDL3/SDL_render.h"
+#include "SDL3/SDL_stdinc.h"
 
 typedef enum
 {
@@ -39,7 +39,7 @@ void scene_loading_oninit(Scene *s)
 
 void scene_loading_ontick(Scene *s, double dt)
 {
-    AppState *app = app_get();
+    AppState *app      = app_get();
     SceneLoading *data = (SceneLoading *)s->data;
 
     if (data->mutex && SDL_TryLockMutex(data->mutex))
@@ -51,18 +51,18 @@ void scene_loading_ontick(Scene *s, double dt)
 
         // Transition itself out.
         SceneTransitionInfo trans = {
-            .scene = s,
-            .curve = ANIMATION_CURVE_LINEAR,
+            .scene    = s,
+            .curve    = ANIMATION_CURVE_LINEAR,
             .duration = 2,
-            .entry = false,
-            .type = TRANSITION_FADE,
+            .entry    = false,
+            .type     = TRANSITION_FADE,
         };
         scene_mgr_start_transition(&app->scene_mgr, trans);
     }
 
     // Regardless of failing or succeeding, we keep rendering, so even when
     // fading out, the animation stays smooth.
-    Sprite *spr_object = hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
+    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
     spr_object->rotation += 12 * SDL_PI_D * dt;
 }
 
@@ -78,7 +78,7 @@ void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
     botright.x = winst.w - 64;
     botright.y = winst.h - 64;
 
-    Sprite *spr_object = hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
+    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
     render_sprite(spr_object, botright);
 }
 
@@ -97,7 +97,7 @@ Scene *scene_loading(SDL_Mutex *mutex)
 {
     SDL_assert(mutex != NULL);
 
-    Scene *s = scene_init();
+    Scene *s           = scene_init();
     SceneLoading *data = SDL_malloc(sizeof(SceneLoading));
 
     if (!s || !data)
@@ -111,11 +111,11 @@ Scene *scene_loading(SDL_Mutex *mutex)
     data->mutex = mutex;
 
     s->captures_focus = true;
-    s->data = data;
-    s->oninit = scene_loading_oninit;
-    s->ontick = scene_loading_ontick;
-    s->ondraw = scene_loading_ondraw;
-    s->ondestroy = scene_loading_ondestroy;
+    s->data           = data;
+    s->oninit         = scene_loading_oninit;
+    s->ontick         = scene_loading_ontick;
+    s->ondraw         = scene_loading_ondraw;
+    s->ondestroy      = scene_loading_ondestroy;
 
     return s;
 }

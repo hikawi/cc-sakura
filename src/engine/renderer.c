@@ -1,15 +1,16 @@
 #include "engine/renderer.h"
+
+#include "app.h"
+#include "engine/map.h"
+#include "misc/mathex.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
-#include "app.h"
-#include "engine/map.h"
-#include "misc/mathex.h"
+
 #include <string.h>
 
-void shift_position_to_origin(RenderingOriginType type, double *x, double *y,
-                              double w, double h)
+void shift_position_to_origin(RenderingOriginType type, double *x, double *y, double w, double h)
 {
     switch (type)
     {
@@ -80,7 +81,7 @@ void render_map(Map *map, Sprite *spr)
             if (spr->sel_tag >= 0)
             {
                 FrameTag tag = spr->tags[spr->sel_tag];
-                frame = spr->frames[tag.from + (Uint32)node.dir];
+                frame        = spr->frames[tag.from + (Uint32)node.dir];
             }
             else
             {
@@ -91,15 +92,13 @@ void render_map(Map *map, Sprite *spr)
             srcrect = frame.frame;
 
             dstrect.x = x * APPLICATION_MAP_TILE * APPLICATION_SCALE;
-            dstrect.y = (Uint32)appstate->window.h - (map->h - y - 1) *
-                                                         APPLICATION_MAP_TILE *
-                                                         APPLICATION_SCALE;
+            dstrect.y = (Uint32)appstate->window.h - (map->h - y - 1) * APPLICATION_MAP_TILE * APPLICATION_SCALE;
             dstrect.w = APPLICATION_MAP_TILE * APPLICATION_SCALE;
             dstrect.h = APPLICATION_MAP_TILE * APPLICATION_SCALE;
 
             render_aligned_texture((RenderingOptions){
                 .texture = spr->texture,
-                .origin = RENDER_ORIGIN_BOTTOM_LEFT,
+                .origin  = RENDER_ORIGIN_BOTTOM_LEFT,
                 .srcrect = &srcrect,
                 .dstrect = &dstrect,
             });
@@ -127,8 +126,7 @@ void render_aligned_texture(RenderingOptions options)
 
     if (feq(options.rotation, 0) && !options.flip_hori && !options.flip_vert)
     {
-        SDL_RenderTexture(app_get()->window.renderer, options.texture,
-                          options.srcrect, &true_dstrect);
+        SDL_RenderTexture(app_get()->window.renderer, options.texture, options.srcrect, &true_dstrect);
     }
     else
     {
@@ -142,8 +140,7 @@ void render_aligned_texture(RenderingOptions options)
             flags |= SDL_FLIP_VERTICAL;
         }
 
-        SDL_RenderTextureRotated(app_get()->window.renderer, options.texture,
-                                 options.srcrect, &true_dstrect,
+        SDL_RenderTextureRotated(app_get()->window.renderer, options.texture, options.srcrect, &true_dstrect,
                                  options.rotation, NULL, flags);
     }
 }
@@ -159,24 +156,24 @@ void render_sprite(Sprite *spr, Vector2 pos)
     else
     {
         FrameTag tag = spr->tags[spr->sel_tag];
-        frame = &spr->frames[spr->frame_idx + tag.from];
+        frame        = &spr->frames[spr->frame_idx + tag.from];
     }
 
     SDL_FRect srcrect, dstrect;
-    srcrect = frame->frame;
+    srcrect   = frame->frame;
     dstrect.x = (float)pos.x;
     dstrect.y = (float)pos.y;
     dstrect.h = srcrect.h * (float)spr->scale;
     dstrect.w = srcrect.w * (float)spr->scale;
 
     RenderingOptions opts = {
-        .origin = RENDER_ORIGIN_MIDDLE_CENTER,
-        .texture = spr->texture,
-        .srcrect = &srcrect,
-        .dstrect = &dstrect,
+        .origin    = RENDER_ORIGIN_MIDDLE_CENTER,
+        .texture   = spr->texture,
+        .srcrect   = &srcrect,
+        .dstrect   = &dstrect,
         .flip_hori = false,
         .flip_vert = false,
-        .rotation = spr->rotation,
+        .rotation  = spr->rotation,
     };
     render_aligned_texture(opts);
 }

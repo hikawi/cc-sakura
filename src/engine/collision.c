@@ -1,8 +1,10 @@
 #include "engine/collision.h"
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_stdinc.h"
+
 #include "misc/mathex.h"
 #include "misc/vector.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_stdinc.h"
+
 #include <math.h>
 #include <stdint.h>
 
@@ -131,15 +133,15 @@ Collision collision_aabb_circle(AABBCollider c1, CircleCollider c2)
     {
         // For this case, we calculate the distance between the center
         // to each of the AABB sides, the shortest one is the normal.
-        double left = c2.x - (c1.x - c1.w / 2);
-        double right = (c1.x + c1.w / 2) - c2.x;
-        double top = c2.y - (c1.y - c1.h / 2);
+        double left   = c2.x - (c1.x - c1.w / 2);
+        double right  = (c1.x + c1.w / 2) - c2.x;
+        double top    = c2.y - (c1.y - c1.h / 2);
         double bottom = (c1.y + c1.h / 2) - c2.y;
 
         // Find the minimum and its index.
         double vals[4] = {left, right, top, bottom};
-        double min = left;
-        int idx = 0;
+        double min     = left;
+        int idx        = 0;
 
         for (int i = 1; i < 4; i++)
         {
@@ -196,9 +198,9 @@ Collision collision_aabb_circle(AABBCollider c1, CircleCollider c2)
         // Normal case, the normal vector is the vector that points from
         // the circle center to the closest point.
         double sqrt_dist = SDL_sqrt(dist);
-        info.normal.x = dx / sqrt_dist;
-        info.normal.y = dy / sqrt_dist;
-        info.depth = c2.r - sqrt_dist;
+        info.normal.x    = dx / sqrt_dist;
+        info.normal.y    = dy / sqrt_dist;
+        info.depth       = c2.r - sqrt_dist;
     }
 
     return info;
@@ -235,7 +237,7 @@ Collision collision_circle_circle(CircleCollider c1, CircleCollider c2)
     if (dx * dx + dy * dy == 0)
     {
         info.normal = (Vector2){.x = 0, .y = -1};
-        info.depth = c1.r + c2.r;
+        info.depth  = c1.r + c2.r;
         return info;
     }
 
@@ -245,8 +247,8 @@ Collision collision_circle_circle(CircleCollider c1, CircleCollider c2)
     // I think this is a lot simpler, the depth is how much it's collided by
     // (distance - r1 - r2 = -depth), and the normal vector is already
     // calculated.
-    double dist = SDL_sqrt(dx * dx + dy * dy);
-    info.depth = -(dist - c1.r - c2.r);
+    double dist   = SDL_sqrt(dx * dx + dy * dy);
+    info.depth    = -(dist - c1.r - c2.r);
     info.normal.x = dx / dist;
     info.normal.y = dy / dist;
 
@@ -262,22 +264,18 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
 
     // Step 1. Get some data for the local axes in each OBB. We're using
     // the Separating Axis Theorem. Calculate the local axes for each OBB.
-    Vector2 local_x1 =
-        (Vector2){.x = SDL_cos(c1.angle), .y = SDL_sin(c1.angle)};
-    Vector2 local_y1 =
-        (Vector2){.x = -SDL_sin(c1.angle), .y = SDL_cos(c1.angle)};
-    Vector2 local_x2 =
-        (Vector2){.x = SDL_cos(c2.angle), .y = SDL_sin(c2.angle)};
-    Vector2 local_y2 =
-        (Vector2){.x = -SDL_sin(c2.angle), .y = SDL_cos(c2.angle)};
+    Vector2 local_x1 = (Vector2){.x = SDL_cos(c1.angle), .y = SDL_sin(c1.angle)};
+    Vector2 local_y1 = (Vector2){.x = -SDL_sin(c1.angle), .y = SDL_cos(c1.angle)};
+    Vector2 local_x2 = (Vector2){.x = SDL_cos(c2.angle), .y = SDL_sin(c2.angle)};
+    Vector2 local_y2 = (Vector2){.x = -SDL_sin(c2.angle), .y = SDL_cos(c2.angle)};
 
     // Step 2. Find the vector that crosses the two centers.
     Vector2 center = (Vector2){.x = c2.x - c1.x, .y = c2.y - c1.y};
 
     // Step 3. For each local axes, project all of them onto each other.
     Vector2 axes[4] = {local_x1, local_y1, local_x2, local_y2};
-    double overlap = INFINITY;
-    int idx = 0;
+    double overlap  = INFINITY;
+    int idx         = 0;
     for (int i = 0; i < 4; i++)
     {
         // Project c1.
@@ -303,7 +301,7 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
         if (r1 + r2 - s < overlap)
         {
             overlap = r1 + r2 - s;
-            idx = i;
+            idx     = i;
         }
     }
 
@@ -330,10 +328,10 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
 Collision collision_aabb_obb(AABBCollider c1, OBBCollider c2)
 {
     OBBCollider c3;
-    c3.x = c1.x;
-    c3.y = c1.y;
-    c3.w = c1.w;
-    c3.h = c1.h;
+    c3.x     = c1.x;
+    c3.y     = c1.y;
+    c3.w     = c1.w;
+    c3.h     = c1.h;
     c3.angle = 0;
 
     return collision_obb_obb(c3, c2);
@@ -348,7 +346,7 @@ Collision get_collision_obb_circle(OBBCollider c1, CircleCollider c2)
 {
     // Step 1. Transform the circle into local coordinate space
     Vector2 new_center = {.x = c2.x - c1.x, .y = c2.y - c1.y};
-    new_center = vector2_rot(new_center, -c1.angle);
+    new_center         = vector2_rot(new_center, -c1.angle);
 
     // Step 2. Treat the OBB as an AABB and check collisions.
     // The OBB is IN THE ORIGIN in its own coordinate space.
@@ -384,8 +382,7 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
     Collision info = {.is_colliding = false, .depth = 0};
 
     // Step 1. Find the closest point on the capsule to the AABB center.
-    Vector2 p =
-        closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
+    Vector2 p = closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
 
     // Step 2. Find the closest point on the AABB that is the closest to
     // that representative point.
@@ -410,15 +407,15 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
         // I think this is similar to the AABB-Circle one.
         // Find where the minimum distance to each of the AABB edge is.
         // Just copied the code.
-        double left = p.x - (c1.x - c1.w / 2);
-        double right = (c1.x + c1.w / 2) - p.x;
-        double top = p.y - (c1.y - c1.h / 2);
+        double left   = p.x - (c1.x - c1.w / 2);
+        double right  = (c1.x + c1.w / 2) - p.x;
+        double top    = p.y - (c1.y - c1.h / 2);
         double bottom = (c1.y + c1.h / 2) - p.y;
 
         // Find the minimum and its index.
         double vals[4] = {left, right, top, bottom};
-        double min = left;
-        int idx = 0;
+        double min     = left;
+        int idx        = 0;
 
         for (int i = 1; i < 4; i++)
         {
@@ -453,7 +450,7 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
     {
         // Normal case.
         info.normal = vector2_norm(d);
-        info.depth = c2.r - vector2_len(d);
+        info.depth  = c2.r - vector2_len(d);
     }
 
     return info;
@@ -467,13 +464,13 @@ Collision collision_obb_capsule(OBBCollider c1, CapsuleCollider c2)
 {
     // Step 1. Undo the rotation.
     Vector2 obb_center = {.x = c1.x, .y = c1.y};
-    Vector2 p1_tl = vector2_sub(c2.p1, obb_center);
-    Vector2 p2_tl = vector2_sub(c2.p2, obb_center);
-    p1_tl = vector2_rot(p1_tl, -c1.angle);
-    p2_tl = vector2_rot(p2_tl, -c1.angle);
+    Vector2 p1_tl      = vector2_sub(c2.p1, obb_center);
+    Vector2 p2_tl      = vector2_sub(c2.p2, obb_center);
+    p1_tl              = vector2_rot(p1_tl, -c1.angle);
+    p2_tl              = vector2_rot(p2_tl, -c1.angle);
 
     // Step 2. Treat the OBB as an AABB.
-    AABBCollider aabb = {.x = 0, .y = 0, .w = c1.w, .h = c1.h};
+    AABBCollider aabb   = {.x = 0, .y = 0, .w = c1.w, .h = c1.h};
     CapsuleCollider cap = {.p1 = p1_tl, .p2 = p2_tl, .r = c2.r};
 
     // Step 3. Check collision, and transform back if needed.
@@ -506,8 +503,7 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
 
     // Step 1. Find the closest point on the capsule closest to the circle's
     // center.
-    Vector2 p =
-        closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
+    Vector2 p = closest_point_on_segment(c2.p1, c2.p2, (Vector2){.x = c1.x, .y = c1.y});
 
     // Step 2. Calculate the distance between the capsule's segment and the
     // center.
@@ -521,14 +517,14 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
     {
         // If length is close enough to 0, the center of the circle is on
         // the capsule's segment.
-        Vector2 in = vector2_sub(c2.p1, c2.p2);
+        Vector2 in  = vector2_sub(c2.p1, c2.p2);
         info.normal = vector2_norm(vector2_rot(in, -M_PI_2));
-        info.depth = c1.r + c2.r;
+        info.depth  = c1.r + c2.r;
     }
     else
     {
         info.normal = vector2_norm(d);
-        info.depth = c1.r + c2.r - vector2_len(d);
+        info.depth  = c1.r + c2.r - vector2_len(d);
     }
 
     return info;
@@ -631,15 +627,15 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_type)
         {
         case COLLIDER_TYPE_AABB:
-            info = collision_aabb_capsule(c2->aabb, c1->capsule);
+            info        = collision_aabb_capsule(c2->aabb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_TYPE_OBB:
-            info = collision_obb_capsule(c2->obb, c1->capsule);
+            info        = collision_obb_capsule(c2->obb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_TYPE_CIRCLE:
-            info = collision_circle_capsule(c2->circle, c1->capsule);
+            info        = collision_circle_capsule(c2->circle, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         default:
@@ -650,13 +646,13 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_type)
         {
         case COLLIDER_TYPE_AABB:
-            info = collision_aabb_circle(c2->aabb, c1->circle);
+            info        = collision_aabb_circle(c2->aabb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_TYPE_CIRCLE:
             return collision_circle_circle(c1->circle, c2->circle);
         case COLLIDER_TYPE_OBB:
-            info = get_collision_obb_circle(c2->obb, c1->circle);
+            info        = get_collision_obb_circle(c2->obb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_TYPE_CAPSULE:
@@ -669,7 +665,7 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_type)
         {
         case COLLIDER_TYPE_AABB:
-            info = collision_aabb_obb(c2->aabb, c1->obb);
+            info        = collision_aabb_obb(c2->aabb, c1->obb);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_TYPE_CIRCLE:
@@ -694,14 +690,14 @@ Collision collision_check(const Collider *c1, const Collider *c2)
 Collider collision_convert_to_aabb(const Collider *collider)
 {
     Collider val;
-    val.collider_type = COLLIDER_TYPE_AABB;
+    val.collider_type  = COLLIDER_TYPE_AABB;
     val.collision_type = COLLISION_GHOST;
-    val.name = "tmp_aabb";
-    val.aabb = (AABBCollider){
-        .h = 0,
-        .w = 0,
-        .x = 0,
-        .y = 0,
+    val.name           = "tmp_aabb";
+    val.aabb           = (AABBCollider){
+                  .h = 0,
+                  .w = 0,
+                  .x = 0,
+                  .y = 0,
     };
 
     if (!collider)
@@ -730,14 +726,10 @@ Collider collision_convert_to_aabb(const Collider *collider)
 
         Vector2 points[4];
 
-        points[0] =
-            (Vector2){.x = -collider->obb.w / 2, .y = -collider->obb.h / 2};
-        points[1] =
-            (Vector2){.x = collider->obb.w / 2, .y = -collider->obb.h / 2};
-        points[2] =
-            (Vector2){.x = collider->obb.w / 2, .y = collider->obb.h / 2};
-        points[3] =
-            (Vector2){.x = -collider->obb.w / 2, .y = collider->obb.h / 2};
+        points[0]      = (Vector2){.x = -collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[1]      = (Vector2){.x = collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[2]      = (Vector2){.x = collider->obb.w / 2, .y = collider->obb.h / 2};
+        points[3]      = (Vector2){.x = -collider->obb.w / 2, .y = collider->obb.h / 2};
         Vector2 center = {.x = collider->obb.x, .y = collider->obb.y};
 
         // Rotation values
@@ -794,8 +786,7 @@ Collider collision_convert_to_aabb(const Collider *collider)
 
 bool collision_is_fully_enclosed(const Collider *outer, const Collider *inner)
 {
-    if (!outer || !inner || outer->collider_type != COLLIDER_TYPE_AABB ||
-        inner->collider_type != COLLIDER_TYPE_AABB)
+    if (!outer || !inner || outer->collider_type != COLLIDER_TYPE_AABB || inner->collider_type != COLLIDER_TYPE_AABB)
     {
         return false;
     }
@@ -817,8 +808,7 @@ bool collision_is_fully_enclosed(const Collider *outer, const Collider *inner)
         .y = inner->aabb.y + inner->aabb.h / 2,
     };
 
-    return minin.x >= minout.x && maxin.x <= maxout.x && minin.y >= minout.y &&
-           maxin.y <= maxout.y;
+    return minin.x >= minout.x && maxin.x <= maxout.x && minin.y >= minout.y && maxin.y <= maxout.y;
 }
 
 Collision collision_partial_check(const Collider *c1, const Collider *c2)
@@ -838,8 +828,8 @@ Uint64 collision_pair_hash(const void *pair)
     if (b > a)
     {
         uintptr_t tmp = b;
-        b = a;
-        a = tmp;
+        b             = a;
+        a             = tmp;
     }
 
     return a * 31 ^ b;
@@ -850,6 +840,5 @@ bool collision_pair_eq(const void *a, const void *b)
     CollisionPair *pa = (CollisionPair *)a;
     CollisionPair *pb = (CollisionPair *)b;
 
-    return pa == pb || (pa->a == pb->a && pa->b == pb->b) ||
-           (pa->a == pb->b && pa->b == pb->a);
+    return pa == pb || (pa->a == pb->a && pa->b == pb->b) || (pa->a == pb->b && pa->b == pb->a);
 }

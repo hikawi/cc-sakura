@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "SDL3/SDL_render.h"
 #include "engine/signal.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
 #include "misc/quadtree.h"
+#include "SDL3/SDL_render.h"
 
 /**
  * Represents a scene in the game.
@@ -100,9 +100,9 @@ typedef struct
 {
     TransitionType type;  // The transition animation type.
     AnimationCurve curve; // How to smooth out that animation.
-    bool entry;      // Whether it's an entrance animation or an exit animation.
-    double duration; // The duration of the animation. Must be greater than 0.
-    Scene *scene;    // The scene responsible for the animation.
+    bool entry;           // Whether it's an entrance animation or an exit animation.
+    double duration;      // The duration of the animation. Must be greater than 0.
+    Scene *scene;         // The scene responsible for the animation.
 } SceneTransitionInfo;
 
 /**

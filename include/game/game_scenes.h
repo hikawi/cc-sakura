@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "engine/scene.h"
 #include "SDL3/SDL_mutex.h"
 #include "SDL3/SDL_pixels.h"
-#include "engine/scene.h"
 
 /**
  * Sets up the starting scene.

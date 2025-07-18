@@ -5,29 +5,29 @@
 
 #pragma once
 
+#include "engine/collision.h"
+#include "engine/scene.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
-#include "engine/collision.h"
-#include "engine/scene.h"
 
-#define APPLICATION_NAME "Sakura and the Clow Cards"
-#define APPLICATION_VERSION "0.3.0"
-#define APPLICATION_IDENTIFIER "dev.luny.ccsakura"
-#define APPLICATION_ORGANIZATION "Luny"
-#define APPLICATION_APP_NAME "Cardcaptor Sakura"
+#define APPLICATION_NAME            "Sakura and the Clow Cards"
+#define APPLICATION_VERSION         "0.3.0"
+#define APPLICATION_IDENTIFIER      "dev.luny.ccsakura"
+#define APPLICATION_ORGANIZATION    "Luny"
+#define APPLICATION_APP_NAME        "Cardcaptor Sakura"
 
-#define APPLICATION_ORIGINAL_WIDTH 1600
+#define APPLICATION_ORIGINAL_WIDTH  1600
 #define APPLICATION_ORIGINAL_HEIGHT 900
 
-#define APPLICATION_MAX_FPS 60
-#define APPLICATION_SCALE 2
-#define APPLICATION_SHOW_FPS 1
-#define APPLICATION_SHOW_COLLIDERS 1
+#define APPLICATION_MAX_FPS         60
+#define APPLICATION_SCALE           2
+#define APPLICATION_SHOW_FPS        1
+#define APPLICATION_SHOW_COLLIDERS  1
 
-#define APPLICATION_MAP_TILE 16
+#define APPLICATION_MAP_TILE        16
 #define APPLICATION_MAX_SCENE_COUNT 16
 
 /**
@@ -37,13 +37,13 @@
 typedef struct
 {
     Uint64 last_frame_tick; // When the last frame was rendered.
-    double frame_accum; // The amount of time accumulated before the next fixed
-                        // update.
-    Uint32 frame_count; // The counter for frames to display an uncapped FPS
-    double frame_time;  // How much time has passed, for calculating FPS. Each
-                        // second passed (1.0) is a reset to `frame_count`.
-    Uint32 fps; // The final counter for displaying the FPS. This value is used,
-                // as `frame_count` is unreliable.
+    double frame_accum;     // The amount of time accumulated before the next fixed
+                            // update.
+    Uint32 frame_count;     // The counter for frames to display an uncapped FPS
+    double frame_time;      // How much time has passed, for calculating FPS. Each
+                            // second passed (1.0) is a reset to `frame_count`.
+    Uint32 fps;             // The final counter for displaying the FPS. This value is used,
+                            // as `frame_count` is unreliable.
 } FrameData;
 
 /**

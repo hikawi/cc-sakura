@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "SDL3/SDL_render.h"
 #include "engine/map.h"
 #include "engine/sprite.h"
+#include "SDL3/SDL_render.h"
 
 typedef enum
 {
@@ -36,8 +36,7 @@ typedef struct
 /**
  * Shifts the position into the provided origin.
  */
-void shift_position_to_origin(RenderingOriginType type, double *x, double *y,
-                              double w, double h);
+void shift_position_to_origin(RenderingOriginType type, double *x, double *y, double w, double h);
 
 /**
  * Renders a texture that is aligned with its origin.

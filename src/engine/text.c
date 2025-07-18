@@ -1,4 +1,8 @@
 #include "engine/text.h"
+
+#include "app.h"
+#include "engine/renderer.h"
+#include "misc/mathex.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_log.h"
@@ -6,9 +10,6 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "app.h"
-#include "engine/renderer.h"
-#include "misc/mathex.h"
 
 #define MAX_FONT_NODES 50
 
@@ -61,9 +62,9 @@ bool font_eq(Font f1, Font f2)
 int font_hash(Font font)
 {
     int hash = 17;
-    hash = hash * 31 + (int)font.face;
-    hash = hash * 31 + (int)font.style;
-    hash = hash * 31 + (int)font.sp;
+    hash     = hash * 31 + (int)font.face;
+    hash     = hash * 31 + (int)font.style;
+    hash     = hash * 31 + (int)font.sp;
     return hash % MAX_FONT_NODES;
 }
 
@@ -73,9 +74,9 @@ int font_hash(Font font)
 FontNode *font_node_init(Font font, TTF_Font *ttf)
 {
     FontNode *node = SDL_malloc(sizeof(FontNode));
-    node->font = font;
+    node->font     = font;
     node->ttf_font = ttf;
-    node->next = NULL;
+    node->next     = NULL;
     return node;
 }
 
@@ -84,7 +85,7 @@ FontNode *font_node_init(Font font, TTF_Font *ttf)
  */
 FontNode *font_node_get(Font font)
 {
-    int idx = font_hash(font);
+    int idx       = font_hash(font);
     FontNode *cur = font_nodes[idx];
     while (cur)
     {
@@ -144,8 +145,7 @@ FontNode *font_node_get_or_create(Font font)
 
         if (!ttf)
         {
-            SDL_LogError(SDL_LOG_CATEGORY_RENDER,
-                         "Unable to open a TTF font. %s", SDL_GetError());
+            SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Unable to open a TTF font. %s", SDL_GetError());
             return NULL;
         }
 
@@ -162,7 +162,7 @@ void font_node_remove(Font font)
     int idx = font_hash(font);
 
     FontNode *prev = NULL;
-    FontNode *cur = font_nodes[idx];
+    FontNode *cur  = font_nodes[idx];
 
     while (cur)
     {
@@ -185,7 +185,7 @@ void font_node_remove(Font font)
         }
 
         prev = cur;
-        cur = cur->next;
+        cur  = cur->next;
     }
 }
 
@@ -207,8 +207,7 @@ void font_engine_render_text(FontRenderingOptions opts)
     SDL_assert(node != NULL);
 
     // Create the text.
-    SDL_Surface *surface = TTF_RenderText_Solid(
-        node->ttf_font, opts.text, SDL_strlen(opts.text), opts.color);
+    SDL_Surface *surface = TTF_RenderText_Solid(node->ttf_font, opts.text, SDL_strlen(opts.text), opts.color);
 
     // Calculate the position for the text.
     double x = opts.x, y = opts.y;
@@ -216,8 +215,7 @@ void font_engine_render_text(FontRenderingOptions opts)
     shift_position_to_origin(opts.origin, &x, &y, w, h);
 
     // Create the surface to render.
-    SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(state->window.renderer, surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(state->window.renderer, surface);
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
     SDL_FRect dstrect = {
         .x = (float)x,

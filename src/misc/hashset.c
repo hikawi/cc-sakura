@@ -1,4 +1,5 @@
 #include "misc/hashset.h"
+
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
@@ -17,8 +18,7 @@ bool hash_set_add(HashSet *set, const void *item)
 
     if (!set->hash)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't use hash set without a hash function.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't use hash set without a hash function.");
         return false;
     }
 
@@ -27,7 +27,7 @@ bool hash_set_add(HashSet *set, const void *item)
     // First node.
     if (!set->buckets[hash])
     {
-        set->buckets[hash] = SDL_malloc(sizeof(HashSetNode));
+        set->buckets[hash]       = SDL_malloc(sizeof(HashSetNode));
         set->buckets[hash]->item = item;
         set->buckets[hash]->next = NULL;
         set->length++;
@@ -35,25 +35,24 @@ bool hash_set_add(HashSet *set, const void *item)
     }
 
     // Find the end of the node, or ignore if already added.
-    HashSetNode *cur = set->buckets[hash];
+    HashSetNode *cur  = set->buckets[hash];
     HashSetNode *prev = NULL;
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) ||
-            cur->item == item)
+        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
         {
             return false; // already added
         }
 
         prev = cur;
-        cur = cur->next;
+        cur  = cur->next;
     }
 
     // Found the end, but not added.
     HashSetNode *node = SDL_malloc(sizeof(HashSetNode));
-    node->item = item;
-    node->next = NULL;
-    prev->next = node;
+    node->item        = item;
+    node->next        = NULL;
+    prev->next        = node;
     set->length++;
     return true;
 }
@@ -67,20 +66,18 @@ bool hash_set_remove(HashSet *set, const void *item)
 
     if (!set->hash)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't use hash set without a hash function.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't use hash set without a hash function.");
         return false;
     }
 
     Uint32 hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
 
     // Find the end of the node, or ignore if already added.
-    HashSetNode *cur = set->buckets[hash];
+    HashSetNode *cur  = set->buckets[hash];
     HashSetNode *prev = NULL;
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) ||
-            cur->item == item)
+        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
         {
             if (prev)
             {
@@ -97,7 +94,7 @@ bool hash_set_remove(HashSet *set, const void *item)
         }
 
         prev = cur;
-        cur = cur->next;
+        cur  = cur->next;
     }
 
     // Did not found
@@ -113,8 +110,7 @@ bool hash_set_has(const HashSet *set, const void *item)
 
     if (!set->hash)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't use hash set without a hash function.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't use hash set without a hash function.");
         return false;
     }
 
@@ -124,8 +120,7 @@ bool hash_set_has(const HashSet *set, const void *item)
     HashSetNode *cur = set->buckets[hash];
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) ||
-            cur->item == item)
+        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
         {
             return true;
         }
@@ -160,7 +155,7 @@ void hash_set_clear(HashSet *set)
 
 void hash_set_iterate(const HashSet *set, int *length, const void ***items)
 {
-    *items = SDL_calloc((size_t)set->length, sizeof(void *));
+    *items  = SDL_calloc((size_t)set->length, sizeof(void *));
     *length = set->length;
 
     int len = 0;
@@ -170,7 +165,7 @@ void hash_set_iterate(const HashSet *set, int *length, const void ***items)
         while (cur)
         {
             (*items)[len++] = cur->item;
-            cur = cur->next;
+            cur             = cur->next;
         }
     }
 }

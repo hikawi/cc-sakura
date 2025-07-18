@@ -1,12 +1,5 @@
 #include "engine/engine.h"
-#include "SDL3/SDL_blendmode.h"
-#include "SDL3/SDL_events.h"
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_mutex.h"
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_render.h"
-#include "SDL3/SDL_stdinc.h"
-#include "SDL3/SDL_timer.h"
+
 #include "app.h"
 #include "engine/collision.h"
 #include "engine/scene.h"
@@ -16,19 +9,27 @@
 #include "misc/hashset.h"
 #include "misc/list.h"
 #include "misc/quadtree.h"
+#include "SDL3/SDL_blendmode.h"
+#include "SDL3/SDL_events.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_mutex.h"
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_render.h"
+#include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_timer.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-static List *signals_queue = NULL;
+static List *signals_queue      = NULL;
 static SDL_Mutex *signals_mutex = NULL;
 
 /**
  * Attempts to recurse a quadtree through each node and finds all potential
  * collisions in a broad-phase scan.
  */
-void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors,
-                                   HashSet *potentials)
+void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, HashSet *potentials)
 {
     if (!root)
     {
@@ -37,18 +38,16 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors,
 
     for (int i = 0; i < (int)root->colliders->length; i++)
     {
-        const Collider this =
-            collision_convert_to_aabb(root->colliders->items[i]);
+        const Collider this = collision_convert_to_aabb(root->colliders->items[i]);
 
         // Intra-node collisions
         for (int j = i + 1; j < (int)root->colliders->length; j++)
         {
-            if (collision_partial_check(&this, root->colliders->items[j])
-                    .is_colliding)
+            if (collision_partial_check(&this, root->colliders->items[j]).is_colliding)
             {
                 CollisionPair *potential = SDL_malloc(sizeof(CollisionPair));
-                potential->a = root->colliders->items[i];
-                potential->b = root->colliders->items[j];
+                potential->a             = root->colliders->items[i];
+                potential->b             = root->colliders->items[j];
                 hash_set_add(potentials, potential);
             }
         }
@@ -56,12 +55,11 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors,
         // Ancestor collisions.
         for (int j = 0; j < (int)ancestors->length; j++)
         {
-            if (collision_partial_check(&this, ancestors->items[j])
-                    .is_colliding)
+            if (collision_partial_check(&this, ancestors->items[j]).is_colliding)
             {
                 CollisionPair *potential = SDL_malloc(sizeof(CollisionPair));
-                potential->a = root->colliders->items[i];
-                potential->b = ancestors->items[j];
+                potential->a             = root->colliders->items[i];
+                potential->b             = ancestors->items[j];
                 hash_set_add(potentials, potential);
             }
         }
@@ -100,19 +98,9 @@ void engine_handle_collisions(AppState *app)
         if (!s->quadtree)
         {
             Uint32 size = s->colliders->size;
-            Collider **colliders = SDL_malloc(sizeof(Collider *) * size);
-            Uint32 *keys = SDL_malloc(sizeof(Uint32) * size);
-            if (!colliders || !keys)
-            {
-                if (colliders)
-                    SDL_free(colliders);
-                if (keys)
-                    SDL_free(keys);
-
-                app_panic("Failed to allocate data for collisions.");
-                return;
-            }
-            hash_map_iterate(s->colliders, keys, (void **)colliders);
+            Collider **colliders;
+            Uint32 *keys;
+            hash_map_iterate(s->colliders, &keys, (const void ***)&colliders);
 
             s->quadtree = quadtree_init();
             for (int j = 0; j < (int)size; j++)
@@ -140,8 +128,8 @@ void engine_handle_collisions(AppState *app)
         // We do this by recursing through the quadtree as needed.
         HashSet *potentials = hash_set_init();
         potentials->compare = collision_pair_eq;
-        potentials->hash = collision_pair_hash;
-        List *ancestors = list_init();
+        potentials->hash    = collision_pair_hash;
+        List *ancestors     = list_init();
         engine_broad_phase_collisions(s->quadtree, ancestors, potentials);
         list_destroy(ancestors);
 
@@ -154,14 +142,14 @@ void engine_handle_collisions(AppState *app)
         for (int j = 0; j < potentials_length; j++)
         {
             CollisionPair *pair = (void *)potentials_list[j];
-            Collision info = collision_check(pair->a, pair->b);
+            Collision info      = collision_check(pair->a, pair->b);
             if (!info.is_colliding)
             {
                 continue;
             }
 
-            signal.timestamp = SDL_GetTicks();
-            signal.type = SIGNAL_COLLISION;
+            signal.timestamp      = SDL_GetTicks();
+            signal.type           = SIGNAL_COLLISION;
             signal.collision.pair = *pair;
             signal.collision.info = info;
 
@@ -198,8 +186,8 @@ void engine_pump_signals(AppState *app)
 void engine_iterate(AppState *app)
 {
     // Calculate delta time
-    Uint64 cur_frame = SDL_GetTicks();
-    double dt = (cur_frame - app->frame_data.last_frame_tick) / 1000.0;
+    Uint64 cur_frame                = SDL_GetTicks();
+    double dt                       = (cur_frame - app->frame_data.last_frame_tick) / 1000.0;
     app->frame_data.last_frame_tick = cur_frame;
 
     if (dt > 0.1)
@@ -227,7 +215,7 @@ void engine_iterate(AppState *app)
     app->frame_data.frame_count++;
     if (app->frame_data.frame_time >= 1)
     {
-        app->frame_data.fps = app->frame_data.frame_count;
+        app->frame_data.fps         = app->frame_data.frame_count;
         app->frame_data.frame_count = 0;
         app->frame_data.frame_time -= 1;
     }
@@ -239,18 +227,14 @@ void engine_handle_event(AppState *app, SDL_Event *event)
     switch (event->type)
     {
     case SDL_EVENT_MOUSE_MOTION:
-        app->input.mouse.aabb.x =
-            (double)(event->motion.x + event->motion.xrel);
-        app->input.mouse.aabb.y =
-            (double)(event->motion.y + event->motion.yrel);
+        app->input.mouse.aabb.x = (double)(event->motion.x + event->motion.xrel);
+        app->input.mouse.aabb.y = (double)(event->motion.y + event->motion.yrel);
         break;
     case SDL_EVENT_WINDOW_RESIZED:
-        SDL_GetRenderOutputSize(app->window.renderer, &app->window.w,
-                                &app->window.h);
+        SDL_GetRenderOutputSize(app->window.renderer, &app->window.w, &app->window.h);
         SDL_DestroyTexture(app->scene_mgr.target);
-        app->scene_mgr.target = SDL_CreateTexture(
-            app->window.renderer, SDL_PIXELFORMAT_RGBA8888,
-            SDL_TEXTUREACCESS_TARGET, app->window.w, app->window.h);
+        app->scene_mgr.target = SDL_CreateTexture(app->window.renderer, SDL_PIXELFORMAT_RGBA8888,
+                                                  SDL_TEXTUREACCESS_TARGET, app->window.w, app->window.h);
 
         // Reapply render target.
         if (SDL_GetRenderTarget(app->window.renderer) != NULL)
@@ -303,14 +287,12 @@ bool engine_init(AppState *app)
     if (!font_engine_init(app))
     {
         success = false;
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Failed to start font engine");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to start font engine");
     }
 
     if (!success)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Some errors happened while initializing engine");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Some errors happened while initializing engine");
     }
 
     return success;

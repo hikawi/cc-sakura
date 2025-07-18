@@ -1,25 +1,25 @@
 #include "misc/hashmap.h"
+
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_stdinc.h"
 
-static inline Uint32 hash_uint32(Uint32 key)
+static inline Uint32 hash_uint32(const Uint32 key)
 {
     return (key * 2654435761u) % HASH_MAP_MAX_BUCKETS;
 }
 
 HashMap *hash_map_init(void)
 {
-    HashMap *map = SDL_malloc(sizeof(HashMap));
-    SDL_memset(map, 0, sizeof(HashMap));
+    HashMap *map = SDL_calloc(1, sizeof(HashMap));
     return map;
 }
 
-bool hash_map_has_key(HashMap *map, Uint32 key)
+bool hash_map_has_key(const HashMap *map, const Uint32 key)
 {
     return hash_map_get(map, key) != NULL;
 }
 
-bool hash_map_has_value(HashMap *map, void *value)
+bool hash_map_has_value(const HashMap *map, const void *value)
 {
     for (int i = 0; i < HASH_MAP_MAX_BUCKETS; ++i)
     {
@@ -36,31 +36,31 @@ bool hash_map_has_value(HashMap *map, void *value)
     return false;
 }
 
-void *hash_map_put(HashMap *map, Uint32 key, void *value)
+const void *hash_map_put(HashMap *map, const Uint32 key, const void *value)
 {
-    Uint32 idx = hash_uint32(key);
+    Uint32 idx        = hash_uint32(key);
     HashMapNode *prev = NULL;
-    HashMapNode *cur = map->nodes[idx];
+    HashMapNode *cur  = map->nodes[idx];
 
     while (cur)
     {
         // Replacement.
         if (cur->key == key)
         {
-            void *ret = cur->value;
-            cur->value = value;
+            const void *ret = cur->value;
+            cur->value      = value;
             return ret;
         }
 
         prev = cur;
-        cur = cur->next;
+        cur  = cur->next;
     }
 
     // That key doesn't exist yet.
     HashMapNode *node = SDL_malloc(sizeof(HashMapNode));
-    node->key = key;
-    node->value = value;
-    node->next = NULL;
+    node->key         = key;
+    node->value       = value;
+    node->next        = NULL;
     if (prev)
     {
         // The chain is already started.
@@ -76,11 +76,11 @@ void *hash_map_put(HashMap *map, Uint32 key, void *value)
     return NULL;
 }
 
-void *hash_map_remove(HashMap *map, Uint32 key)
+const void *hash_map_remove(HashMap *map, const Uint32 key)
 {
-    Uint32 idx = hash_uint32(key);
+    Uint32 idx        = hash_uint32(key);
     HashMapNode *prev = NULL;
-    HashMapNode *cur = map->nodes[idx];
+    HashMapNode *cur  = map->nodes[idx];
 
     while (cur)
     {
@@ -97,20 +97,20 @@ void *hash_map_remove(HashMap *map, Uint32 key)
                 map->nodes[idx] = cur->next;
             }
 
-            void *ret = cur->value;
+            const void *ret = cur->value;
             SDL_free(cur);
             map->size--;
             return ret;
         }
 
         prev = cur;
-        cur = cur->next;
+        cur  = cur->next;
     }
 
     return NULL;
 }
 
-void *hash_map_get(HashMap *map, Uint32 key)
+const void *hash_map_get(const HashMap *map, const Uint32 key)
 {
     HashMapNode *cur = map->nodes[hash_uint32(key)];
     while (cur)
@@ -122,9 +122,12 @@ void *hash_map_get(HashMap *map, Uint32 key)
     return NULL;
 }
 
-void hash_map_iterate(HashMap *map, Uint32 *keys, void **values)
+void hash_map_iterate(const HashMap *map, Uint32 **keys, const void ***values)
 {
     SDL_assert(keys != NULL && values != NULL);
+
+    *keys   = SDL_malloc(sizeof(Uint32) * map->size);
+    *values = SDL_malloc(sizeof(const void *) * map->size);
 
     Uint32 idx = 0;
     for (int i = 0; i < HASH_MAP_MAX_BUCKETS; i++)
@@ -132,8 +135,8 @@ void hash_map_iterate(HashMap *map, Uint32 *keys, void **values)
         HashMapNode *node = map->nodes[i];
         while (node)
         {
-            keys[idx] = node->key;
-            values[idx] = node->value;
+            (*keys)[idx]   = node->key;
+            (*values)[idx] = node->value;
             idx++;
             node = node->next;
         }

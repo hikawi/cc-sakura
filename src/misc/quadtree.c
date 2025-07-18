@@ -1,9 +1,9 @@
 #include "misc/quadtree.h"
-#include "SDL3/SDL_stdinc.h"
+
 #include "app.h"
 #include "engine/collision.h"
 #include "misc/list.h"
-#include <string.h>
+#include "SDL3/SDL_stdinc.h"
 
 QuadtreeNode *quadtree_init(void)
 {
@@ -16,7 +16,7 @@ QuadtreeNode *quadtree_init(void)
 
     SDL_memset(root->children, 0, 4 * sizeof(QuadtreeNode *));
     root->colliders = list_init();
-    root->depth = 0;
+    root->depth     = 0;
     if (!root->colliders)
     {
         SDL_free(root);
@@ -45,8 +45,8 @@ void quadtree_subdivide(QuadtreeNode *node)
     };
     for (int i = 0; i < 4; i++)
     {
-        node->children[i] = quadtree_init();
-        node->children[i]->depth = node->depth + 1;
+        node->children[i]           = quadtree_init();
+        node->children[i]->depth    = node->depth + 1;
         node->children[i]->region.x = node->region.x + dirs[i].x;
         node->children[i]->region.y = node->region.y + dirs[i].y;
         node->children[i]->region.w = node->region.w / 2;
@@ -65,8 +65,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
 
     if (!root->children[0])
     {
-        if (root->colliders->length < MAX_COLLIDERS_PER_NODE ||
-            root->depth >= MAX_QUADTREE_DEPTH)
+        if (root->colliders->length < MAX_COLLIDERS_PER_NODE || root->depth >= MAX_QUADTREE_DEPTH)
         {
             list_add(root->colliders, item);
             return true;
@@ -76,7 +75,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
 
         // Move colliders into children.
         List *current_colliders = list_init();
-        for (int i = 0; i < (int)root->colliders->length; i++)
+        for (Uint32 i = 0; i < root->colliders->length; i++)
         {
             Collider col = collision_convert_to_aabb(root->colliders->items[i]);
 
@@ -85,12 +84,11 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
             {
                 Collider child;
                 child.collider_type = COLLIDER_TYPE_AABB;
-                child.aabb = root->children[j]->region;
+                child.aabb          = root->children[j]->region;
 
                 if (collision_is_fully_enclosed(&child, &col))
                 {
-                    added = quadtree_add(root->children[j],
-                                         root->colliders->items[i]);
+                    added = quadtree_add(root->children[j], root->colliders->items[i]);
                     break;
                 }
             }
@@ -113,7 +111,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
             QuadtreeNode *child_node = root->children[i];
             Collider child;
             child.collider_type = COLLIDER_TYPE_AABB;
-            child.aabb = child_node->region;
+            child.aabb          = child_node->region;
 
             if (collision_is_fully_enclosed(&child, &aabb))
             {
@@ -140,7 +138,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
             QuadtreeNode *child_node = root->children[i];
             Collider child;
             child.collider_type = COLLIDER_TYPE_AABB;
-            child.aabb = child_node->region;
+            child.aabb          = child_node->region;
 
             if (collision_is_fully_enclosed(&child, &aabb))
             {
@@ -163,8 +161,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
 /**
  * Recursively looks for an item and delete it from a quadtree.
  */
-bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent,
-                           const Collider *item)
+bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent, const Collider *item)
 {
     if (!cur)
     {
@@ -229,8 +226,7 @@ bool quadtree_remove(QuadtreeNode *root, const Collider *item)
     return quadtree_remove_recur(root, NULL, item);
 }
 
-void quadtree_query(const QuadtreeNode *root, const Collider *collider,
-                    List *list)
+void quadtree_query(const QuadtreeNode *root, const Collider *collider, List *list)
 {
     if (!root || !collider || !list)
     {
@@ -239,7 +235,7 @@ void quadtree_query(const QuadtreeNode *root, const Collider *collider,
 
     Collider node;
     node.collider_type = COLLIDER_TYPE_AABB;
-    node.aabb = root->region;
+    node.aabb          = root->region;
 
     Collider target = collision_convert_to_aabb(collider);
 
@@ -253,8 +249,7 @@ void quadtree_query(const QuadtreeNode *root, const Collider *collider,
     for (int i = 0; i < (int)root->colliders->length; i++)
     {
         const Collider *potential = root->colliders->items[i];
-        if (potential != collider &&
-            collision_partial_check(&target, potential).is_colliding)
+        if (potential != collider && collision_partial_check(&target, potential).is_colliding)
         {
             list_add(list, potential);
         }

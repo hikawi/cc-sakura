@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "SDL3/SDL_stdinc.h"
 #include "engine/sprite.h"
+#include "SDL3/SDL_stdinc.h"
 
 #define NODE_DIR_N (1 << 0)
 #define NODE_DIR_S (1 << 1)
@@ -14,21 +14,21 @@
 
 // This isn't used but it's here as a reference for how to tile your sprites.
 #define TILE_NEIGHBOR_NONE 0
-#define TILE_NEIGHBOR_N (NODE_DIR_N)
-#define TILE_NEIGHBOR_S (NODE_DIR_S)
-#define TILE_NEIGHBOR_W (NODE_DIR_W)
-#define TILE_NEIGHBOR_E (NODE_DIR_E)
-#define TILE_NEIGHBOR_NS (NODE_DIR_N | NODE_DIR_S)
-#define TILE_NEIGHBOR_NW (NODE_DIR_N | NODE_DIR_W)
-#define TILE_NEIGHBOR_NE (NODE_DIR_N | NODE_DIR_E)
-#define TILE_NEIGHBOR_SW (NODE_DIR_S | NODE_DIR_W)
-#define TILE_NEIGHBOR_SE (NODE_DIR_S | NODE_DIR_E)
-#define TILE_NEIGHBOR_WE (NODE_DIR_W | NODE_DIR_E)
-#define TILE_NEIGHBOR_NSW (NODE_DIR_N | NODE_DIR_S | NODE_DIR_W)
-#define TILE_NEIGHBOR_NSE (NODE_DIR_N | NODE_DIR_S | NODE_DIR_E)
-#define TILE_NEIGHBOR_NWE (NODE_DIR_N | NODE_DIR_W | NODE_DIR_E)
-#define TILE_NEIGHBOR_SWE (NODE_DIR_S | NODE_DIR_W | NODE_DIR_E)
-#define TILE_NEIGHBOR_ALL (NODE_DIR_N | NODE_DIR_S | NODE_DIR_W | NODE_DIR_E)
+#define TILE_NEIGHBOR_N    (NODE_DIR_N)
+#define TILE_NEIGHBOR_S    (NODE_DIR_S)
+#define TILE_NEIGHBOR_W    (NODE_DIR_W)
+#define TILE_NEIGHBOR_E    (NODE_DIR_E)
+#define TILE_NEIGHBOR_NS   (NODE_DIR_N | NODE_DIR_S)
+#define TILE_NEIGHBOR_NW   (NODE_DIR_N | NODE_DIR_W)
+#define TILE_NEIGHBOR_NE   (NODE_DIR_N | NODE_DIR_E)
+#define TILE_NEIGHBOR_SW   (NODE_DIR_S | NODE_DIR_W)
+#define TILE_NEIGHBOR_SE   (NODE_DIR_S | NODE_DIR_E)
+#define TILE_NEIGHBOR_WE   (NODE_DIR_W | NODE_DIR_E)
+#define TILE_NEIGHBOR_NSW  (NODE_DIR_N | NODE_DIR_S | NODE_DIR_W)
+#define TILE_NEIGHBOR_NSE  (NODE_DIR_N | NODE_DIR_S | NODE_DIR_E)
+#define TILE_NEIGHBOR_NWE  (NODE_DIR_N | NODE_DIR_W | NODE_DIR_E)
+#define TILE_NEIGHBOR_SWE  (NODE_DIR_S | NODE_DIR_W | NODE_DIR_E)
+#define TILE_NEIGHBOR_ALL  (NODE_DIR_N | NODE_DIR_S | NODE_DIR_W | NODE_DIR_E)
 
 /**
  * Represents the tile type of a map.

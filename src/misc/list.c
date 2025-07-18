@@ -1,13 +1,14 @@
 #include "misc/list.h"
+
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
 List *list_init(void)
 {
-    List *list = SDL_malloc(sizeof(List));
+    List *list     = SDL_malloc(sizeof(List));
     list->capacity = 10;
-    list->items = SDL_malloc(sizeof(void *) * list->capacity);
-    list->length = 0;
+    list->items    = SDL_malloc(sizeof(void *) * list->capacity);
+    list->length   = 0;
     return list;
 }
 
@@ -22,18 +23,16 @@ void list_shrink(List *list)
     if (list->capacity / 4 <= list->length)
         return;
 
-    Uint32 new_capacity = list->capacity / 2;
-    const void **new_items =
-        SDL_realloc(list->items, sizeof(void *) * new_capacity);
+    Uint32 new_capacity    = list->capacity / 2;
+    const void **new_items = SDL_realloc(list->items, sizeof(void *) * new_capacity);
     if (new_items)
     {
-        list->items = new_items;
+        list->items    = new_items;
         list->capacity = new_capacity;
     }
     else
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Reallocation for list failed.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Reallocation for list failed.");
     }
 }
 
@@ -52,8 +51,7 @@ void list_add_at(List *list, const void *item, const Uint32 k)
         list_expand(list);
 
     list_expand(list);
-    SDL_memmove(list->items + k + 1, list->items + k,
-                sizeof(void *) * (list->length - k));
+    SDL_memmove(list->items + k + 1, list->items + k, sizeof(void *) * (list->length - k));
     list->items[k] = item;
     list->length++;
 }
@@ -72,8 +70,7 @@ void list_remove_at(List *list, const Uint32 idx)
 
     if (idx < list->length - 1)
     {
-        SDL_memmove(&list->items[idx], &list->items[idx + 1],
-                    sizeof(void *) * (list->length - idx - 1));
+        SDL_memmove(&list->items[idx], &list->items[idx + 1], sizeof(void *) * (list->length - idx - 1));
     }
     list->length--;
     list_shrink(list);
@@ -110,8 +107,7 @@ void list_join(List *list, const List *src)
     while (list->length + src->length > list->capacity)
         list_expand(list);
 
-    SDL_memcpy(&list->items[list->length], src->items,
-               sizeof(void *) * src->length);
+    SDL_memcpy(&list->items[list->length], src->items, sizeof(void *) * src->length);
     list->length += src->length;
 }
 
@@ -121,8 +117,7 @@ void list_clear(List *list)
     list_shrink(list);
 }
 
-void quick_sort(const void **array, int start, int end,
-                int (*comparator)(const void *, const void *))
+void quick_sort(const void **array, int start, int end, int (*comparator)(const void *, const void *))
 {
     if (start >= end - 1)
         return;
@@ -145,8 +140,8 @@ void quick_sort(const void **array, int start, int end,
             break;
 
         const void *tmp = array[i];
-        array[i] = array[j];
-        array[j] = tmp;
+        array[i]        = array[j];
+        array[j]        = tmp;
     }
 
     // Conquer

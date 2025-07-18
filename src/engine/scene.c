@@ -1,12 +1,14 @@
 #include "engine/scene.h"
-#include "SDL3/SDL_log.h"
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_render.h"
-#include "SDL3/SDL_stdinc.h"
+
 #include "app.h"
 #include "engine/sprite.h"
 #include "misc/hashmap.h"
 #include "misc/list.h"
+#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_render.h"
+#include "SDL3/SDL_stdinc.h"
+
 #include <string.h>
 
 /**
@@ -42,17 +44,17 @@ struct SceneTransition
 
 Scene *scene_init(void)
 {
-    Scene *scene = SDL_calloc(1, sizeof(Scene));
-    scene->zindex = 0;
-    scene->quadtree = NULL;
-    scene->data = NULL;
-    scene->enabled = true;
+    Scene *scene             = SDL_calloc(1, sizeof(Scene));
+    scene->zindex            = 0;
+    scene->quadtree          = NULL;
+    scene->data              = NULL;
+    scene->enabled           = true;
     scene->accepting_signals = true;
-    scene->captures_focus = false;
+    scene->captures_focus    = false;
     scene->stops_propagation = false;
-    scene->moved_colliders = list_init();
-    scene->colliders = hash_map_init();
-    scene->sprites = hash_map_init();
+    scene->moved_colliders   = list_init();
+    scene->colliders         = hash_map_init();
+    scene->sprites           = hash_map_init();
     return scene;
 }
 
@@ -78,9 +80,9 @@ void scene_destroy(Scene *scene)
 
     if (scene->colliders)
     {
-        Uint32 *keys = SDL_malloc(sizeof(Uint32) * scene->colliders->size);
-        void **vals = SDL_malloc(sizeof(void *) * scene->colliders->size);
-        hash_map_iterate(scene->colliders, keys, vals);
+        Uint32 *keys;
+        void **vals;
+        hash_map_iterate(scene->colliders, &keys, (const void ***)&vals);
 
         for (int i = 0; i < (int)scene->colliders->size; i++)
         {
@@ -94,9 +96,9 @@ void scene_destroy(Scene *scene)
 
     if (scene->sprites)
     {
-        Uint32 *keys = SDL_malloc(sizeof(Uint32) * scene->sprites->size);
-        void **vals = SDL_malloc(sizeof(void *) * scene->sprites->size);
-        hash_map_iterate(scene->sprites, keys, vals);
+        Uint32 *keys;
+        void **vals;
+        hash_map_iterate(scene->sprites, &keys, (const void ***)&vals);
 
         for (int i = 0; i < (int)scene->sprites->size; i++)
         {
@@ -157,7 +159,7 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
     (void)mgr;
 
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
 
     // Render it to the texture layer.
     SDL_Texture *target = SDL_GetRenderTarget(win.renderer);
@@ -172,13 +174,12 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
 /**
  * Renders the none transition.
  */
-void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
-                                      double progress)
+void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     (void)progress;
 
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Instantly end the transition.
@@ -191,11 +192,10 @@ void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
 /**
  * Renders the fading transition.
  */
-void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
-                                      double progress)
+void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Then we start the fading based on the progress.
@@ -221,12 +221,10 @@ void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
  * Animates the sliding left transition. This will animate the scene sliding to
  * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_slide_left(SceneManager *mgr,
-                                            SceneTransition *trans,
-                                            double progress)
+void scene_mgr_transition_render_slide_left(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -245,12 +243,10 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr,
  * Animates the sliding right transition. This will animate the scene sliding to
  * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_slide_right(SceneManager *mgr,
-                                             SceneTransition *trans,
-                                             double progress)
+void scene_mgr_transition_render_slide_right(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -268,12 +264,10 @@ void scene_mgr_transition_render_slide_right(SceneManager *mgr,
  * Animates the sliding up transition. This will animate the scene sliding to
  * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_slide_up(SceneManager *mgr,
-                                          SceneTransition *trans,
-                                          double progress)
+void scene_mgr_transition_render_slide_up(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -291,12 +285,10 @@ void scene_mgr_transition_render_slide_up(SceneManager *mgr,
  * Animates the sliding down transition. This will animate the scene sliding to
  * move out of the screen or the scene sliding in to move inside of the screen.
  */
-void scene_mgr_transition_render_slide_down(SceneManager *mgr,
-                                            SceneTransition *trans,
-                                            double progress)
+void scene_mgr_transition_render_slide_down(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -314,12 +306,10 @@ void scene_mgr_transition_render_slide_down(SceneManager *mgr,
 /**
  * Animates the sequence of splitting horizontally.
  */
-void scene_mgr_transition_render_split_horiz(SceneManager *mgr,
-                                             SceneTransition *trans,
-                                             double progress)
+void scene_mgr_transition_render_split_horiz(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
 
     scene_mgr_transition_render(mgr, trans);
 
@@ -367,8 +357,7 @@ void scene_mgr_transition_render_split_horiz(SceneManager *mgr,
 /**
  * Applies a transition effect on the renderer.
  */
-void scene_mgr_handle_transition(SceneManager *mgr, SceneTransition *trans,
-                                 double dt)
+void scene_mgr_handle_transition(SceneManager *mgr, SceneTransition *trans, double dt)
 {
 
     // If the transition is inactive, then do nothing.
@@ -461,33 +450,29 @@ void scene_mgr_phys_tick(SceneManager *mgr)
 void scene_mgr_start_transition(SceneManager *mgr, SceneTransitionInfo info)
 {
     AppState *appstate = app_get();
-    WindowStatus win = appstate->window;
+    WindowStatus win   = appstate->window;
 
     if (info.duration < 0)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't have a negative duration transition.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't have a negative duration transition.");
         return;
     }
 
     if (!info.scene)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't have a transition with a null scene.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't have a transition with a null scene.");
         return;
     }
 
     SceneTransition *trans = SDL_calloc(1, sizeof(SceneTransition));
-    trans->info = info;
-    trans->elapsed = 0;
-    trans->active = true;
-    trans->texture = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888,
-                                       SDL_TEXTUREACCESS_TARGET, win.w, win.h);
+    trans->info            = info;
+    trans->elapsed         = 0;
+    trans->active          = true;
+    trans->texture = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, win.w, win.h);
 
     if (!trans->texture)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Unable to allocate texture for transition");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to allocate texture for transition");
         SDL_free(trans);
         return;
     }
@@ -535,7 +520,7 @@ void scene_mgr_reorder(SceneManager *mgr)
 
 void scene_mgr_draw(SceneManager *mgr)
 {
-    AppState *appstate = app_get();
+    AppState *appstate     = app_get();
     SDL_Renderer *renderer = appstate->window.renderer;
 
     // We're gonna go through each scene in the current active stack and render
@@ -559,11 +544,9 @@ void scene_mgr_draw(SceneManager *mgr)
         {
             // Make sure these are rendered.
             // We can add interpolation functions here after.
-            double progress = trans->info.duration == 0
-                                  ? 1
-                                  : trans->elapsed / trans->info.duration;
-            progress = SDL_clamp(progress, 0, 1);
-            progress = animation_curve_calc(trans->info.curve, progress);
+            double progress = trans->info.duration == 0 ? 1 : trans->elapsed / trans->info.duration;
+            progress        = SDL_clamp(progress, 0, 1);
+            progress        = animation_curve_calc(trans->info.curve, progress);
 
             // Clear up transitioning targets also.
             SDL_SetRenderTarget(renderer, trans->texture);

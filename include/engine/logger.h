@@ -3,6 +3,7 @@
 // Represents the application's logging mechanism.
 
 #include "app.h"
+
 #include <stdbool.h>
 
 /**

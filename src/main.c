@@ -6,19 +6,20 @@
 
 #define SDL_MAIN_USE_CALLBACKS
 
+#include "app.h"
+#include "engine/engine.h"
+#include "game/game_scenes.h"
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_main.h"
 #include "SDL3_ttf/SDL_ttf.h"
-#include "app.h"
-#include "engine/engine.h"
-#include "game/game_scenes.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
-static bool SDL_INIT_SUCCESS = false;
-static bool TTF_INIT_SUCCESS = false;
-static bool APP_INIT_SUCCESS = false;
+static bool SDL_INIT_SUCCESS    = false;
+static bool TTF_INIT_SUCCESS    = false;
+static bool APP_INIT_SUCCESS    = false;
 static bool ENGINE_INIT_SUCCESS = false;
 
 /**
@@ -30,12 +31,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     (void)argv;
 
     SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
-    SDL_SetAppMetadata(APPLICATION_NAME, APPLICATION_VERSION,
-                       APPLICATION_IDENTIFIER);
+    SDL_SetAppMetadata(APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_IDENTIFIER);
 
     // Initializes components
-    if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS |
-                  SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD))
     {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to initialize SDL.");
         return SDL_APP_FAILURE;
@@ -50,27 +49,24 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     TTF_INIT_SUCCESS = true;
 
     AppState *app = app_init();
-    *appstate = app;
+    *appstate     = app;
 
     if (app == NULL)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
-                     "Unable to initialize window and renderer.");
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to initialize window and renderer.");
         return SDL_APP_FAILURE;
     }
     APP_INIT_SUCCESS = true;
 
     if (!engine_init(app))
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM,
-                     "Unable to initialize game engine.");
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to initialize game engine.");
         return SDL_APP_FAILURE;
     }
     ENGINE_INIT_SUCCESS = true;
 
     scene_setup();
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                "Bootstrapped application successfully.");
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Bootstrapped application successfully.");
     return SDL_APP_CONTINUE;
 }
 
@@ -122,8 +118,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 
     if (result == SDL_APP_SUCCESS)
     {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
-                    "Application finished successfully");
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Application finished successfully");
     }
     else
     {

@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "SDL3/SDL_pixels.h"
 #include "misc/vector.h"
+#include "SDL3/SDL_pixels.h"
 
-#define MAX_QUADTREE_DEPTH 6
+#define MAX_QUADTREE_DEPTH     6
 #define MAX_COLLIDERS_PER_NODE 10
 
 /**
@@ -29,19 +29,19 @@ typedef enum
  */
 typedef enum
 {
-    COLLISION_SOLID,   // The collider is an unmoving solid. (floors, walls)
-    COLLISION_DYNAMIC, // The collider is a moveable solid. (chars, enemies,
-                       // boxes)
-    COLLISION_SENSOR,  // The collider is invisible, but needed to detect
-                       // something in a range. (checkpoints, doors)
-    COLLISION_HITBOX,  // The collider is meant to deal damage. (sword strikes,
-                       // projectiles)
-    COLLISION_HURTBOX, // The collider is meant to take damage. (the body,
-                       // hitbox touches here to deal damage)
-    COLLISION_GHOST,   // The collider is non-interactive. Ignored by physics
-                       // (ghosts, decorations)
-    COLLISION_ONE_WAY, // The collider is interactable from one way. (one-way
-                       // doors, platforms)
+    COLLISION_SOLID,     // The collider is an unmoving solid. (floors, walls)
+    COLLISION_DYNAMIC,   // The collider is a moveable solid. (chars, enemies,
+                         // boxes)
+    COLLISION_SENSOR,    // The collider is invisible, but needed to detect
+                         // something in a range. (checkpoints, doors)
+    COLLISION_HITBOX,    // The collider is meant to deal damage. (sword strikes,
+                         // projectiles)
+    COLLISION_HURTBOX,   // The collider is meant to take damage. (the body,
+                         // hitbox touches here to deal damage)
+    COLLISION_GHOST,     // The collider is non-interactive. Ignored by physics
+                         // (ghosts, decorations)
+    COLLISION_ONE_WAY,   // The collider is interactable from one way. (one-way
+                         // doors, platforms)
     COLLISION_DEBUG_ZONE // The collider for debugging zones.
 } CollisionType;
 

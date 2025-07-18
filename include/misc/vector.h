@@ -5,11 +5,12 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /**
  * Represents a vector of coordinates (x, y). THis may be used as
  * directional vectors or as a 2D point.
  */
-#include <stdbool.h>
 typedef struct
 {
     double x;

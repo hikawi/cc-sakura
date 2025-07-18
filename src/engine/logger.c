@@ -1,15 +1,15 @@
 #include "engine/logger.h"
+
+#include "app.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
-#include "app.h"
 
 static char log_buf[1024] = {0};
 static size_t log_buf_len = sizeof(log_buf);
 
-void logger_output_func(void *userdata, int category, SDL_LogPriority priority,
-                        const char *message)
+void logger_output_func(void *userdata, int category, SDL_LogPriority priority, const char *message)
 {
     AppState *app = userdata;
     if (!app || !app->logger.logio)
@@ -88,8 +88,7 @@ void logger_output_func(void *userdata, int category, SDL_LogPriority priority,
         break;
     }
 
-    SDL_snprintf(log_buf, log_buf_len, "[%s] | %s > %s\n", priority_str,
-                 category_str, message);
+    SDL_snprintf(log_buf, log_buf_len, "[%s] | %s > %s\n", priority_str, category_str, message);
     SDL_WriteIO(app->logger.logio, log_buf, SDL_strlen(log_buf));
 }
 
@@ -97,14 +96,12 @@ bool logger_init(AppState *app)
 {
     if (app->logger.logio)
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                    "Logger is already initialized.");
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Logger is already initialized.");
         return true;
     }
 
     char fbuf[1024] = {0};
-    char *pref_path =
-        SDL_GetPrefPath(APPLICATION_ORGANIZATION, APPLICATION_APP_NAME);
+    char *pref_path = SDL_GetPrefPath(APPLICATION_ORGANIZATION, APPLICATION_APP_NAME);
     SDL_snprintf(fbuf, sizeof(fbuf), "%slog.txt", pref_path);
     SDL_free(pref_path);
     pref_path = NULL;
@@ -112,9 +109,7 @@ bool logger_init(AppState *app)
     app->logger.logio = SDL_IOFromFile(fbuf, "w");
     if (!app->logger.logio)
     {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_APPLICATION,
-            "Unable to open log file for writing, defaulting to console.");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to open log file for writing, defaulting to console.");
         return false;
     }
 

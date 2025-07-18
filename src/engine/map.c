@@ -1,9 +1,10 @@
 #include "engine/map.h"
+
+#include "engine/sprite.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
-#include "engine/sprite.h"
 
 int map_compute_index(Map *map, Uint32 x, Uint32 y)
 {
@@ -21,13 +22,13 @@ void map_autotile(Map *map)
     {
         for (Uint32 x = 0; x < map->w; x++)
         {
-            int idx = map_compute_index(map, x, y);
+            int idx   = map_compute_index(map, x, y);
             int north = map_compute_index(map, x, y - 1);
             int south = map_compute_index(map, x, y + 1);
-            int east = map_compute_index(map, x + 1, y);
-            int west = map_compute_index(map, x - 1, y);
+            int east  = map_compute_index(map, x + 1, y);
+            int west  = map_compute_index(map, x - 1, y);
 
-            MapTile val = map->tiles[idx].tile;
+            MapTile val         = map->tiles[idx].tile;
             map->tiles[idx].dir = 0;
 
             if (north >= 0 && map->tiles[north].tile == val)
@@ -72,7 +73,7 @@ Map *map_init_v1(SDL_IOStream *io)
     map->tiles = SDL_malloc(map->w * map->h * sizeof(MapNode));
     for (Uint32 i = 0; i < map->w * map->h; i++)
     {
-        map->tiles[i].dir = 0;
+        map->tiles[i].dir  = 0;
         map->tiles[i].tile = TILE_AIR;
     }
 
@@ -97,15 +98,14 @@ Map *map_init(const char *name)
 {
     SDL_Log("Attempting to load map %s", name);
 
-    char buf[1024] = {0};
+    char buf[1024]  = {0};
     size_t buf_size = sizeof(buf);
     SDL_snprintf(buf, buf_size, "%sassets/map/%s.map", SDL_GetBasePath(), name);
 
     SDL_IOStream *io = SDL_IOFromFile(buf, "rb");
     if (io == NULL)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Can't find map file of name %s", name);
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't find map file of name %s", name);
         return NULL;
     }
 
@@ -119,8 +119,7 @@ Map *map_init(const char *name)
         map = map_init_v1(io);
         break;
     default:
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Unknown version of map file. Can't load %s", name);
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unknown version of map file. Can't load %s", name);
         break;
     }
 

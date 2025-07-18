@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "SDL3/SDL_stdinc.h"
 #include "engine/collision.h"
+#include "SDL3/SDL_stdinc.h"
 
 /**
  * Represents the type of a signal.

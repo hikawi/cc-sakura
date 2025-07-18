@@ -5,16 +5,34 @@ on:
     branches: ["main"]
     tags:
       - "v*" # Trigger on semantic version tags (v1.0.0, etc.)
+  pull_request:
+    branches: ["main"]
 
 permissions:
   contents: write
 
 jobs:
   build:
-    continue-on-error: true
     strategy:
+      fail-fast: false
+      # Set up a matrix to run the following 3 configurations:
+      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
+      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
+      #
+      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2025]
+        include:
+          - os: ubuntu-lates
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout with Submodules
@@ -34,24 +52,42 @@ jobs:
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev nasm
 
-      - name: Build (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          chmod +x scripts/build-macos.sh
-          ./scripts/build-macos.sh
+      # - name: Install Dependencies (Windows)
+      #   if: matrix.os == 'windows-latest'
+      #   run: |
+      #     choco install nasm
+      #     echo "C:\Program Files\NASM\" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Build (Linux)
+      - name: Build with CMake
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          cmake --build build --config Release
+
+      - name: Package artifacts (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          chmod +x scripts/build-ubuntu.sh
-          ./scripts/build-ubuntu.sh
+          mkdir -p CCSakura-Linux
+          mv -v build/bin/* CCSakura-Linux
+          mv -v build/lib/* CCSakura-Linux
+          cp -R -v assets CCSakura-Linux
 
-      - name: Build (Windows)
-        if: matrix.os == 'windows-2025'
+      - name: Package artifacts (MacOS)
+        if: matrix.os == 'macos-latest'
         run: |
-          ./scripts/build-windows.ps1
-        env:
-          GITHUB_WORKSPACE: ${{ github.workspace }}
+          mv build/bin/CCSakura.app CCSakura.app
+          mkdir -p CCSakura.app/Contents/Frameworks
+          mkdir -p CCSakura.app/Contents/Resources
+          mv -v build/lib/* CCSakura.app/Contents/Frameworks
+          cp -R -v assets CCSakura.app/Contents/Resources
+          install_name_tool -add_rpath "@executable_path/../Frameworks" "./CCSakura.app/Contents/MacOS/CCSakura"
+
+      - name: Package artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir -p CCSakura-Win
+          mv -Verbose "build\bin\Release\*" "CCSakura-Win"
+          mv -Verbose "build\lib\Release\*" "CCSakura-Win"
+          cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -60,7 +96,7 @@ jobs:
           path: |
             ./CCSakura-Win/
             ./CCSakura.app/
-            ./CCSakura-linux.tar.gz
+            ./CCSakura-Linux/
           retention-days: 30
 
   release:

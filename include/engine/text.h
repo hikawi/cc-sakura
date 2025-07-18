@@ -5,10 +5,11 @@
 
 #pragma once
 
-#include "SDL3/SDL_pixels.h"
-#include "SDL3_ttf/SDL_ttf.h"
 #include "app.h"
 #include "engine/renderer.h"
+#include "SDL3/SDL_pixels.h"
+#include "SDL3_ttf/SDL_ttf.h"
+
 #include <stdbool.h>
 
 /**

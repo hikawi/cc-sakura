@@ -1,6 +1,7 @@
 #include "misc/vector.h"
-#include "SDL3/SDL_stdinc.h"
+
 #include "misc/mathex.h"
+#include "SDL3/SDL_stdinc.h"
 
 Vector2 vector2_make(double x, double y)
 {
@@ -60,10 +61,10 @@ Vector2 vector2_proj(Vector2 from, Vector2 to)
     // normalized b.
     Vector2 res;
 
-    double len_b = vector2_len(to);
+    double len_b  = vector2_len(to);
     double scalar = vector2_dot(from, to) / len_b;
-    res.x = to.x * scalar / len_b;
-    res.y = to.y * scalar / len_b;
+    res.x         = to.x * scalar / len_b;
+    res.y         = to.y * scalar / len_b;
 
     return res;
 }

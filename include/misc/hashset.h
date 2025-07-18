@@ -5,6 +5,7 @@
 #pragma once
 
 #include "SDL3/SDL_stdinc.h"
+
 #include <stdbool.h>
 
 #define HASH_SET_MAX_BUCKETS 256

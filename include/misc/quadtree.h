@@ -7,7 +7,7 @@
 #include "engine/collision.h"
 #include "misc/list.h"
 
-#define MAX_COLLIDERS_PER_NODE 10
+#define MAX_COLLIDERS_PER_NODE  10
 #define MAX_QUADTREE_NODE_DEPTH 7
 
 /**
@@ -46,8 +46,7 @@ bool quadtree_remove(QuadtreeNode *root, const Collider *item);
  * Checks the quadtree for any items that may collide with the provided
  * collider.
  */
-void quadtree_query(const QuadtreeNode *root, const Collider *collider,
-                    List *list);
+void quadtree_query(const QuadtreeNode *root, const Collider *collider, List *list);
 
 /**
  * Destroys a quadtree recursively.

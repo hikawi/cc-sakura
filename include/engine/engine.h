@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "SDL3/SDL_events.h"
 #include "app.h"
+#include "SDL3/SDL_events.h"
 
 /**
  * Initializes the engine of this application.

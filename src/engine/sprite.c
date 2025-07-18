@@ -1,4 +1,6 @@
 #include "engine/sprite.h"
+
+#include "app.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
@@ -7,7 +9,7 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
-#include "app.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,8 +27,7 @@ void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
     char *img_data = SDL_malloc(img_len * sizeof(char));
     if (!SDL_ReadIO(io, img_data, img_len * sizeof(char)))
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Failed to load image data?");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load image data?");
         SDL_free(img_data);
         return;
     }
@@ -53,7 +54,7 @@ void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
             char *name = SDL_malloc(sizeof(char) * (name_len + 1));
             SDL_ReadIO(io, name, name_len);
             name[name_len] = '\0';
-            tags[i].tag = name;
+            tags[i].tag    = name;
 
             SDL_ReadU32LE(io, &tags[i].from);
             SDL_ReadU32LE(io, &tags[i].to);
@@ -92,16 +93,16 @@ void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
             SDL_ReadU32LE(io, &absw);
             SDL_ReadU32LE(io, &absh);
 
-            frames[i].size.x = srcw;
-            frames[i].size.y = srch;
+            frames[i].size.x   = srcw;
+            frames[i].size.y   = srch;
             frames[i].offset.x = relx;
             frames[i].offset.y = rely;
             frames[i].offset.w = relw;
             frames[i].offset.h = relh;
-            frames[i].frame.x = absx;
-            frames[i].frame.y = absy;
-            frames[i].frame.w = absw;
-            frames[i].frame.h = absh;
+            frames[i].frame.x  = absx;
+            frames[i].frame.y  = absy;
+            frames[i].frame.w  = absw;
+            frames[i].frame.h  = absh;
             SDL_ReadU32LE(io, &frames[i].duration);
         }
     }
@@ -111,24 +112,23 @@ void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
     }
 
     // Only allocate when we're sure everything is ready.
-    Sprite *sprite = SDL_malloc(sizeof(Sprite));
-    sprite->tags = tags;
-    sprite->num_tags = num_tags;
-    sprite->size.x = width;
-    sprite->size.y = height;
-    sprite->frames = frames;
-    sprite->num_frames = num_frames;
-    sprite->playing = false;
-    sprite->frame_idx = 0;
+    Sprite *sprite      = SDL_malloc(sizeof(Sprite));
+    sprite->tags        = tags;
+    sprite->num_tags    = num_tags;
+    sprite->size.x      = width;
+    sprite->size.y      = height;
+    sprite->frames      = frames;
+    sprite->num_frames  = num_frames;
+    sprite->playing     = false;
+    sprite->frame_idx   = 0;
     sprite->frame_accum = 0;
-    sprite->sel_tag = -1;
+    sprite->sel_tag     = -1;
 
     // Load the texture needed.
     SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
     SDL_Surface *surface = IMG_Load_IO(img_io, true);
-    SDL_Texture *texture =
-        SDL_CreateTextureFromSurface(app_get()->window.renderer, surface);
-    sprite->texture = texture;
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(app_get()->window.renderer, surface);
+    sprite->texture      = texture;
 
     SDL_DestroySurface(surface);
     SDL_free(img_data);
@@ -140,16 +140,14 @@ Sprite *sprite_init(const char *sprite)
     SDL_Log("Attempting to load sprite %s", sprite);
 
     char buf[1024] = {0};
-    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(),
-                 sprite);
+    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(), sprite);
 
     SDL_IOStream *io = SDL_IOFromFile(buf, "r");
-    Sprite *spr = NULL;
+    Sprite *spr      = NULL;
 
     if (io == NULL)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load sprite %s",
-                     buf);
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load sprite %s", buf);
         return NULL;
     }
 
@@ -164,13 +162,12 @@ Sprite *sprite_init(const char *sprite)
         sprite_init_v1(io, &spr);
         break;
     default:
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Unknown sprite version. Can't decode");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unknown sprite version. Can't decode");
         break;
     }
 
     spr->rotation = 0;
-    spr->scale = 1;
+    spr->scale    = 1;
 
     SDL_SetTextureScaleMode(spr->texture, SDL_SCALEMODE_PIXELART);
     SDL_CloseIO(io);
@@ -198,8 +195,7 @@ bool sprite_set_animation(Sprite *spr, const char *name)
     spr->sel_tag = idx;
     if (idx < 0)
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                    "Trying to set sprite's animation to %s failed.", name);
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Trying to set sprite's animation to %s failed.", name);
     }
     else
     {
@@ -211,9 +207,9 @@ bool sprite_set_animation(Sprite *spr, const char *name)
 
 void sprite_reset_animation(Sprite *spr)
 {
-    spr->frame_idx = 0;
+    spr->frame_idx   = 0;
     spr->frame_accum = 0;
-    spr->playing = false;
+    spr->playing     = false;
 }
 
 bool sprite_advance_animation(Sprite *spr, double dt)
@@ -227,12 +223,12 @@ bool sprite_advance_animation(Sprite *spr, double dt)
     if (spr->sel_tag >= 0)
     {
         FrameTag tag = spr->tags[spr->sel_tag];
-        total = tag.to - tag.from + 1;
-        current = &spr->frames[tag.from + spr->frame_idx];
+        total        = tag.to - tag.from + 1;
+        current      = &spr->frames[tag.from + spr->frame_idx];
     }
     else
     {
-        total = spr->num_frames;
+        total   = spr->num_frames;
         current = &spr->frames[spr->frame_idx];
     }
 
