@@ -127,3 +127,10 @@ https://github.com/user-attachments/assets/89be68a7-c340-4a58-99b9-2672e3a3a4fe
 https://github.com/user-attachments/assets/881e791a-f1d1-45a7-8bc7-eb9bb9d3c4dd
 
 </details>
+
+<details>
+    <summary>Day 21, July 20, 2025 (Centralized Loading Screen)</summary>
+
+https://github.com/user-attachments/assets/ad2798eb-8ad4-4717-bd43-390a95b9a4e4
+
+</details>

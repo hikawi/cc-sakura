@@ -174,14 +174,6 @@ void scene_000_onsignal(Scene *s, Signal *signal)
     }
 }
 
-void scene_000_ondestroy(Scene *s)
-{
-    SDL_free((void *)hash_map_get(s->colliders, SCENE_000_BTN_LEFT));
-    SDL_free((void *)hash_map_get(s->colliders, SCENE_000_BTN_MID));
-    SDL_free((void *)hash_map_get(s->colliders, SCENE_000_BTN_RIGHT));
-    SDL_free(s->data);
-}
-
 Scene *scene_000_main(void)
 {
     Scene *sc = scene_init();
@@ -189,7 +181,6 @@ Scene *scene_000_main(void)
     sc->oninit     = scene_000_oninit;
     sc->onphystick = scene_000_onphystick;
     sc->ondraw     = scene_000_ondraw;
-    sc->ondestroy  = scene_000_ondestroy;
     sc->onsignal   = scene_000_onsignal;
 
     Scene000Data *data = SDL_malloc(sizeof(Scene000Data));

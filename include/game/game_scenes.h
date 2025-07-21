@@ -32,7 +32,9 @@ Scene *scene_fps(const SDL_Color color);
  * Sets up a loading screen while waiting for some data to load. As soon as the
  * mutex is acquireable by this scene. It will start transitioning out with an
  * intermediary.
+ *
+ * When the thread STARTS transitioning out, the callback is called with the provided user data.
  */
-Scene *scene_loading(SDL_Mutex *mutex);
+Scene *scene_loading(SDL_Mutex *mutex, void (*callback)(void *), void *userdata);
 
 Scene *scene_000_main(void); // Scene 000: The main menu.

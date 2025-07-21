@@ -10,6 +10,19 @@
 // Only sets up the first time.
 static bool setup = false;
 
+void setup_next_scene(void *userdata)
+{
+    Scene *main              = scene_000_main();
+    SceneTransitionInfo info = {
+        .scene    = main,
+        .curve    = ANIMATION_CURVE_LINEAR,
+        .duration = 2,
+        .entry    = true,
+        .type     = TRANSITION_SLIDE_DOWN,
+    };
+    scene_mgr_start_transition(userdata, info);
+}
+
 int fake_thread_busy(void *lol)
 {
     ThreadData *data = (ThreadData *)lol;
@@ -36,6 +49,7 @@ int fake_thread_busy(void *lol)
     SDL_DestroyCondition(data->started);
     SDL_DestroyMutex(data->started_mutex);
     SDL_free(data);
+
     return 0;
 }
 
@@ -59,7 +73,7 @@ void scene_setup(void)
     SDL_UnlockMutex(td.started_mutex);
 
     SceneTransitionInfo info = {
-        .scene    = scene_loading(td.mutex),
+        .scene    = scene_loading(td.mutex, setup_next_scene, &app->scene_mgr),
         .entry    = true,
         .type     = TRANSITION_NONE,
         .duration = 2,

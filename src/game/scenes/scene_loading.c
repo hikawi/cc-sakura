@@ -22,6 +22,8 @@ typedef enum
 typedef struct
 {
     SDL_Mutex *mutex;
+    void (*callback)(void *);
+    void *userdata;
 } SceneLoading;
 
 void scene_loading_oninit(Scene *s)
@@ -58,6 +60,13 @@ void scene_loading_ontick(Scene *s, double dt)
             .type     = TRANSITION_FADE,
         };
         scene_mgr_start_transition(&app->scene_mgr, trans);
+
+        // Callbacks.
+        SDL_Log("Running a callback on %p", (void *)data->callback);
+        if (data->callback)
+        {
+            data->callback(data->userdata);
+        }
     }
 
     // Regardless of failing or succeeding, we keep rendering, so even when
@@ -93,7 +102,7 @@ void scene_loading_ondestroy(Scene *s)
     }
 }
 
-Scene *scene_loading(SDL_Mutex *mutex)
+Scene *scene_loading(SDL_Mutex *mutex, void (*callback)(void *), void *userdata)
 {
     SDL_assert(mutex != NULL);
 
@@ -108,7 +117,9 @@ Scene *scene_loading(SDL_Mutex *mutex)
         return NULL;
     }
 
-    data->mutex = mutex;
+    data->mutex    = mutex;
+    data->callback = callback;
+    data->userdata = userdata;
 
     s->captures_focus = true;
     s->data           = data;
