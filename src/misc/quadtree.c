@@ -5,6 +5,9 @@
 #include "misc/list.h"
 #include "SDL3/SDL_stdinc.h"
 
+#define MAX_COLLIDERS_PER_NODE 10
+#define MAX_QUADTREE_DEPTH     7
+
 QuadtreeNode *quadtree_init(void)
 {
     QuadtreeNode *root = SDL_malloc(sizeof(QuadtreeNode));
@@ -83,8 +86,8 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
             for (int j = 0; j < 4; j++)
             {
                 Collider child;
-                child.collider_type = COLLIDER_TYPE_AABB;
-                child.aabb          = root->children[j]->region;
+                child.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+                child.aabb                = root->children[j]->region;
 
                 if (collision_is_fully_enclosed(&child, &col))
                 {
@@ -110,8 +113,8 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
         {
             QuadtreeNode *child_node = root->children[i];
             Collider child;
-            child.collider_type = COLLIDER_TYPE_AABB;
-            child.aabb          = child_node->region;
+            child.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+            child.aabb                = child_node->region;
 
             if (collision_is_fully_enclosed(&child, &aabb))
             {
@@ -137,8 +140,8 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
         {
             QuadtreeNode *child_node = root->children[i];
             Collider child;
-            child.collider_type = COLLIDER_TYPE_AABB;
-            child.aabb          = child_node->region;
+            child.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+            child.aabb                = child_node->region;
 
             if (collision_is_fully_enclosed(&child, &aabb))
             {
@@ -234,8 +237,8 @@ void quadtree_query(const QuadtreeNode *root, const Collider *collider, List *li
     }
 
     Collider node;
-    node.collider_type = COLLIDER_TYPE_AABB;
-    node.aabb          = root->region;
+    node.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+    node.aabb                = root->region;
 
     Collider target = collision_convert_to_aabb(collider);
 

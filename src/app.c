@@ -38,14 +38,14 @@ AppState *app_init(void)
     SDL_memset(&state->input, 0, sizeof(state->input));
 
     // Setup mouse.
-    state->input.mouse.collider_type  = COLLIDER_TYPE_AABB;
-    state->input.mouse.collision_type = COLLISION_GHOST;
-    state->input.mouse.name           = "mouse";
-    state->input.mouse.aabb           = (AABBCollider){
-                  .x = 0,
-                  .y = 0,
-                  .w = APP_MOUSE_DIMENSION,
-                  .h = APP_MOUSE_DIMENSION,
+    state->input.mouse.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+    state->input.mouse.collider_type       = COLLIDER_TYPE_GHOST;
+    state->input.mouse.name                = "mouse";
+    state->input.mouse.aabb                = (AABBCollider){
+                       .x = 0,
+                       .y = 0,
+                       .w = APP_MOUSE_DIMENSION,
+                       .h = APP_MOUSE_DIMENSION,
     };
 
     // Create window and renderer.
@@ -80,12 +80,12 @@ AppState *app_init(void)
     state->running = true;
 
     // Initialize logger.
-    // if (!logger_init(state))
-    // {
-    //     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize a logger file.");
-    //     app_destroy(appstate);
-    //     return NULL;
-    // }
+    if (!logger_init(state))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize a logger file.");
+        app_destroy(appstate);
+        return NULL;
+    }
 
     return state;
 }
@@ -108,7 +108,7 @@ void app_destroy(AppState *state)
     if (!state)
         return;
 
-    // logger_destroy(state);
+    logger_destroy(state);
     scene_mgr_destroy(state->scene_mgr);
     SDL_DestroyWindow(state->window.window);
     SDL_DestroyRenderer(state->window.renderer);

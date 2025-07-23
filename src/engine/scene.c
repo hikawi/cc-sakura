@@ -12,9 +12,45 @@
 #include <string.h>
 
 /**
- * Calculate the progress based on the curve.
+ * \brief Computes the ease-out bounce relative progress
+ *
+ * Given the absolute progress of the animation, ranging from 0-1, what is the relative
+ * progress when mapped on an ease-out-bounce curve.
+ *
+ * \param progress the absolute progress
+ * \returns the relative progress
+ */
+double ease_out_bounce(const double progress)
+{
+    const double n1 = 7.5625;
+    const double d1 = 2.75;
+
+    if (progress < 1 / d1)
+    {
+        return n1 * progress * progress;
+    }
+    else if (progress < 2 / d1)
+    {
+        const double v = progress - 1.5 / d1;
+        return n1 * v * v + 0.75;
+    }
+    else if (progress < 2.5 / d1)
+    {
+        const double v = progress - 2.25 / d1;
+        return n1 * v * v + 0.9375;
+    }
+
+    const double v = progress - 2.625 / d1;
+    return n1 * v * v + 0.984375;
+}
+
+/**
+ * \brief Computes the relative progress using a curve function.
  *
  * Thanks https://easings.net.
+ *
+ * \param curve The curve to go along
+ * \param progress The true progress, based on time
  */
 double animation_curve_calc(const AnimationCurve curve, const double progress)
 {
@@ -28,19 +64,28 @@ double animation_curve_calc(const AnimationCurve curve, const double progress)
         return SDL_sin((progress * SDL_PI_D) / 2);
     case ANIMATION_CURVE_EASE_IN_OUT:
         return -(SDL_cos(SDL_PI_D * progress) - 1) / 2;
+    case ANIMATION_CURVE_EASE_IN_BOUNCE:
+        return 1 - (ease_out_bounce(1 - progress));
+    case ANIMATION_CURVE_EASE_OUT_BOUNCE:
+        return ease_out_bounce(progress);
+    case ANIMATION_CURVE_EASE_IN_OUT_BOUNCE:
+        return progress < 0.5 ? (1 - ease_out_bounce(1 - 2 * progress)) / 2
+                              : (1 + ease_out_bounce(2 * progress - 1)) / 2;
     }
+
+    return progress;
 }
 
 /**
  * Define the scene transition here to hide it away from engine users (me).
  */
-struct SceneTransition
+typedef struct
 {
     SceneTransitionInfo info;
     SDL_Texture *texture;
     double elapsed;
     bool active;
-};
+} SceneTransition;
 
 Scene *scene_init(void)
 {
@@ -80,7 +125,7 @@ void scene_destroy(Scene *scene)
 
     if (scene->colliders)
     {
-        Uint32 *keys;
+        uint32_t *keys;
         void **vals;
         hash_map_iterate(scene->colliders, &keys, (const void ***)&vals);
 
@@ -96,7 +141,7 @@ void scene_destroy(Scene *scene)
 
     if (scene->sprites)
     {
-        Uint32 *keys;
+        uint32_t *keys;
         void **vals;
         hash_map_iterate(scene->sprites, &keys, (const void ***)&vals);
 

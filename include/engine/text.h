@@ -1,7 +1,9 @@
-// engine/text.h
-//
-// The text rendering part of the engine. This may be used to draw texts
-// with various fonts with ease.
+/**
+ * \file engine/text.h
+ *
+ * The engine's text rendering module. This is used to draw various texts on surfaces with multiple variants of font
+ * faces.
+ */
 
 #pragma once
 
@@ -17,23 +19,44 @@
  */
 typedef enum
 {
-    // The font face that should be the main font to be used.
+    /**
+     * Main font face of the game.
+     */
     FONT_FACE_RAINY_HEARTS,
 
-    // The font face that should be used as secondary font.
+    /**
+     * Font face for decorative text pieces.
+     */
     FONT_FACE_DAYDREAM,
 
-    // The debug font face that can also display all Unicode characters.
+    /**
+     * Debug font that can display all Unicode characters.
+     */
     FONT_FACE_UNIFONT,
 } FontFace;
 
 /**
  * Represents a normal font with various styles.
+ *
+ * This is used as a key to cache. All fields in this struct is used in the hashing function.
  */
 typedef struct
 {
+    /**
+     * The font face to use.
+     */
     FontFace face;
+
+    /**
+     * The font's size in points.
+     */
     float sp;
+
+    /**
+     * The font style flags.
+     *
+     * Font weight does not seem to be properly supported in variable fonts.
+     */
     TTF_FontStyleFlags style;
 } Font;
 
@@ -42,21 +65,53 @@ typedef struct
  */
 typedef struct
 {
+    /**
+     * The hashed font to use.
+     *
+     * If the font has not been used yet, it will be created on the fly.
+     */
     Font font;
+
+    /**
+     * The text to render.
+     *
+     * \warning Sending NULL or leave it dangling is undefined behavior.
+     */
     const char *text;
+
+    /**
+     * The X co-ord to place the text.
+     */
     double x;
+
+    /**
+     * The Y co-ord to place the text.
+     */
     double y;
+
+    /**
+     * The color to display the text in.
+     */
     SDL_Color color;
+
+    /**
+     * Where to place the text's origin point.
+     */
     RenderingOriginType origin;
 } FontRenderingOptions;
 
 /**
  * Initializes the engine needed to create fonts.
+ *
+ * \param app the application to create with
+ * \returns true if it was initialized correctly
  */
 bool font_engine_init(AppState *app);
 
 /**
- * Renders a text.
+ * Renders a text with options.
+ *
+ * \param opts the rendering options
  */
 void font_engine_render_text(FontRenderingOptions opts);
 

@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
 #include "app.h"
+#include "common.h"
 #include "engine/collision.h"
 #include "engine/scene.h"
 #include "engine/signal.h"
@@ -127,19 +128,19 @@ void engine_handle_collisions(AppState *app)
         // like to check collisions for "probably colliding" pairs.
         // We do this by recursing through the quadtree as needed.
         HashSet *potentials = hash_set_init();
-        potentials->compare = collision_pair_eq;
-        potentials->hash    = collision_pair_hash;
+        potentials->compare = (CompareFunction)collision_pair_comp;
+        potentials->hash    = (HashFunction)collision_pair_hash;
         List *ancestors     = list_init();
         engine_broad_phase_collisions(s->quadtree, ancestors, potentials);
         list_destroy(ancestors);
 
         // Second step, narrow-phase.
         const void **potentials_list = NULL;
-        int potentials_length;
+        uint32_t potentials_length;
         hash_set_iterate(potentials, &potentials_length, &potentials_list);
         hash_set_destroy(potentials);
 
-        for (int j = 0; j < potentials_length; j++)
+        for (uint32_t j = 0; j < potentials_length; j++)
         {
             CollisionPair *pair = (void *)potentials_list[j];
             Collision info      = collision_check(pair->a, pair->b);
@@ -160,7 +161,7 @@ void engine_handle_collisions(AppState *app)
         quadtree_remove(s->quadtree, &app->input.mouse);
 
         // Free all the potentials, it's safer to do it here idk.
-        for (int j = 0; j < potentials_length; j++)
+        for (uint32_t j = 0; j < potentials_length; j++)
         {
             SDL_free((void *)potentials_list[j]);
         }

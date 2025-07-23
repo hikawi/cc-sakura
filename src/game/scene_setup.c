@@ -36,7 +36,7 @@ int fake_thread_busy(void *lol)
 
     for (int i = 0; i < 100; i++)
     {
-        SDL_Delay(100);
+        SDL_Delay(50);
         SDL_Log("Logging from fake thread: %d", i);
     }
 

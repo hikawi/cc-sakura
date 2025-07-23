@@ -1,5 +1,6 @@
 #include "engine/collision.h"
 
+#include "common.h"
 #include "misc/mathex.h"
 #include "misc/vector.h"
 #include "SDL3/SDL_log.h"
@@ -11,28 +12,24 @@
 /**
  * GPT-generated for different colors based on collision types.
  */
-SDL_Color collision_get_debug_color(CollisionType type)
+SDL_Color collision_get_debug_color(ColliderType type)
 {
     switch (type)
     {
-    case COLLISION_SOLID:
-        return (SDL_Color){0, 255, 0, 64}; // Green
-    case COLLISION_DYNAMIC:
-        return (SDL_Color){0, 0, 255, 64}; // Blue
-    case COLLISION_SENSOR:
-        return (SDL_Color){255, 255, 0, 64}; // Yellow
-    case COLLISION_HITBOX:
-        return (SDL_Color){255, 0, 0, 64}; // Red
-    case COLLISION_HURTBOX:
-        return (SDL_Color){255, 0, 255, 64}; // Magenta
-    case COLLISION_GHOST:
-        return (SDL_Color){160, 32, 240, 64}; // Purple
-    case COLLISION_ONE_WAY:
-        return (SDL_Color){128, 64, 0, 64}; // Brownish
-    case COLLISION_DEBUG_ZONE:
-        return (SDL_Color){255, 255, 255, 64}; // White
+    case COLLIDER_TYPE_STATIC:
+        return rgba(0, 255, 0, 64); // Green
+    case COLLIDER_TYPE_DYNAMIC:
+        return rgba(0, 0, 255, 64); // Blue
+    case COLLIDER_TYPE_SENSOR:
+        return rgba(255, 255, 0, 64); // Yellow
+    case COLLIDER_TYPE_HITBOX:
+        return rgba(255, 0, 0, 64); // Red
+    case COLLIDER_TYPE_HURTBOX:
+        return rgba(255, 0, 255, 64); // Magenta
+    case COLLIDER_TYPE_PROJECTILE:
+        return rgba(160, 32, 240, 64); // Purple
     default:
-        return (SDL_Color){0, 0, 0, 64};
+        return rgba(0, 0, 0, 64);
     }
 }
 
@@ -608,33 +605,33 @@ Collision collision_check(const Collider *c1, const Collider *c2)
 
     Collision info = {.is_colliding = false, .depth = 0};
 
-    switch (c1->collider_type)
+    switch (c1->collider_shape_type)
     {
-    case COLLIDER_TYPE_AABB:
-        switch (c2->collider_type)
+    case COLLIDER_SHAPE_TYPE_AABB:
+        switch (c2->collider_shape_type)
         {
-        case COLLIDER_TYPE_CAPSULE:
+        case COLLIDER_SHAPE_TYPE_CAPSULE:
             return collision_aabb_capsule(c1->aabb, c2->capsule);
-        case COLLIDER_TYPE_CIRCLE:
+        case COLLIDER_SHAPE_TYPE_CIRCLE:
             return collision_aabb_circle(c1->aabb, c2->circle);
-        case COLLIDER_TYPE_AABB:
+        case COLLIDER_SHAPE_TYPE_AABB:
             return collision_aabb_aabb(c1->aabb, c2->aabb);
-        case COLLIDER_TYPE_OBB:
+        case COLLIDER_SHAPE_TYPE_OBB:
             return collision_aabb_obb(c1->aabb, c2->obb);
         }
         break;
-    case COLLIDER_TYPE_CAPSULE:
-        switch (c2->collider_type)
+    case COLLIDER_SHAPE_TYPE_CAPSULE:
+        switch (c2->collider_shape_type)
         {
-        case COLLIDER_TYPE_AABB:
+        case COLLIDER_SHAPE_TYPE_AABB:
             info        = collision_aabb_capsule(c2->aabb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
-        case COLLIDER_TYPE_OBB:
+        case COLLIDER_SHAPE_TYPE_OBB:
             info        = collision_obb_capsule(c2->obb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
-        case COLLIDER_TYPE_CIRCLE:
+        case COLLIDER_SHAPE_TYPE_CIRCLE:
             info        = collision_circle_capsule(c2->circle, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
@@ -642,37 +639,37 @@ Collision collision_check(const Collider *c1, const Collider *c2)
             break;
         }
         break;
-    case COLLIDER_TYPE_CIRCLE:
-        switch (c2->collider_type)
+    case COLLIDER_SHAPE_TYPE_CIRCLE:
+        switch (c2->collider_shape_type)
         {
-        case COLLIDER_TYPE_AABB:
+        case COLLIDER_SHAPE_TYPE_AABB:
             info        = collision_aabb_circle(c2->aabb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
-        case COLLIDER_TYPE_CIRCLE:
+        case COLLIDER_SHAPE_TYPE_CIRCLE:
             return collision_circle_circle(c1->circle, c2->circle);
-        case COLLIDER_TYPE_OBB:
+        case COLLIDER_SHAPE_TYPE_OBB:
             info        = get_collision_obb_circle(c2->obb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
-        case COLLIDER_TYPE_CAPSULE:
+        case COLLIDER_SHAPE_TYPE_CAPSULE:
             return collision_circle_capsule(c1->circle, c2->capsule);
         default:
             break;
         }
         break;
-    case COLLIDER_TYPE_OBB:
-        switch (c2->collider_type)
+    case COLLIDER_SHAPE_TYPE_OBB:
+        switch (c2->collider_shape_type)
         {
-        case COLLIDER_TYPE_AABB:
+        case COLLIDER_SHAPE_TYPE_AABB:
             info        = collision_aabb_obb(c2->aabb, c1->obb);
             info.normal = vector2_neg(info.normal);
             return info;
-        case COLLIDER_TYPE_CIRCLE:
+        case COLLIDER_SHAPE_TYPE_CIRCLE:
             return get_collision_obb_circle(c1->obb, c2->circle);
-        case COLLIDER_TYPE_OBB:
+        case COLLIDER_SHAPE_TYPE_OBB:
             return collision_obb_obb(c1->obb, c2->obb);
-        case COLLIDER_TYPE_CAPSULE:
+        case COLLIDER_SHAPE_TYPE_CAPSULE:
             return collision_obb_capsule(c1->obb, c2->capsule);
         }
         break;
@@ -690,14 +687,14 @@ Collision collision_check(const Collider *c1, const Collider *c2)
 Collider collision_convert_to_aabb(const Collider *collider)
 {
     Collider val;
-    val.collider_type  = COLLIDER_TYPE_AABB;
-    val.collision_type = COLLISION_GHOST;
-    val.name           = "tmp_aabb";
-    val.aabb           = (AABBCollider){
-                  .h = 0,
-                  .w = 0,
-                  .x = 0,
-                  .y = 0,
+    val.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
+    val.collider_type       = COLLIDER_TYPE_GHOST;
+    val.name                = "tmp_aabb";
+    val.aabb                = (AABBCollider){
+                       .h = 0,
+                       .w = 0,
+                       .x = 0,
+                       .y = 0,
     };
 
     if (!collider)
@@ -705,19 +702,19 @@ Collider collision_convert_to_aabb(const Collider *collider)
         return val;
     }
 
-    val.collision_type = collider->collision_type;
-    switch (collider->collider_type)
+    val.collider_type = collider->collider_type;
+    switch (collider->collider_shape_type)
     {
-    case COLLIDER_TYPE_AABB:
+    case COLLIDER_SHAPE_TYPE_AABB:
         val.aabb = collider->aabb;
         break;
-    case COLLIDER_TYPE_CIRCLE:
+    case COLLIDER_SHAPE_TYPE_CIRCLE:
         val.aabb.h = collider->circle.r * 2;
         val.aabb.w = collider->circle.r * 2;
         val.aabb.x = collider->circle.x;
         val.aabb.y = collider->circle.y;
         break;
-    case COLLIDER_TYPE_OBB:
+    case COLLIDER_SHAPE_TYPE_OBB:
     {
         // The algorithm to convert an OBB to an AABB is that:
         // - Write the coords in the OBB's coord space.
@@ -759,7 +756,7 @@ Collider collision_convert_to_aabb(const Collider *collider)
         val.aabb.y = (min.y + max.y) / 2;
     }
     break;
-    case COLLIDER_TYPE_CAPSULE:
+    case COLLIDER_SHAPE_TYPE_CAPSULE:
     {
         CapsuleCollider cap;
 
@@ -786,7 +783,8 @@ Collider collision_convert_to_aabb(const Collider *collider)
 
 bool collision_is_fully_enclosed(const Collider *outer, const Collider *inner)
 {
-    if (!outer || !inner || outer->collider_type != COLLIDER_TYPE_AABB || inner->collider_type != COLLIDER_TYPE_AABB)
+    if (!outer || !inner || outer->collider_shape_type != COLLIDER_SHAPE_TYPE_AABB ||
+        inner->collider_shape_type != COLLIDER_SHAPE_TYPE_AABB)
     {
         return false;
     }
@@ -819,12 +817,15 @@ Collision collision_partial_check(const Collider *c1, const Collider *c2)
     return collision_check(&new_c1, &new_c2);
 }
 
-Uint64 collision_pair_hash(const void *pair)
+Uint64 collision_pair_hash(const CollisionPair *pair)
 {
-    CollisionPair *p = (CollisionPair *)pair;
+    if (!pair)
+    {
+        return 0;
+    }
 
-    uintptr_t a = (uintptr_t)p->a;
-    uintptr_t b = (uintptr_t)p->b;
+    uintptr_t a = (uintptr_t)pair->a;
+    uintptr_t b = (uintptr_t)pair->b;
     if (b > a)
     {
         uintptr_t tmp = b;
@@ -835,10 +836,46 @@ Uint64 collision_pair_hash(const void *pair)
     return a * 31 ^ b;
 }
 
-bool collision_pair_eq(const void *a, const void *b)
+int collision_pair_comp(const CollisionPair *a, const CollisionPair *b)
 {
-    CollisionPair *pa = (CollisionPair *)a;
-    CollisionPair *pb = (CollisionPair *)b;
+    if ((!a && !b) || a == b)
+    {
+        return 0;
+    }
+    else if (!a)
+    {
+        return -1;
+    }
+    else if (!b)
+    {
+        return 1;
+    }
 
-    return pa == pb || (pa->a == pb->a && pa->b == pb->b) || (pa->a == pb->b && pa->b == pb->a);
+    const uintptr_t min_a = (uintptr_t)SDL_min(a->a, a->b);
+    const uintptr_t max_a = (uintptr_t)SDL_max(a->a, a->b);
+    const uintptr_t min_b = (uintptr_t)SDL_min(b->a, b->b);
+    const uintptr_t max_b = (uintptr_t)SDL_max(b->a, b->b);
+
+    if (min_a == min_b && max_a == max_b)
+    {
+        return 0;
+    }
+    else if (min_a < min_b)
+    {
+        return -1;
+    }
+    else if (min_a > min_b)
+    {
+        return 1;
+    }
+    else if (max_a < max_b)
+    {
+        return -1;
+    }
+    else if (max_a > max_b)
+    {
+        return 1;
+    }
+
+    return 0;
 }

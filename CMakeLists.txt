@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(PROJECT_VERSION "0.3.0")
+set(PROJECT_VERSION "0.2.1")
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -44,6 +44,7 @@ if(MSVC)
 else()
     target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+target_compile_definitions(CCSakura PRIVATE APPLICATION_VERSION="${PROJECT_VERSION}")
 
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE

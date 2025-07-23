@@ -1,5 +1,6 @@
 #include "misc/hashset.h"
 
+#include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
@@ -39,7 +40,7 @@ bool hash_set_add(HashSet *set, const void *item)
     HashSetNode *prev = NULL;
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
+        if ((set->compare && set->compare(item, cur->item) == 0) || cur->item == item)
         {
             return false; // already added
         }
@@ -77,7 +78,7 @@ bool hash_set_remove(HashSet *set, const void *item)
     HashSetNode *prev = NULL;
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
+        if ((set->compare && set->compare(item, cur->item) == 0) || cur->item == item)
         {
             if (prev)
             {
@@ -120,7 +121,7 @@ bool hash_set_has(const HashSet *set, const void *item)
     HashSetNode *cur = set->buckets[hash];
     while (cur)
     {
-        if ((set->compare && set->compare(item, cur->item)) || cur->item == item)
+        if ((set->compare && set->compare(item, cur->item) == 0) || cur->item == item)
         {
             return true;
         }
@@ -153,10 +154,15 @@ void hash_set_clear(HashSet *set)
     set->length = 0;
 }
 
-void hash_set_iterate(const HashSet *set, int *length, const void ***items)
+void hash_set_iterate(const HashSet *set, uint32_t *length, const void ***items)
 {
-    *items  = SDL_calloc((size_t)set->length, sizeof(void *));
+    SDL_assert(length != NULL && items != NULL);
+
     *length = set->length;
+    if (*items == NULL)
+    {
+        *items = SDL_calloc(set->length, sizeof(void *));
+    }
 
     int len = 0;
     for (int i = 0; i < HASH_SET_MAX_BUCKETS; i++)
