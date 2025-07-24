@@ -4,8 +4,6 @@
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 
-#include <sys/syslimits.h>
-
 struct GenericHashMapNode
 {
     const void *key;
