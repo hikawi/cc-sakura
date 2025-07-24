@@ -129,7 +129,7 @@ void scene_destroy(Scene *scene)
         void **vals;
         hash_map_iterate(scene->colliders, &keys, (const void ***)&vals);
 
-        for (int i = 0; i < (int)scene->colliders->size; i++)
+        for (uint32_t i = 0; i < scene->colliders->size; i++)
         {
             SDL_free(vals[i]);
         }
@@ -145,7 +145,7 @@ void scene_destroy(Scene *scene)
         void **vals;
         hash_map_iterate(scene->sprites, &keys, (const void ***)&vals);
 
-        for (int i = 0; i < (int)scene->sprites->size; i++)
+        for (uint32_t i = 0; i < scene->sprites->size; i++)
         {
             sprite_destroy(vals[i]);
         }
@@ -178,7 +178,7 @@ void scene_transition_destroy(SceneTransition *trans)
  */
 void scene_mgr_purge_transitions(SceneManager *mgr)
 {
-    Uint32 i = 0;
+    uint32_t i = 0;
 
     while (i < mgr->transitions->length)
     {

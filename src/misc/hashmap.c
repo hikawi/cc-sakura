@@ -3,7 +3,7 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_stdinc.h"
 
-static inline Uint32 hash_uint32(const Uint32 key)
+static inline uint32_t hash_uint32(const uint32_t key)
 {
     return (key * 2654435761u) % HASH_MAP_MAX_BUCKETS;
 }
@@ -14,7 +14,7 @@ HashMap *hash_map_init(void)
     return map;
 }
 
-bool hash_map_has_key(const HashMap *map, const Uint32 key)
+bool hash_map_has_key(const HashMap *map, const uint32_t key)
 {
     return hash_map_get(map, key) != NULL;
 }
@@ -36,9 +36,9 @@ bool hash_map_has_value(const HashMap *map, const void *value)
     return false;
 }
 
-const void *hash_map_put(HashMap *map, const Uint32 key, const void *value)
+const void *hash_map_put(HashMap *map, const uint32_t key, const void *value)
 {
-    Uint32 idx        = hash_uint32(key);
+    uint32_t idx      = hash_uint32(key);
     HashMapNode *prev = NULL;
     HashMapNode *cur  = map->nodes[idx];
 
@@ -76,9 +76,9 @@ const void *hash_map_put(HashMap *map, const Uint32 key, const void *value)
     return NULL;
 }
 
-const void *hash_map_remove(HashMap *map, const Uint32 key)
+const void *hash_map_remove(HashMap *map, const uint32_t key)
 {
-    Uint32 idx        = hash_uint32(key);
+    uint32_t idx      = hash_uint32(key);
     HashMapNode *prev = NULL;
     HashMapNode *cur  = map->nodes[idx];
 
@@ -110,7 +110,7 @@ const void *hash_map_remove(HashMap *map, const Uint32 key)
     return NULL;
 }
 
-const void *hash_map_get(const HashMap *map, const Uint32 key)
+const void *hash_map_get(const HashMap *map, const uint32_t key)
 {
     HashMapNode *cur = map->nodes[hash_uint32(key)];
     while (cur)
@@ -122,14 +122,14 @@ const void *hash_map_get(const HashMap *map, const Uint32 key)
     return NULL;
 }
 
-void hash_map_iterate(const HashMap *map, Uint32 **keys, const void ***values)
+void hash_map_iterate(const HashMap *map, uint32_t **keys, const void ***values)
 {
     SDL_assert(keys != NULL && values != NULL);
 
-    *keys   = SDL_malloc(sizeof(Uint32) * map->size);
+    *keys   = SDL_malloc(sizeof(uint32_t) * map->size);
     *values = SDL_malloc(sizeof(const void *) * map->size);
 
-    Uint32 idx = 0;
+    uint32_t idx = 0;
     for (int i = 0; i < HASH_MAP_MAX_BUCKETS; i++)
     {
         HashMapNode *node = map->nodes[i];

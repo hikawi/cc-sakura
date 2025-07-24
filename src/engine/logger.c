@@ -5,7 +5,6 @@
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
-#include "SDL3/SDL_thread.h"
 
 #include <stdio.h>
 
@@ -91,8 +90,7 @@ void logger_output_func(void *userdata, int category, SDL_LogPriority priority, 
         break;
     }
 
-    SDL_ThreadID thread_id = SDL_GetCurrentThreadID();
-    SDL_snprintf(log_buf, log_buf_len, "[%s] [%s] %llu > %s\n", priority_str, category_str, thread_id, message);
+    SDL_snprintf(log_buf, log_buf_len, "[%s] [%s] > %s\n", priority_str, category_str, message);
     SDL_WriteIO(app->logger.logio, log_buf, SDL_strlen(log_buf));
     printf("%s", log_buf);
 }

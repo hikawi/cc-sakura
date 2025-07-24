@@ -515,7 +515,7 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
         // If length is close enough to 0, the center of the circle is on
         // the capsule's segment.
         Vector2 in  = vector2_sub(c2.p1, c2.p2);
-        info.normal = vector2_norm(vector2_rot(in, -M_PI_2));
+        info.normal = vector2_norm(vector2_rot(in, -SDL_PI_D / 2));
         info.depth  = c1.r + c2.r;
     }
     else
@@ -817,7 +817,7 @@ Collision collision_partial_check(const Collider *c1, const Collider *c2)
     return collision_check(&new_c1, &new_c2);
 }
 
-Uint64 collision_pair_hash(const CollisionPair *pair)
+uint64_t collision_pair_hash(const CollisionPair *pair)
 {
     if (!pair)
     {

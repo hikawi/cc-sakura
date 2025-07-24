@@ -78,7 +78,7 @@ bool quadtree_add(QuadtreeNode *root, const Collider *item)
 
         // Move colliders into children.
         List *current_colliders = list_init();
-        for (Uint32 i = 0; i < root->colliders->length; i++)
+        for (uint32_t i = 0; i < root->colliders->length; i++)
         {
             Collider col = collision_convert_to_aabb(root->colliders->items[i]);
 
@@ -174,7 +174,7 @@ bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent, const Collid
     int idx = list_find(cur->colliders, item);
     if (idx >= 0)
     {
-        list_remove_at(cur->colliders, (Uint32)idx);
+        list_remove_at(cur->colliders, (uint32_t)idx);
 
         // Merge if needed.
         // If this is root, no need to merge at all.
@@ -183,7 +183,7 @@ bool quadtree_remove_recur(QuadtreeNode *cur, QuadtreeNode *parent, const Collid
             return true;
         }
 
-        Uint32 count = parent->colliders->length;
+        uint32_t count = parent->colliders->length;
         for (int i = 0; i < 4; i++)
         {
             if (!parent->children[i])
@@ -249,7 +249,7 @@ void quadtree_query(const QuadtreeNode *root, const Collider *collider, List *li
     }
 
     // Check all current colliders.
-    for (int i = 0; i < (int)root->colliders->length; i++)
+    for (uint32_t i = 0; i < root->colliders->length; i++)
     {
         const Collider *potential = root->colliders->items[i];
         if (potential != collider && collision_partial_check(&target, potential).is_colliding)

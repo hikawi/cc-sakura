@@ -5,7 +5,6 @@
 #include "misc/mathex.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
-#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 
 #include <string.h>
@@ -58,9 +57,9 @@ void render_map(Map *map, Sprite *spr)
 
     // Let's render (0, maxY) = bottom left. That means local_x * 16 = screen_x.
     // (0, maxY-1) = 1 off bottom => screen_y = win_y - (max_y - local_y) * 16.
-    for (Uint32 x = 0; x < map->w; x++)
+    for (uint32_t x = 0; x < map->w; x++)
     {
-        for (Uint32 y = 0; y < map->h; y++)
+        for (uint32_t y = 0; y < map->h; y++)
         {
             // First, we calculate the srcrect.
             // A sprite is expected to have the following order in 12:
@@ -81,7 +80,7 @@ void render_map(Map *map, Sprite *spr)
             if (spr->sel_tag >= 0)
             {
                 FrameTag tag = spr->tags[spr->sel_tag];
-                frame        = spr->frames[tag.from + (Uint32)node.dir];
+                frame        = spr->frames[tag.from + (uint32_t)node.dir];
             }
             else
             {
@@ -92,7 +91,7 @@ void render_map(Map *map, Sprite *spr)
             srcrect = frame.frame;
 
             dstrect.x = x * APPLICATION_MAP_TILE * APPLICATION_SCALE;
-            dstrect.y = (Uint32)appstate->window.h - (map->h - y - 1) * APPLICATION_MAP_TILE * APPLICATION_SCALE;
+            dstrect.y = (uint32_t)appstate->window.h - (map->h - y - 1) * APPLICATION_MAP_TILE * APPLICATION_SCALE;
             dstrect.w = APPLICATION_MAP_TILE * APPLICATION_SCALE;
             dstrect.h = APPLICATION_MAP_TILE * APPLICATION_SCALE;
 

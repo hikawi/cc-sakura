@@ -23,7 +23,7 @@ void list_shrink(List *list)
     if (list->capacity / 4 <= list->length)
         return;
 
-    Uint32 new_capacity    = list->capacity / 2;
+    uint32_t new_capacity  = list->capacity / 2;
     const void **new_items = SDL_realloc(list->items, sizeof(void *) * new_capacity);
     if (new_items)
     {
@@ -39,16 +39,22 @@ void list_shrink(List *list)
 void list_add(List *list, const void *item)
 {
     if (list->length + 1 <= list->capacity)
+    {
         list_expand(list);
+    }
     list->items[list->length++] = item;
 }
 
-void list_add_at(List *list, const void *item, const Uint32 k)
+void list_add_at(List *list, const void *item, const uint32_t k)
 {
     if (k >= list->length)
+    {
         return;
+    }
     if (list->length + 1 <= list->capacity)
+    {
         list_expand(list);
+    }
 
     list_expand(list);
     SDL_memmove(list->items + k + 1, list->items + k, sizeof(void *) * (list->length - k));
@@ -60,13 +66,17 @@ void list_remove(List *list, const void *item)
 {
     int idx = list_find(list, item);
     if (idx >= 0)
-        list_remove_at(list, (Uint32)idx);
+    {
+        list_remove_at(list, (uint32_t)idx);
+    }
 }
 
-void list_remove_at(List *list, const Uint32 idx)
+void list_remove_at(List *list, const uint32_t idx)
 {
     if (idx >= list->length)
+    {
         return;
+    }
 
     if (idx < list->length - 1)
     {
@@ -76,16 +86,16 @@ void list_remove_at(List *list, const Uint32 idx)
     list_shrink(list);
 }
 
-const void *list_get(const List *list, const int index)
+const void *list_get(const List *list, const uint32_t index)
 {
-    if (index < 0 || index >= (int)list->length)
+    if (index >= list->length)
         return NULL;
     return list->items[index];
 }
 
 int list_find(const List *list, const void *item)
 {
-    for (Uint32 i = 0; i < list->length; i++)
+    for (uint32_t i = 0; i < list->length; i++)
     {
         if (list->items[i] == item)
         {
@@ -103,9 +113,13 @@ bool list_has(const List *list, const void *item)
 void list_join(List *list, const List *src)
 {
     if (src == NULL || src->length == 0)
+    {
         return;
+    }
     while (list->length + src->length > list->capacity)
+    {
         list_expand(list);
+    }
 
     SDL_memcpy(&list->items[list->length], src->items, sizeof(void *) * src->length);
     list->length += src->length;
@@ -120,7 +134,9 @@ void list_clear(List *list)
 void quick_sort(const void **array, int start, int end, int (*comparator)(const void *, const void *))
 {
     if (start >= end - 1)
+    {
         return;
+    }
 
     // Partition.
     const void *pivot = array[start];

@@ -23,7 +23,7 @@ bool hash_set_add(HashSet *set, const void *item)
         return false;
     }
 
-    Uint32 hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
+    uint64_t hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
 
     // First node.
     if (!set->buckets[hash])
@@ -71,7 +71,7 @@ bool hash_set_remove(HashSet *set, const void *item)
         return false;
     }
 
-    Uint32 hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
+    uint64_t hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
 
     // Find the end of the node, or ignore if already added.
     HashSetNode *cur  = set->buckets[hash];
@@ -115,7 +115,7 @@ bool hash_set_has(const HashSet *set, const void *item)
         return false;
     }
 
-    Uint32 hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
+    uint64_t hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
 
     // Find the end of the node, or ignore if already added.
     HashSetNode *cur = set->buckets[hash];

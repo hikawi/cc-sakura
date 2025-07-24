@@ -11,7 +11,6 @@
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_scancode.h"
-#include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_video.h"
 
 #define APPLICATION_NAME            "Sakura and the Clow Cards"

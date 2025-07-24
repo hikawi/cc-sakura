@@ -37,12 +37,12 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, Ha
         return;
     }
 
-    for (int i = 0; i < (int)root->colliders->length; i++)
+    for (uint32_t i = 0; i < root->colliders->length; i++)
     {
         const Collider this = collision_convert_to_aabb(root->colliders->items[i]);
 
         // Intra-node collisions
-        for (int j = i + 1; j < (int)root->colliders->length; j++)
+        for (uint32_t j = i + 1; j < root->colliders->length; j++)
         {
             if (collision_partial_check(&this, root->colliders->items[j]).is_colliding)
             {
@@ -54,7 +54,7 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, Ha
         }
 
         // Ancestor collisions.
-        for (int j = 0; j < (int)ancestors->length; j++)
+        for (uint32_t j = 0; j < ancestors->length; j++)
         {
             if (collision_partial_check(&this, ancestors->items[j]).is_colliding)
             {
@@ -84,7 +84,7 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, Ha
 void engine_handle_collisions(AppState *app)
 {
     Signal signal;
-    for (int i = 0; i < (int)app->scene_mgr.scenes->length; i++)
+    for (uint32_t i = 0; i < app->scene_mgr.scenes->length; i++)
     {
         Scene *s = (Scene *)app->scene_mgr.scenes->items[i];
 
@@ -98,13 +98,13 @@ void engine_handle_collisions(AppState *app)
         // Get all colliders, only if we haven't created the quadtree.
         if (!s->quadtree)
         {
-            Uint32 size = s->colliders->size;
+            uint32_t size = s->colliders->size;
             Collider **colliders;
-            Uint32 *keys;
+            uint32_t *keys;
             hash_map_iterate(s->colliders, &keys, (const void ***)&colliders);
 
             s->quadtree = quadtree_init();
-            for (int j = 0; j < (int)size; j++)
+            for (uint32_t j = 0; j < size; j++)
             {
                 quadtree_add(s->quadtree, colliders[j]);
             }
@@ -117,7 +117,7 @@ void engine_handle_collisions(AppState *app)
         quadtree_add(s->quadtree, &app->input.mouse);
 
         // Handle dirty colliders.
-        for (int j = 0; j < (int)s->moved_colliders->length; j++)
+        for (uint32_t j = 0; j < s->moved_colliders->length; j++)
         {
             quadtree_remove(s->quadtree, s->moved_colliders->items[j]);
             quadtree_add(s->quadtree, s->moved_colliders->items[j]);
@@ -187,7 +187,7 @@ void engine_pump_signals(AppState *app)
 void engine_iterate(AppState *app)
 {
     // Calculate delta time
-    Uint64 cur_frame                = SDL_GetTicks();
+    uint64_t cur_frame              = SDL_GetTicks();
     double dt                       = (cur_frame - app->frame_data.last_frame_tick) / 1000.0;
     app->frame_data.last_frame_tick = cur_frame;
 
