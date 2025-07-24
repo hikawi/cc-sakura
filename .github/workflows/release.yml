@@ -82,7 +82,7 @@ jobs:
           install_name_tool -add_rpath "@executable_path/../Frameworks" "./CCSakura.app/Contents/MacOS/CCSakura"
 
       - name: Package artifacts (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2025'
         run: |
           mkdir -p CCSakura-Win
           mv -Verbose "build\bin\Release\*" "CCSakura-Win"
@@ -116,6 +116,12 @@ jobs:
       - name: List Downloaded Artifacts
         run: ls -R downloaded
 
+      - name: Archive files for release
+        run: |
+          tar -czvf downloaded/CCSakura-Linux.tar.gz downloaded/CCSakura-Linux/CCSakura-Linux/*
+          zip -v -r downloaded/CCSakura-MacOS.zip downloaded/CCSakura-MacOS/CCSakura.app
+          zip -v -r downloaded/CCSakura-Win.zip downloaded/CCSakura-Win/CCSakura-Win
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         env:
@@ -123,4 +129,6 @@ jobs:
         with:
           body_path: CHANGELOG.md
           files: |
-            downloaded/*
+            downloaded/CCSakura-Linux.tar.gz
+            downloaded/CCSakura-MacOS.zip
+            downloaded/CCSakura-Win.zip
