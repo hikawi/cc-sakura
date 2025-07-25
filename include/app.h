@@ -8,7 +8,6 @@
 
 #include "engine/collision.h"
 #include "engine/scene.h"
-#include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_scancode.h"
 #include "SDL3/SDL_video.h"
@@ -111,17 +110,6 @@ typedef struct
 } WindowStatus;
 
 /**
- * The logger module's data.
- */
-typedef struct
-{
-    /**
-     * The IOStream bound to a file, should be initialized with \ref logger_init.
-     */
-    SDL_IOStream *logio;
-} Logger;
-
-/**
  * Represents a struct that holds the main information about the game.
  */
 typedef struct
@@ -145,11 +133,6 @@ typedef struct
      * The app's main scene manager.
      */
     SceneManager scene_mgr;
-
-    /**
-     * The app's logger module.
-     */
-    Logger logger;
 
     /**
      * Whether the app should run on next tick, or tear down gracefully.

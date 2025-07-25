@@ -21,6 +21,7 @@ A self-designed, built from the ground up 2D platformer game, using C and SDL3
   - [Progress](#progress)
     - [Week 1](#week-1)
     - [Week 2](#week-2)
+    - [Week 3](#week-3)
 
 ## Overview
 
@@ -29,6 +30,8 @@ A passion project where Kinomoto Sakura (from Cardcaptor Sakura) traverses the 2
 - **Pure C + SDL3** – I decided to go fully hands on with engine making and designing, one part as a passion project, and one as a way to learn the internal workings of popular game engines like Unity or Unreal.
 - **Custom Collision System** – Supports AABB, OBB, Circle, and Capsule colliders, partially.
 - **Fixed & Variable Tick System** – Smooth physics (60 FPS) + flexible animations.
+
+Public Wiki is available [here](https://cc-sakura.luny.dev/).
 
 ## Getting Started
 
@@ -53,10 +56,10 @@ cmake -S . -B build && cmake --build build
 Run the binary, you can run it with CMake:
 
 ```bash
-cmake --build build --target run
+cmake --build build
 ```
 
-Or you can run it directly (via double-clicking the binary file or through the command line), on the binary file generated in `build/bin`.
+You can run it directly (via double-clicking the binary file or through the command line), on the binary file generated in `build/bin`.
 
 ## Coding Conventions
 

@@ -45,3 +45,11 @@ SDL_Color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
  * \see rgba
  */
 SDL_FColor rgbaf(float r, float g, float b, float a);
+
+/**
+ * Hashs a string.
+ *
+ * \param str the string to hash
+ * \returns the hash value of a string
+ */
+uint64_t strhash(const char *str);

@@ -1,7 +1,6 @@
 #include "app.h"
 
 #include "engine/collision.h"
-#include "engine/logger.h"
 #include "engine/scene.h"
 #include "misc/list.h"
 #include "SDL3/SDL_assert.h"
@@ -79,14 +78,6 @@ AppState *app_init(void)
 
     state->running = true;
 
-    // Initialize logger.
-    if (!logger_init(state))
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize a logger file.");
-        app_destroy(appstate);
-        return NULL;
-    }
-
     return state;
 }
 
@@ -108,7 +99,6 @@ void app_destroy(AppState *state)
     if (!state)
         return;
 
-    logger_destroy(state);
     scene_mgr_destroy(state->scene_mgr);
     SDL_DestroyWindow(state->window.window);
     SDL_DestroyRenderer(state->window.renderer);

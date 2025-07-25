@@ -5,6 +5,7 @@
 #include "misc/mathex.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
+#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
@@ -139,7 +140,10 @@ FontNode *font_node_get_or_create(Font font)
     // No cache font. We start to create it.
     if (!node)
     {
-        TTF_Font *ttf = TTF_OpenFont(get_font_file_name(font.face), font.sp);
+        char buf[1024];
+        SDL_snprintf(buf, sizeof(buf), "%s%s", SDL_GetBasePath(), get_font_file_name(font.face));
+
+        TTF_Font *ttf = TTF_OpenFont(buf, font.sp);
         TTF_SetFontHinting(ttf, TTF_HINTING_LIGHT_SUBPIXEL);
         TTF_SetFontStyle(ttf, font.style);
 

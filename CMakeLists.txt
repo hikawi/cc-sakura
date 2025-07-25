@@ -46,6 +46,13 @@ else()
 endif()
 target_compile_definitions(CCSakura PRIVATE APPLICATION_VERSION="${PROJECT_VERSION}")
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_options(CCSakura PRIVATE -fsanitize=address
+        -fsanitize=undefined -fno-omit-frame-pointer)
+    target_link_options(CCSakura PRIVATE -fsanitize=address
+        -fsanitize=undefined)
+endif()
+
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE
     SDL3::SDL3
