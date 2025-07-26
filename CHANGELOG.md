@@ -9,3 +9,4 @@
 ### Changes
 
 - Fixed the font path not using the correct base path.
+- Sprite rendering system was rewritten to be more verbose with errors and more portable.

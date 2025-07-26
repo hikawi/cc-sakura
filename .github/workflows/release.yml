@@ -53,18 +53,12 @@ jobs:
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev nasm
 
       - name: Cache CMake dependency source code
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-cmake-dependency-sources
         with:
-          # CMake cache is at ${{github.workspace}}/build/_deps but we only will cache folders ending in '-src' to cache source code
           path: ${{github.workspace}}/build
-          # Cache hash is dependent on CMakeLists files anywhere as these can change what's in the cache, as well as cmake modules files
-          key: ${{ env.cache-name }}-${{ hashFiles('**/CMakeLists.txt') }}
-          # it's acceptable to reuse caches for different CMakeLists content if exact match is not available and unlike build caches, we
-          # don't need to restrict these by OS or compiler as it's only source code that's being cached
-          restore-keys: |
-            ${{ env.cache-name }}-
+          key: ${{ runner.os }}-${{ hashFiles('./CMakeLists.txt') }}
 
       - name: Build with CMake
         run: |
