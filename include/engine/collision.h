@@ -233,11 +233,6 @@ typedef struct
      */
     ColliderType collider_type;
 
-    /**
-     * The debugging name of the collider.
-     */
-    const char *name;
-
     union
     {
         CapsuleCollider capsule;

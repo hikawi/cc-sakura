@@ -40,9 +40,9 @@ endif()
 
 # Set warnings as error
 if(MSVC)
-    target_compile_options(CCSakura PRIVATE /W4)
+    target_compile_options(CCSakura PRIVATE /W4 /O2)
 else()
-    target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
 endif()
 target_compile_definitions(CCSakura PRIVATE APPLICATION_VERSION="${PROJECT_VERSION}")
 

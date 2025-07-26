@@ -1,87 +1,121 @@
-// engine/sprite.h
-//
-// Handles the loading, creating and destroying sprites.
+/**
+ * \file engine/sprite.h
+ *
+ * Provides a cache of sprite sheets and configurable and extensible sprite system.
+ */
 
 #pragma once
 
+#include "engine/renderer.h"
+#include "misc/genhashmap.h"
 #include "misc/vector.h"
 #include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 
-#include <stdbool.h>
+#include <stdint.h>
 
 /**
- * Represents a sprite frame. It holds a certain rectangle that covers around
- * the sprite for pixel-perfect rendering, and for collision calculations.
+ * Represents a single frame of a sprite.
  */
 typedef struct
 {
-    SDL_FRect frame;  // The absolute srcrect of the frame to the main texture.
-    Vector2 size;     // The source size of the frame.
-    SDL_FRect offset; // The offset rect based on the original source size.
-    Uint32 duration;  // The duration of the frame.
+    SDL_Rect frame;           ///< The frame where the sprite is in the main texture.
+    SDL_Rect spr_source_size; ///< The sprite's frame in the original source box.
+    struct
+    {
+        uint32_t w;    ///< Width of the original source box.
+        uint32_t h;    ///< Height of the original source box.
+    } source_size;     ///< The dimensions of the original source box.
+    uint32_t duration; ///< The duration that an animation can stay for.
 } SpriteFrame;
 
 /**
- * Represents a frame tag. Provided by Aseprite, denoted from which index to
- * which index is a tag.
+ * Represents a tag that tags a sequence of frames with a name.
  */
 typedef struct
 {
-    char *tag;
-    Uint32 from;
-    Uint32 to;
-} FrameTag;
+    char *name;    ///< The name of the tag
+    uint32_t from; ///< The index where the tag sequence starts, inclusive
+    uint32_t to;   ///< The index where the tag sequence ends, inclusive
+} SpriteFrameTag;
 
 /**
- * Represents a Sprite. A sprite can be animated or not (determined by the `fps`
- * field). A sprite also has frames, where each frame determines the source
- * rectangle WITHIN the frame.
+ * Represents a sprite that maps to a sprite sheet.
  */
 typedef struct
 {
-    SDL_Texture *texture; // The GPU accelerated texture to paint, it can be a
-                          // whole sprite sheet.
-    SpriteFrame *frames;  // The sprite's frames.
-    Uint32 num_frames;    // The number of frames.
-    Vector2 size;         // The size of the sprite sheet as a whole.
-    FrameTag *tags;       // The sprite's frame tags.
-    Uint32 num_tags;      // The number of tags.
+    SDL_Texture *texture; ///< The GPU-accelerated texture for the whole sheet
+    char *name;           ///< The name of the sprite
+    uint32_t w;           ///< The width of the original texture
+    uint32_t h;           ///< The height of the original texture
 
-    bool playing;       // Whether the sprite is playing.
-    int sel_tag;        // The frame tag that is currently being chosen.
-    Uint32 frame_idx;   // The current frame index of the sprite.
-    double frame_accum; // The accumulator for frames to decide when we should
-                        // move on to next frame.
+    SpriteFrameTag *tags;     ///< The array of frame tags
+    uint32_t tags_length;     ///< The length of the frame tags array
+    uint32_t sel_tag;         ///< The currently selected frame tag index
+    GenericHashMap *tags_map; ///< Hashmap for quickly querying frame tags by string
 
-    double scale;    // How the sprite will be scaled when render.
-    double rotation; // How the sprite will be rotated when render.
+    SpriteFrame *frames;    ///< The array of frames
+    uint32_t frames_length; ///< The length of the frames array
+    uint32_t frame_idx;     ///< The current index into the frame array
+
+    bool playing;       ///< Whether the animation should be playing
+    double frame_accum; ///< The accumulator in seconds for animation calculation
+    double scale;       ///< The sprite's local scaling
+    double rotation;    ///< The sprite's rotation
+    bool flip_hori;     ///< Whether to flip the sprite horizontally
+    bool flip_vert;     ///< Whether to flip the sprite vertically
 } Sprite;
 
 /**
- * Loads a sprite from a sprite asset.
+ * Represents a struct for passing properties into the \ref sprite_render function.
  */
-Sprite *sprite_init(const char *sprite);
+typedef struct
+{
+    const Sprite *spr;          ///< The sprite to render.
+    SDL_Renderer *renderer;     ///< The renderer to render with.
+    Vector2 pos;                ///< The position to render at.
+    RenderingOriginType origin; ///< The origin of the rendered sprite.
+} SpriteRenderProperties;
 
 /**
- * Sets the sprite animation's currently selected tag.
- */
-bool sprite_set_animation(Sprite *spr, const char *name);
-
-/**
- * Resets a sprite's animation back to the default state.
- */
-void sprite_reset_animation(Sprite *spr);
-
-/**
- * Advances a sprite's animation status by a deltatime amount.
- * This does nothing if the sprite is not playing.
+ * Loads a sprite from a texture and cache the sprite's sheet.
  *
- * Returns true if the sprite was advanced a step.
+ * The sprite sheet will stay available for as long as there are multiple sprites pointing to it.
+ *
+ * \param name the name of the sprite to load
+ * \returns the sprite with a cached texture
  */
-bool sprite_advance_animation(Sprite *spr, double dt);
+Sprite *sprite_load(const char *name);
+
+/**
+ * Selects a tag in the sprite and resets the animation.
+ *
+ * \param spr the sprite to modify
+ * \param tag the tag to set to
+ * \returns true if the tag was set correctly, false otherwise
+ */
+bool sprite_select_tag(Sprite *spr, const char *tag);
+
+/**
+ * Advances a sprite's animation by a deltatime amount.
+ *
+ * This does nothing if the sprite is currently paused.
+ *
+ * \param spr the sprite to advance
+ * \param dt the deltatime to advance
+ */
+void sprite_advance_animation(Sprite *spr, const double dt);
+
+/**
+ * Renders a sprite.
+ *
+ * \pzram props the properties for rendering a sprite
+ */
+void sprite_render(SpriteRenderProperties props);
 
 /**
  * Destroys a sprite.
+ *
+ * \param spr the sprite to destroy
  */
 void sprite_destroy(Sprite *spr);

@@ -677,10 +677,7 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         break;
     }
 
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                 "Colliders %s and %s can't be checked since the check is "
-                 "unimplemented.",
-                 c1->name, c2->name);
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Collider collision can't be checked since the check is unimplemented.");
     return info;
 }
 
@@ -689,7 +686,6 @@ Collider collision_convert_to_aabb(const Collider *collider)
     Collider val;
     val.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
     val.collider_type       = COLLIDER_TYPE_GHOST;
-    val.name                = "tmp_aabb";
     val.aabb                = (AABBCollider){
                        .h = 0,
                        .w = 0,

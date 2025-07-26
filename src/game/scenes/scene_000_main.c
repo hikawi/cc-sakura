@@ -10,7 +10,6 @@
 #include "engine/text.h"
 #include "game/game_scenes.h"
 #include "misc/hashmap.h"
-#include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 
@@ -33,7 +32,6 @@ void scene_000_oninit(Scene *s)
     Collider *btn_left            = SDL_malloc(sizeof(Collider));
     btn_left->collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
     btn_left->collider_type       = COLLIDER_TYPE_SENSOR;
-    btn_left->name                = "btn_left";
     btn_left->aabb                = (AABBCollider){
                        .x = winst.w / 2.0 - winst.w / 4.0 + 100,
                        .y = winst.h / 2.0,
@@ -44,7 +42,6 @@ void scene_000_oninit(Scene *s)
     Collider *btn_right            = SDL_malloc(sizeof(Collider));
     btn_right->collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
     btn_right->collider_type       = COLLIDER_TYPE_SENSOR;
-    btn_right->name                = "btn_right";
     btn_right->aabb                = (AABBCollider){
                        .x = winst.w / 2.0 + winst.w / 4.0 - 100,
                        .y = winst.h / 2.0,
@@ -55,7 +52,6 @@ void scene_000_oninit(Scene *s)
     Collider *btn_mid            = SDL_malloc(sizeof(Collider));
     btn_mid->collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
     btn_mid->collider_type       = COLLIDER_TYPE_SENSOR;
-    btn_mid->name                = "btn_mid";
     btn_mid->aabb                = (AABBCollider){
                        .x = winst.w / 2.0,
                        .y = winst.h / 2.0,
@@ -157,7 +153,6 @@ void scene_000_onsignal(Scene *s, Signal *signal)
     switch (signal->type)
     {
     case SIGNAL_COLLISION:
-        SDL_Log("Found collision pair %s and %s", signal->collision.pair.a->name, signal->collision.pair.b->name);
         if (collision_pair_comp(&btn_left_p, &signal->collision.pair) == 0)
         {
             data->left_selected = true;
@@ -185,7 +180,7 @@ Scene *scene_000_main(void)
     sc->ondraw     = scene_000_ondraw;
     sc->onsignal   = scene_000_onsignal;
 
-    Scene000Data *data = SDL_malloc(sizeof(Scene000Data));
+    Scene000Data *data = SDL_calloc(1, sizeof(Scene000Data));
     sc->data           = data;
 
     return sc;

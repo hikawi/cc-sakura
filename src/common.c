@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "SDL3/SDL_assert.h"
+#include "SDL3/SDL_log.h"
 
 SDL_Color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {

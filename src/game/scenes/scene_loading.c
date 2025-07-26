@@ -28,7 +28,7 @@ typedef struct
 
 void scene_loading_oninit(Scene *s)
 {
-    Sprite *spr = sprite_init("object");
+    Sprite *spr = sprite_load("object");
     if (!spr)
     {
         app_panic("Couldn't load object sprite for loading scene.");
@@ -36,7 +36,7 @@ void scene_loading_oninit(Scene *s)
     }
 
     hash_map_put(s->sprites, SCENE_LOADING_SPR_OBJECT, spr);
-    sprite_set_animation(spr, "sakura");
+    sprite_select_tag(spr, "sakura");
 }
 
 void scene_loading_ontick(Scene *s, double dt)
@@ -88,7 +88,13 @@ void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
     botright.y = winst.h - 64;
 
     Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
-    render_sprite(spr_object, botright);
+
+    SpriteRenderProperties props;
+    props.renderer = renderer;
+    props.pos      = botright;
+    props.spr      = spr_object;
+    props.origin   = RENDER_ORIGIN_BOTTOM_RIGHT;
+    sprite_render(props);
 }
 
 void scene_loading_ondestroy(Scene *s)

@@ -4,4 +4,8 @@
 
 ### Removals
 
+- Removed the file logging service. Console is enough.
+
 ### Changes
+
+- Fixed the font path not using the correct base path.

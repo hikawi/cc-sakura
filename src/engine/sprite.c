@@ -1,264 +1,350 @@
 #include "engine/sprite.h"
 
 #include "app.h"
+#include "common.h"
+#include "engine/renderer.h"
+#include "misc/genhashmap.h"
+#include "SDL3/SDL_assert.h"
+#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
-#include "SDL3/SDL_rect.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 /**
- * Version 1 of the sprite decoder tool.
+ * Version 1 of the Sprite File Format loader.
  */
-void sprite_init_v1(SDL_IOStream *io, Sprite **spr)
+bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
 {
-    // First let's read the image first.
-    // We start with the image length and then all the bytes of the image.
-    Uint64 img_len;
-    SDL_ReadU64LE(io, &img_len);
+    uint64_t img_size;
+    SDL_ReadU64LE(fp, &img_size);
 
-    char *img_data = SDL_malloc(img_len * sizeof(char));
-    if (!SDL_ReadIO(io, img_data, img_len * sizeof(char)))
+    uint8_t *img_buf = SDL_malloc(sizeof(uint8_t) * img_size);
+    if (!img_buf)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load image data?");
-        SDL_free(img_data);
-        return;
-    }
-
-    // Read the template width and height.
-    Uint32 width, height;
-    SDL_ReadU32LE(io, &width);
-    SDL_ReadU32LE(io, &height);
-
-    // Load the frame tags.
-    Uint32 num_tags;
-    SDL_ReadU32LE(io, &num_tags);
-    FrameTag *tags = NULL;
-    if (num_tags > 0)
-    {
-        tags = SDL_malloc(sizeof(FrameTag) * num_tags);
-
-        for (Uint32 i = 0; i < num_tags; i++)
-        {
-            // For each tag, we reach the name, and the "from" and "to".
-            Uint32 name_len;
-            SDL_ReadU32LE(io, &name_len);
-
-            char *name = SDL_malloc(sizeof(char) * (name_len + 1));
-            SDL_ReadIO(io, name, name_len);
-            name[name_len] = '\0';
-            tags[i].tag    = name;
-
-            SDL_ReadU32LE(io, &tags[i].from);
-            SDL_ReadU32LE(io, &tags[i].to);
-        }
-    }
-    else
-    {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No frame tags are loaded.");
-    }
-
-    // Next. We read in the frames
-    SpriteFrame *frames = NULL;
-    Uint32 num_frames;
-    SDL_ReadU32LE(io, &num_frames);
-
-    // For each of them now.
-    if (num_frames > 0)
-    {
-        frames = SDL_malloc(sizeof(SpriteFrame) * num_frames);
-
-        for (Uint32 i = 0; i < num_frames; i++)
-        {
-            // For each frame, we read in the following:
-            // source width, source height, relative x, relative y, relative
-            // width, relative height, absolute x, absolute y, absolute width
-            // and absolute height, duration.
-            Uint32 srcw, srch, relx, rely, relw, relh, absx, absy, absw, absh;
-            SDL_ReadU32LE(io, &srcw);
-            SDL_ReadU32LE(io, &srch);
-            SDL_ReadU32LE(io, &relx);
-            SDL_ReadU32LE(io, &rely);
-            SDL_ReadU32LE(io, &relw);
-            SDL_ReadU32LE(io, &relh);
-            SDL_ReadU32LE(io, &absx);
-            SDL_ReadU32LE(io, &absy);
-            SDL_ReadU32LE(io, &absw);
-            SDL_ReadU32LE(io, &absh);
-
-            frames[i].size.x   = srcw;
-            frames[i].size.y   = srch;
-            frames[i].offset.x = relx;
-            frames[i].offset.y = rely;
-            frames[i].offset.w = relw;
-            frames[i].offset.h = relh;
-            frames[i].frame.x  = absx;
-            frames[i].frame.y  = absy;
-            frames[i].frame.w  = absw;
-            frames[i].frame.h  = absh;
-            SDL_ReadU32LE(io, &frames[i].duration);
-        }
-    }
-    else
-    {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "No frames are loaded.");
-    }
-
-    // Only allocate when we're sure everything is ready.
-    Sprite *sprite      = SDL_malloc(sizeof(Sprite));
-    sprite->tags        = tags;
-    sprite->num_tags    = num_tags;
-    sprite->size.x      = width;
-    sprite->size.y      = height;
-    sprite->frames      = frames;
-    sprite->num_frames  = num_frames;
-    sprite->playing     = false;
-    sprite->frame_idx   = 0;
-    sprite->frame_accum = 0;
-    sprite->sel_tag     = -1;
-
-    // Load the texture needed.
-    SDL_IOStream *img_io = SDL_IOFromMem(img_data, img_len);
-    SDL_Surface *surface = IMG_Load_IO(img_io, true);
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(app_get()->window.renderer, surface);
-    sprite->texture      = texture;
-
-    SDL_DestroySurface(surface);
-    SDL_free(img_data);
-    *spr = sprite;
-}
-
-Sprite *sprite_init(const char *sprite)
-{
-    SDL_Log("Attempting to load sprite %s", sprite);
-
-    char buf[1024] = {0};
-    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(), sprite);
-
-    SDL_IOStream *io = SDL_IOFromFile(buf, "r");
-    Sprite *spr      = NULL;
-
-    if (io == NULL)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load sprite %s", buf);
-        return NULL;
-    }
-
-    // Ok we can now create the Sprite *. Hopefully it's not the wrong file
-    // type!
-    Uint32 version;
-    SDL_ReadU32LE(io, &version);
-
-    switch (version)
-    {
-    case 1:
-        sprite_init_v1(io, &spr);
-        break;
-    default:
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unknown sprite version. Can't decode");
-        break;
-    }
-
-    spr->rotation = 0;
-    spr->scale    = 1;
-
-    SDL_SetTextureScaleMode(spr->texture, SDL_SCALEMODE_PIXELART);
-    SDL_CloseIO(io);
-    return spr;
-}
-
-bool sprite_set_animation(Sprite *spr, const char *name)
-{
-    if (name == NULL)
-    {
-        spr->sel_tag = -1;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Can't allocate enough memory for image buffer");
         return false;
     }
 
-    int idx = -1;
-    for (Uint32 i = 0; i < spr->num_tags; i++)
+    // Read the image by chunks until it is finished.
+    // uint64_t img_read = 0;
+    // while (img_read < img_size)
+    // {
+    //     uint64_t buf_read = SDL_ReadIO(fp, img_buf + img_read, 4096);
+
+    //     if (buf_read == 0)
+    //     {
+    //         // Unexpected EOF!
+    //         if (SDL_GetIOStatus(fp) == SDL_IO_STATUS_EOF)
+    //         {
+    //             SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unexpected EOF from reading sprite. Sprite file is
+    //             corrupted?"); SDL_free(img_buf); return false;
+    //         }
+    //         else
+    //         {
+    //             SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Read data sprite error: %s", SDL_GetError());
+    //             SDL_free(img_buf);
+    //             return false;
+    //         }
+    //     }
+
+    //     img_read += buf_read;
+    // }
+    SDL_ReadIO(fp, img_buf, img_size);
+
+    // Convert from byte array to a workable Surface by SDL_image.
+    SDL_IOStream *img_io = SDL_IOFromMem(img_buf, img_size);
+    if (!img_io)
     {
-        if (SDL_strcmp(spr->tags[i].tag, name) == 0)
+        SDL_free(img_buf);
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open IO stream for sprite file: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_Surface *img_surface = IMG_Load_IO(img_io, true);
+    SDL_free(img_buf); // We can free the image buffer now.
+    if (!img_surface)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to create surface from IO: %s", SDL_GetError());
+        return false;
+    }
+
+    // GPU-accelerated texture, we don't need the surface anymore!
+    SDL_Texture *img_texture = SDL_CreateTextureFromSurface(renderer, img_surface);
+    SDL_DestroySurface(img_surface); // We can destroy the surface now.
+    if (!img_texture)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to create texture from surface: %s", SDL_GetError());
+        return false;
+    }
+
+    spr->texture = img_texture;
+    SDL_SetTextureScaleMode(img_texture, SDL_SCALEMODE_PIXELART);
+    SDL_ReadU32LE(fp, &spr->w);
+    SDL_ReadU32LE(fp, &spr->h);
+
+    // Read frame tags.
+    SDL_ReadU32LE(fp, &spr->tags_length);
+    spr->tags = SDL_malloc(sizeof(SpriteFrameTag) * spr->tags_length);
+    if (!spr->tags)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for frame tags.");
+        return false;
+    }
+
+    // During iterations, we would also create the appropriate generic hash map's nodes for that.
+    // This would look very ugly though.
+    spr->tags_map = gen_hash_map_init();
+    if (!spr->tags_map)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for a frame tag lookup table.");
+        return false;
+    }
+    spr->tags_map->hash           = (HashFunction)strhash;
+    spr->tags_map->comparator     = (CompareFunction)SDL_strcmp;
+    spr->tags_map->destroys_value = true;
+
+    // Loop through each tag.
+    for (uint32_t i = 0; i < spr->tags_length; i++)
+    {
+        uint32_t name_length;
+        SDL_ReadU32LE(fp, &name_length);
+
+        spr->tags[i].name = SDL_calloc(name_length + 1, sizeof(char));
+        if (!spr->tags[i].name)
         {
-            idx = (int)i;
-            break;
+            SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for a frame tag's name %d", i);
+            return false;
+        }
+
+        // Let's hope this doesn't fail now, cause fuck me sideways.
+        SDL_ReadIO(fp, spr->tags[i].name, name_length);
+        SDL_ReadU32LE(fp, &spr->tags[i].from);
+        SDL_ReadU32LE(fp, &spr->tags[i].to);
+
+        // Hopefully that didn't fail because the stuff starts here.
+        // We reuse the name because we already allocated for it.
+        uint32_t *index = SDL_malloc(sizeof(uint32_t));
+        if (!index)
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for a number. HOW LOW ON MEMORY ARE YOU?");
+            return false;
+        }
+        *index = i;
+
+        gen_hash_map_put(spr->tags_map, spr->tags[i].name, index);
+    }
+
+    // Reading data for each frames
+    SDL_ReadU32LE(fp, &spr->frames_length);
+    spr->frames = SDL_malloc(sizeof(SpriteFrame) * spr->frames_length);
+    if (!spr->frames)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for sprite frames.");
+        return false;
+    }
+    for (uint32_t i = 0; i < spr->frames_length; i++)
+    {
+        SDL_ReadU32LE(fp, &spr->frames[i].source_size.w);
+        SDL_ReadU32LE(fp, &spr->frames[i].source_size.h);
+
+        uint32_t x, y, w, h;
+        SDL_ReadU32LE(fp, &x);
+        SDL_ReadU32LE(fp, &y);
+        SDL_ReadU32LE(fp, &w);
+        SDL_ReadU32LE(fp, &h);
+        spr->frames[i].spr_source_size.x = (int)x;
+        spr->frames[i].spr_source_size.y = (int)y;
+        spr->frames[i].spr_source_size.w = (int)w;
+        spr->frames[i].spr_source_size.h = (int)h;
+
+        SDL_ReadU32LE(fp, &x);
+        SDL_ReadU32LE(fp, &y);
+        SDL_ReadU32LE(fp, &w);
+        SDL_ReadU32LE(fp, &h);
+        spr->frames[i].frame.x = (int)x;
+        spr->frames[i].frame.y = (int)y;
+        spr->frames[i].frame.w = (int)w;
+        spr->frames[i].frame.h = (int)h;
+
+        SDL_ReadU32LE(fp, &spr->frames[i].duration);
+    }
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Successfully loaded sprite %s from v1 loader.", spr->name);
+    return true;
+}
+
+Sprite *sprite_load(const char *name)
+{
+    SDL_Renderer *renderer = app_get()->window.renderer;
+    char buf[1024]         = {0};
+    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(), name);
+
+    SDL_IOStream *fp = SDL_IOFromFile(buf, "rb");
+    if (!fp)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Couldn't open sprite asset with name %s", buf);
+        return NULL;
+    }
+
+    Sprite *spr = SDL_calloc(1, sizeof(Sprite));
+    if (!spr)
+    {
+        SDL_CloseIO(fp);
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate enough memory for Sprite %s.", name);
+        return NULL;
+    }
+
+    spr->name  = SDL_strdup(name);
+    spr->scale = 1;
+
+    // Read the version and delegate.
+    uint32_t spr_version;
+    SDL_ReadU32LE(fp, &spr_version);
+    bool status = true;
+
+    switch (spr_version)
+    {
+    case 1:
+        status = sprite_load_v1(spr, fp, renderer);
+        break;
+    }
+
+    SDL_CloseIO(fp);
+    if (!status)
+    {
+        sprite_destroy(spr);
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to load sprite at path %s.", buf);
+        return NULL;
+    }
+
+    return spr;
+}
+
+bool sprite_select_tag(Sprite *spr, const char *tag)
+{
+    SDL_assert(spr != NULL && tag != NULL);
+
+    uint32_t *tag_idx = (uint32_t *)gen_hash_map_get(spr->tags_map, tag);
+    if (!tag_idx)
+    {
+        spr->sel_tag = 0;
+        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Trying to set a sprite animation to non-existent %s.", tag);
+        return false;
+    }
+
+    spr->sel_tag     = *tag_idx;
+    spr->frame_accum = 0;
+    spr->frame_idx   = spr->tags[spr->sel_tag].from;
+    return true;
+}
+
+void sprite_advance_animation(Sprite *spr, double dt)
+{
+    SDL_assert(spr != NULL && dt >= 0);
+    if (!spr->playing)
+    {
+        return;
+    }
+    if (spr->frames_length == 0)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Can't advance animation on a sprite with no frames.");
+        return;
+    }
+
+    double duration = spr->frames[spr->frame_idx].duration / 1000.0;
+    if (spr->frame_accum > duration)
+    {
+        spr->frame_accum -= duration;
+        if (spr->tags_length > 0)
+        {
+            SpriteFrameTag tag    = spr->tags[spr->sel_tag];
+            uint32_t frame_window = (tag.to - tag.from) + 1;
+            spr->frame_idx        = ((spr->frame_idx + 1 - tag.from) % frame_window) + tag.from;
+        }
+        else
+        {
+            spr->frame_idx = (spr->frame_idx + 1) % spr->frames_length;
         }
     }
 
-    spr->sel_tag = idx;
-    if (idx < 0)
-    {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Trying to set sprite's animation to %s failed.", name);
-    }
-    else
-    {
-        sprite_reset_animation(spr);
-    }
-
-    return idx >= 0;
-}
-
-void sprite_reset_animation(Sprite *spr)
-{
-    spr->frame_idx   = 0;
-    spr->frame_accum = 0;
-    spr->playing     = false;
-}
-
-bool sprite_advance_animation(Sprite *spr, double dt)
-{
     spr->frame_accum += dt;
+}
 
-    // Get the current frame and see if we passed the threshold.
-    SpriteFrame *current = NULL;
-    Uint32 total;
+void sprite_render(SpriteRenderProperties props)
+{
+    SDL_assert(props.renderer != NULL);
+    SDL_assert(props.spr != NULL && props.spr->frames_length > 0);
 
-    if (spr->sel_tag >= 0)
-    {
-        FrameTag tag = spr->tags[spr->sel_tag];
-        total        = tag.to - tag.from + 1;
-        current      = &spr->frames[tag.from + spr->frame_idx];
-    }
-    else
-    {
-        total   = spr->num_frames;
-        current = &spr->frames[spr->frame_idx];
-    }
+    AppState *app     = app_get();
+    SpriteFrame frame = props.spr->frames[props.spr->frame_idx];
 
-    // Check if we passed the sprite frame's duration threshold.
-    // If so, we advance the index by one.
-    if (current && spr->frame_accum > (current->duration / 1000.0))
-    {
-        spr->frame_accum -= (current->duration / 1000.0);
-        spr->frame_idx = (spr->frame_idx + 1) % total;
-        return true;
-    }
+    SDL_FRect frect;
+    frect.x = (float)frame.frame.x;
+    frect.y = (float)frame.frame.y;
+    frect.w = (float)frame.frame.w;
+    frect.h = (float)frame.frame.h;
 
-    return false;
+    SDL_FRect dstrect;
+    dstrect.x = (float)props.pos.x;
+    dstrect.y = (float)props.pos.y;
+    dstrect.w = frect.w * (float)(props.spr->scale * app->settings.scale);
+    dstrect.h = frect.h * (float)(props.spr->scale * app->settings.scale);
+
+    RenderingOptions opts;
+    opts.texture   = props.spr->texture;
+    opts.srcrect   = &frect;
+    opts.dstrect   = &dstrect;
+    opts.origin    = props.origin;
+    opts.rotation  = props.spr->rotation;
+    opts.flip_hori = props.spr->flip_hori;
+    opts.flip_vert = props.spr->flip_vert;
+    opts.renderer  = props.renderer;
+    render_aligned_texture(opts);
 }
 
 void sprite_destroy(Sprite *spr)
 {
     if (!spr)
-        return;
-
-    if (spr->tags)
     {
-        for (Uint32 i = 0; i < spr->num_tags; i++)
-        {
-            SDL_free(spr->tags[i].tag);
-        }
-        SDL_free(spr->tags);
+        return;
     }
 
-    SDL_free(spr->frames);
-    SDL_DestroyTexture(spr->texture);
+    if (spr->frames)
+    {
+        SDL_free(spr->frames);
+        spr->frames = NULL;
+    }
+    if (spr->texture)
+    {
+        SDL_DestroyTexture(spr->texture);
+        spr->texture = NULL;
+    }
+    if (spr->tags)
+    {
+        for (uint32_t i = 0; i < spr->tags_length; i++)
+        {
+            if (spr->tags[i].name)
+            {
+                SDL_free(spr->tags[i].name);
+                spr->tags[i].name = NULL;
+            }
+        }
+        SDL_free(spr->tags);
+        spr->tags = NULL;
+    }
+    if (spr->name)
+    {
+        SDL_free(spr->name);
+        spr->name = NULL;
+    }
+    if (spr->tags_map)
+    {
+        gen_hash_map_destroy(spr->tags_map);
+        spr->tags_map = NULL;
+    }
     SDL_free(spr);
 }

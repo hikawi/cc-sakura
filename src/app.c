@@ -39,7 +39,6 @@ AppState *app_init(void)
     // Setup mouse.
     state->input.mouse.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
     state->input.mouse.collider_type       = COLLIDER_TYPE_GHOST;
-    state->input.mouse.name                = "mouse";
     state->input.mouse.aabb                = (AABBCollider){
                        .x = 0,
                        .y = 0,
@@ -75,6 +74,10 @@ AppState *app_init(void)
     // Create scene manager.
     state->scene_mgr.scenes      = list_init();
     state->scene_mgr.transitions = list_init();
+
+    // Set app settings
+    state->settings.max_fps = 60;
+    state->settings.scale   = 2;
 
     state->running = true;
 

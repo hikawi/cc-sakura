@@ -31,34 +31,12 @@
  */
 typedef struct
 {
-    /**
-     * The timestamp when the last frame was rendered.
-     */
-    uint64_t last_frame_tick;
-
-    /**
-     * The accumulated time before the next fixed update is dispatched.
-     */
-    double frame_accum;
-
-    /**
-     * The counter for frames per second.
-     */
-    uint32_t frame_count;
-
-    /**
-     * How much time has passed for calculating FPS, in seconds.
-     *
-     * Each second passed, \ref frame_count will be reset.
-     */
-    double frame_time;
-
-    /**
-     * The final counter that the FPS display should use.
-     *
-     * This value is updated every second by \ref frame_count.
-     */
-    uint32_t fps;
+    uint64_t last_frame_tick; ///< The timstamp when the last frame was rendered.
+    double frame_accum;       ///< The accumulated time before the next fixed update is dispatched.
+    uint32_t frame_count;     ///< The counter for frames per second.
+    double frame_time;        ///< How much time has passed for calculating FPS, in seconds. Each second passed, \ref
+                              ///< frame_count will be reset.
+    uint32_t fps;             ///< The final counter for the FPS display.
 } FrameData;
 
 /**
@@ -110,34 +88,26 @@ typedef struct
 } WindowStatus;
 
 /**
+ * Represents configurable application settings.
+ */
+typedef struct
+{
+    uint32_t max_fps; ///< Application's target FPS cap
+    double scale;     ///< Application's main scaling
+} Settings;
+
+/**
  * Represents a struct that holds the main information about the game.
  */
 typedef struct
 {
-    /**
-     * App's frame data for calculating FPS and tick dispatcher.
-     */
-    FrameData frame_data;
+    FrameData frame_data;   ///< Frame data for calculating FPS and tick dispatching
+    InputStatus input;      ///< Input status for polling
+    WindowStatus window;    ///< SDL's created window data
+    SceneManager scene_mgr; ///< The app's scene manager
+    Settings settings;      ///< App's settings configuration
 
-    /**
-     * Input status data holder.
-     */
-    InputStatus input;
-
-    /**
-     * SDL's window data.
-     */
-    WindowStatus window;
-
-    /**
-     * The app's main scene manager.
-     */
-    SceneManager scene_mgr;
-
-    /**
-     * Whether the app should run on next tick, or tear down gracefully.
-     */
-    bool running;
+    bool running; ///< Whether the app should run on next tick
 } AppState;
 
 /**

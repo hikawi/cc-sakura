@@ -59,7 +59,7 @@ const void *gen_hash_map_put(GenericHashMap *map, const void *key, const void *v
     SDL_assert(map != NULL && key != NULL && value != NULL);
     SDL_assert(map->hash != NULL && map->comparator != NULL);
 
-    uint64_t idx = map->hash(key);
+    uint64_t idx = map->hash(key) % map->capacity;
 
     GenericHashMapNode *prev = NULL;
     GenericHashMapNode *node = map->buckets[idx];
@@ -67,6 +67,7 @@ const void *gen_hash_map_put(GenericHashMap *map, const void *key, const void *v
     {
         if (map->comparator(node->key, key) == 0)
         {
+            SDL_Log("f");
             const void *old = node->value;
             node->value     = value;
 
@@ -83,7 +84,7 @@ const void *gen_hash_map_put(GenericHashMap *map, const void *key, const void *v
         node = node->next;
     }
 
-    GenericHashMapNode *new_node = SDL_calloc(1, sizeof(GenericHashMapNode *));
+    GenericHashMapNode *new_node = SDL_calloc(1, sizeof(GenericHashMapNode));
     SDL_assert(new_node != NULL);
     new_node->key   = key;
     new_node->value = value;
@@ -107,7 +108,7 @@ const void *gen_hash_map_remove(GenericHashMap *map, const void *key)
     SDL_assert(map != NULL && key != NULL);
     SDL_assert(map->hash != NULL && map->comparator != NULL && map->buckets != NULL);
 
-    uint64_t idx = map->hash(key);
+    uint64_t idx = map->hash(key) % map->capacity;
 
     GenericHashMapNode *prev = NULL;
     GenericHashMapNode *cur  = map->buckets[idx];
@@ -142,7 +143,7 @@ bool gen_hash_map_has(const GenericHashMap *map, const void *key)
     SDL_assert(map != NULL && key != NULL);
     SDL_assert(map->hash != NULL && map->comparator != NULL);
 
-    uint64_t idx            = map->hash(key);
+    uint64_t idx            = map->hash(key) % map->capacity;
     GenericHashMapNode *cur = map->buckets[idx];
     while (cur && map->comparator(cur->key, key) != 0)
     {
@@ -157,7 +158,7 @@ const void *gen_hash_map_get(GenericHashMap *map, const void *key)
     SDL_assert(map != NULL && key != NULL);
     SDL_assert(map->hash != NULL && map->comparator != NULL);
 
-    uint64_t idx            = map->hash(key);
+    uint64_t idx            = map->hash(key) % map->capacity;
     GenericHashMapNode *cur = map->buckets[idx];
     while (cur && map->comparator(cur->key, key) != 0)
     {
