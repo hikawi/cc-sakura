@@ -243,6 +243,6 @@ void font_engine_destroy(void)
         }
     }
 
-    TTF_DestroyRendererTextEngine(text_engine);
+    TTF_DestroySurfaceTextEngine(text_engine);
     text_engine = NULL;
 }

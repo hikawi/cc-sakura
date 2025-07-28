@@ -11,6 +11,7 @@
 
 #include "misc/vector.h"
 #include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_render.h"
 
 /**
  * Represents an enumeration of collider shapes.
@@ -356,3 +357,11 @@ uint64_t collision_pair_hash(const CollisionPair *pair);
  * \returns a number below 0 if a < b, 0 if a = b, and > 0 if a > b.
  */
 int collision_pair_comp(const CollisionPair *a, const CollisionPair *b);
+
+/**
+ * Renders a collider on the target renderer.
+ *
+ * \param collider the collider to draw
+ * \param renderer the renderer to draw to
+ */
+void collider_render(const Collider *collider, SDL_Renderer *renderer);

@@ -630,6 +630,25 @@ void scene_mgr_draw(SceneManager *mgr)
             scene->ondraw(scene, renderer);
         }
 
+        // Draw overlays on colliders
+        if (appstate->settings.show_debug_colliders)
+        {
+            uint32_t *keys             = NULL;
+            const Collider **colliders = NULL;
+            hash_map_iterate(scene->colliders, &keys, (const void ***)&colliders);
+
+            if (keys && colliders)
+            {
+                for (uint32_t j = 0; j < scene->colliders->size; j++)
+                {
+                    collider_render(colliders[j], renderer);
+                }
+            }
+
+            SDL_free(keys);
+            SDL_free(colliders);
+        }
+
         SDL_SetRenderTarget(renderer, NULL);
         SDL_RenderTexture(renderer, mgr->target, NULL, NULL);
     }

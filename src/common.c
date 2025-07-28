@@ -1,7 +1,7 @@
 #include "common.h"
 
 #include "SDL3/SDL_assert.h"
-#include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
 
 SDL_Color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
@@ -21,6 +21,16 @@ SDL_FColor rgbaf(float r, float g, float b, float a)
         .b = b,
         .a = a,
     };
+}
+
+SDL_FColor color_to_fcolor(SDL_Color color)
+{
+    SDL_FColor fcolor;
+    fcolor.r = color.r / 255.f;
+    fcolor.g = color.g / 255.f;
+    fcolor.b = color.b / 255.f;
+    fcolor.a = color.a / 255.f;
+    return fcolor;
 }
 
 uint64_t strhash(const char *str)

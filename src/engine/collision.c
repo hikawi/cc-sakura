@@ -3,11 +3,15 @@
 #include "common.h"
 #include "misc/mathex.h"
 #include "misc/vector.h"
+#include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_log.h"
+#include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
 
 #include <math.h>
 #include <stdint.h>
+#include <string.h>
 
 /**
  * GPT-generated for different colors based on collision types.
@@ -874,4 +878,196 @@ int collision_pair_comp(const CollisionPair *a, const CollisionPair *b)
     }
 
     return 0;
+}
+
+/**
+ * Renders an AABB collider.
+ *
+ * \param aabb the aabb collider to render
+ * \param renderer the target renderer
+ */
+static void collider_render_aabb(const AABBCollider aabb, SDL_Renderer *renderer)
+{
+    SDL_FRect dst;
+    dst.w = (float)aabb.w;
+    dst.h = (float)aabb.h;
+    dst.x = (float)(aabb.x - aabb.w / 2);
+    dst.y = (float)(aabb.y - aabb.h / 2);
+    SDL_RenderFillRect(renderer, &dst);
+}
+
+/**
+ * Renders an OBB collider.
+ *
+ * \param obb the obb collider to render
+ * \param color the color to render with
+ * \param renderer the target renderer
+ */
+static void collider_render_obb(const OBBCollider obb, const SDL_FColor color, SDL_Renderer *renderer)
+{
+    Vector2 points[4];
+    points[0].x = -obb.w / 2;
+    points[0].y = -obb.h / 2;
+    points[1].x = obb.w / 2;
+    points[1].y = -obb.h / 2;
+    points[2].x = obb.w / 2;
+    points[2].y = obb.h / 2;
+    points[3].x = -obb.w / 2;
+    points[3].y = obb.h / 2;
+
+    Vector2 center = {.x = obb.x, .y = obb.y};
+    double sint = SDL_sin(obb.angle), cost = SDL_cos(obb.angle);
+    SDL_Vertex vertices[4];
+    for (int i = 0; i < 4; i++)
+    {
+        points[i]         = vector2_rot_sincos(points[i], sint, cost);
+        points[i]         = vector2_add(points[i], center);
+        vertices[i]       = vector2_to_vertex(points[i]);
+        vertices[i].color = color;
+    }
+
+    // How to connect the vertices, we create two triangles here. 0-1-2 as a triangle and 1-2-3 as a triangle would make
+    // a rectangle.
+    const int indices[6] = {0, 1, 2, 1, 2, 3};
+    SDL_RenderGeometry(renderer, NULL, vertices, 4, indices, 6);
+}
+
+/**
+ * Renders a part-circle collider.
+ *
+ * \param circle the circle to render
+ * \param start the angle to start drawing the circle at, in radians
+ * \param end the angle to stop drawing the circle at, in radians
+ * \param color the color of the circle
+ * \param renderer the renderer
+ */
+static void collider_render_circle(const CircleCollider circle, const double start, const double end,
+                                   const SDL_FColor color, SDL_Renderer *renderer)
+{
+    SDL_assert(start <= end);
+
+    // Each circle segment would be around 5 degrees? So PI / 36.
+    // We calculate how many segments there are, based on the angle we need to draw.
+    // THe number of vertices is segments + 2.
+    const double step             = SDL_PI_D / 36;
+    const uint32_t segments_count = (uint32_t)SDL_ceil((end - start) / step);
+    SDL_Vertex *vertices          = SDL_calloc(segments_count + 2, sizeof(SDL_Vertex));
+    int *indices                  = SDL_calloc(segments_count * 3, sizeof(int));
+    double cur                    = start;
+
+    // Check for memory allocation success.
+    if (!vertices || !indices)
+    {
+        if (vertices)
+        {
+            SDL_free(vertices);
+        }
+        if (indices)
+        {
+            SDL_free(indices);
+        }
+
+        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Can't allocate enough memory for collider rendering geometry circle.");
+        return;
+    }
+
+    // We want to build the center vertex and the first vertex.
+    vertices[0].color      = color;
+    vertices[0].position.x = (float)circle.x;
+    vertices[0].position.y = (float)circle.y;
+    vertices[1].color      = color;
+    vertices[1].position.x = (float)(SDL_cos(start) * circle.r + circle.x);
+    vertices[1].position.y = (float)(SDL_sin(start) * circle.r + circle.y);
+
+    // Build the rest of the vertices
+    for (uint32_t i = 0; i < segments_count; i++)
+    {
+        cur += step;
+        vertices[i + 2].color = color;
+
+        if (i < segments_count - 1)
+        {
+            vertices[i + 2].position.x = (float)(SDL_cos(cur) * circle.r + circle.x);
+            vertices[i + 2].position.y = (float)(SDL_sin(cur) * circle.r + circle.y);
+        }
+        else
+        {
+            // Last segment is the final line on the end angle.
+            vertices[i + 2].position.x = (float)(SDL_cos(end) * circle.r + circle.x);
+            vertices[i + 2].position.y = (float)(SDL_sin(end) * circle.r + circle.y);
+        }
+
+        // Build the indices, indices cover segments.
+        indices[i * 3]     = 0;
+        indices[i * 3 + 1] = (int)i + 1;
+        indices[i * 3 + 2] = (int)i + 2;
+    }
+
+    SDL_RenderGeometry(renderer, NULL, vertices, (int)segments_count + 2, indices, (int)segments_count * 3);
+    SDL_free(vertices);
+    SDL_free(indices);
+}
+
+/**
+ * Renders a capsule collider.
+ *
+ * \param capsule the capsule collider
+ * \param color the color
+ * \param renderer the renderer target
+ */
+static void collider_render_capsule(const CapsuleCollider capsule, const SDL_FColor color, SDL_Renderer *renderer)
+{
+    Vector2 line = vector2_sub(capsule.p1, capsule.p2);
+
+    OBBCollider shaft;
+    shaft.x     = (capsule.p1.x + capsule.p2.x) / 2;
+    shaft.y     = (capsule.p1.y + capsule.p2.y) / 2;
+    shaft.w     = capsule.r * 2;
+    shaft.h     = vector2_len(line);
+    shaft.angle = vector2_get_rot(line);
+
+    CircleCollider c1;
+    c1.x = capsule.p1.x;
+    c1.y = capsule.p1.y;
+    c1.r = capsule.r;
+
+    CircleCollider c2;
+    c2.x = capsule.p2.x;
+    c2.y = capsule.p2.y;
+    c2.r = capsule.r;
+
+    // Calculate the circle angles.
+    Vector2 perp = vector2_norm(vector2_rot(line, -SDL_PI_D / 2));
+    double start = vector2_get_rot(perp);
+
+    collider_render_obb(shaft, color, renderer);
+    collider_render_circle(c1, start, start + SDL_PI_D, color, renderer);
+    collider_render_circle(c2, start - SDL_PI_D, start, color, renderer);
+}
+
+void collider_render(const Collider *collider, SDL_Renderer *renderer)
+{
+    SDL_assert(collider != NULL && renderer != NULL);
+
+    SDL_Color color   = collision_get_debug_color(collider->collider_type);
+    SDL_FColor fcolor = color_to_fcolor(color);
+    SDL_SetRenderDrawColorFloat(renderer, fcolor.r, fcolor.g, fcolor.b, fcolor.a);
+
+    switch (collider->collider_shape_type)
+    {
+    case COLLIDER_SHAPE_TYPE_AABB:
+        collider_render_aabb(collider->aabb, renderer);
+        break;
+    case COLLIDER_SHAPE_TYPE_OBB:
+        collider_render_obb(collider->obb, fcolor, renderer);
+        break;
+    case COLLIDER_SHAPE_TYPE_CIRCLE:
+        collider_render_circle(collider->circle, 0, SDL_PI_D * 2, fcolor, renderer);
+        break;
+    case COLLIDER_SHAPE_TYPE_CAPSULE:
+        collider_render_capsule(collider->capsule, fcolor, renderer);
+        break;
+    default:
+        break;
+    }
 }

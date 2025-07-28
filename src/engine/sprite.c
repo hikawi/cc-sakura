@@ -30,30 +30,31 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
     }
 
     // Read the image by chunks until it is finished.
-    // uint64_t img_read = 0;
-    // while (img_read < img_size)
-    // {
-    //     uint64_t buf_read = SDL_ReadIO(fp, img_buf + img_read, 4096);
+    uint64_t img_read = 0;
+    while (img_read < img_size)
+    {
+        uint64_t to_read  = SDL_min(4096, img_size - img_read);
+        uint64_t buf_read = SDL_ReadIO(fp, img_buf + img_read, to_read);
 
-    //     if (buf_read == 0)
-    //     {
-    //         // Unexpected EOF!
-    //         if (SDL_GetIOStatus(fp) == SDL_IO_STATUS_EOF)
-    //         {
-    //             SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unexpected EOF from reading sprite. Sprite file is
-    //             corrupted?"); SDL_free(img_buf); return false;
-    //         }
-    //         else
-    //         {
-    //             SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Read data sprite error: %s", SDL_GetError());
-    //             SDL_free(img_buf);
-    //             return false;
-    //         }
-    //     }
+        if (buf_read == 0)
+        {
+            // Unexpected EOF!
+            if (SDL_GetIOStatus(fp) == SDL_IO_STATUS_EOF)
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unexpected EOF from reading sprite. Sprite file is corrupted?");
+                SDL_free(img_buf);
+                return false;
+            }
+            else
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Read data sprite error: %s", SDL_GetError());
+                SDL_free(img_buf);
+                return false;
+            }
+        }
 
-    //     img_read += buf_read;
-    // }
-    SDL_ReadIO(fp, img_buf, img_size);
+        img_read += buf_read;
+    }
 
     // Convert from byte array to a workable Surface by SDL_image.
     SDL_IOStream *img_io = SDL_IOFromMem(img_buf, img_size);

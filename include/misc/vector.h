@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "SDL3/SDL_render.h"
+
 #include <stdbool.h>
 
 /**
@@ -105,3 +107,10 @@ Vector2 vector2_norm(Vector2 vec);
  * comparisons.
  */
 bool vector2_eq(Vector2 a, Vector2 b);
+
+/**
+ * Converts a vector to a vertex.
+ *
+ * \param vec the vector to convert
+ */
+SDL_Vertex vector2_to_vertex(Vector2 vec);

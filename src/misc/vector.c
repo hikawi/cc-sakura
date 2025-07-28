@@ -135,3 +135,11 @@ bool vector2_eq(Vector2 a, Vector2 b)
 {
     return feq(a.x, b.x) && feq(a.y, b.y);
 }
+
+SDL_Vertex vector2_to_vertex(Vector2 vec)
+{
+    SDL_Vertex v;
+    v.position.x = (float)vec.x;
+    v.position.y = (float)vec.y;
+    return v;
+}

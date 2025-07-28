@@ -76,8 +76,9 @@ AppState *app_init(void)
     state->scene_mgr.transitions = list_init();
 
     // Set app settings
-    state->settings.max_fps = 60;
-    state->settings.scale   = 2;
+    state->settings.max_fps              = 60;
+    state->settings.scale                = 2;
+    state->settings.show_debug_colliders = true;
 
     state->running = true;
 

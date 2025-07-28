@@ -47,6 +47,14 @@ SDL_Color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 SDL_FColor rgbaf(float r, float g, float b, float a);
 
 /**
+ * Converts a color struct to a fcolor struct.
+ *
+ * \param color the color to convert
+ * \returns the floating point version of color
+ */
+SDL_FColor color_to_fcolor(SDL_Color color);
+
+/**
  * Hashs a string.
  *
  * \param str the string to hash

@@ -44,17 +44,9 @@ typedef struct
  */
 typedef struct
 {
-    /**
-     * Keyboard input status in the form of SDL scancodes.
-     */
-    bool keyboard[SDL_SCANCODE_COUNT];
-
-    /**
-     * The mouse's collider.
-     *
-     * This will be updated every frame or every time the mouse moves to reflect the mouse's position.
-     */
-    Collider mouse;
+    bool keyboard[SDL_SCANCODE_COUNT]; ///< Keyboard input status in the form of SDL scancodes.
+    Collider mouse; ///< The mouse's collider. This will be updated every frame or every time the mouse moves to reflect
+                    ///< the mouse's position.
 } InputStatus;
 
 /**
@@ -92,8 +84,9 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t max_fps; ///< Application's target FPS cap
-    double scale;     ///< Application's main scaling
+    uint32_t max_fps;          ///< Application's target FPS cap
+    double scale;              ///< Application's main scaling
+    bool show_debug_colliders; ///< Whether to draw debug collision masks on colliders
 } Settings;
 
 /**
