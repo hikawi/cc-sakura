@@ -6,6 +6,7 @@
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_error.h"
+#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_messagebox.h"
 #include "SDL3/SDL_pixels.h"
@@ -13,6 +14,7 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 #include "SDL3/SDL_video.h"
+#include "SDL3_image/SDL_image.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +72,20 @@ AppState *app_init(void)
         return NULL;
     }
     SDL_SetTextureBlendMode(state->scene_mgr.target, SDL_BLENDMODE_BLEND);
+
+    // Setup the window icon with SDL3, the icon is available in the assets folder.
+    char buf[1024] = {0};
+    SDL_snprintf(buf, sizeof(buf), "%sassets/icon.ico", SDL_GetBasePath());
+    SDL_Surface *icon = IMG_Load(buf);
+    if (icon)
+    {
+        SDL_SetWindowIcon(appstate->window.window, icon);
+        SDL_DestroySurface(icon);
+    }
+    else
+    {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Unable to apply a window icon. Error %s", SDL_GetError());
+    }
 
     // Create scene manager.
     state->scene_mgr.scenes      = list_init();

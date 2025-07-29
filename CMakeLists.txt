@@ -9,8 +9,6 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(PROJECT_VERSION "0.2.1")
-
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
@@ -31,6 +29,9 @@ file(GLOB_RECURSE GAME_HEADERS CONFIGURE_DEPENDS include/*.h)
 if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 
+    set(MACOSX_BUNDLE_ICON_FILE "assets/icon.png")
+    set(MACOSX_BUNDLE_LONG_VERSION_STRING "0.3")
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING "0.3")
     add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
 elseif(WIN32)
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
@@ -44,7 +45,6 @@ if(MSVC)
 else()
     target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
 endif()
-target_compile_definitions(CCSakura PRIVATE APPLICATION_VERSION="${PROJECT_VERSION}")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(CCSakura PRIVATE -fsanitize=address

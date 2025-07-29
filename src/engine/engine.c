@@ -10,6 +10,7 @@
 #include "misc/hashset.h"
 #include "misc/list.h"
 #include "misc/quadtree.h"
+#include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_blendmode.h"
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_log.h"
@@ -174,14 +175,25 @@ void engine_handle_collisions(AppState *app)
  */
 void engine_pump_signals(AppState *app)
 {
-    (void)app;
-
     SDL_LockMutex(signals_mutex);
 
-    // Fake handling pumped signals
+    // Snapshot the current queue of signals.
+    uint32_t length  = signals_queue->length;
+    Signal **signals = SDL_malloc(sizeof(Signal *) * length);
+    SDL_assert(signals != NULL); // We can't do anything if there's no memory to handle the signals
+    SDL_memcpy(signals, signals_queue->items, sizeof(Signal *) * length);
     list_clear(signals_queue);
 
     SDL_UnlockMutex(signals_mutex);
+
+    for (uint32_t i = 0; i < length; i++)
+    {
+        Signal *signal = (Signal *)signals[i];
+        scene_mgr_on_signal(&app->scene_mgr, signal);
+        signal_destroy(signal);
+    }
+
+    SDL_free(signals);
 }
 
 void engine_iterate(AppState *app)
@@ -232,20 +244,30 @@ void engine_handle_event(AppState *app, SDL_Event *event)
         app->input.mouse.aabb.y = (double)(event->motion.y + event->motion.yrel);
         break;
     case SDL_EVENT_WINDOW_RESIZED:
+    {
+        int old_w = app->window.w;
+        int old_h = app->window.h;
+
+        SDL_Texture *target = SDL_GetRenderTarget(app->window.renderer);
         SDL_GetRenderOutputSize(app->window.renderer, &app->window.w, &app->window.h);
         SDL_DestroyTexture(app->scene_mgr.target);
         app->scene_mgr.target = SDL_CreateTexture(app->window.renderer, SDL_PIXELFORMAT_RGBA8888,
                                                   SDL_TEXTUREACCESS_TARGET, app->window.w, app->window.h);
 
         // Reapply render target.
-        if (SDL_GetRenderTarget(app->window.renderer) != NULL)
-            SDL_SetRenderTarget(app->window.renderer, app->scene_mgr.target);
-        else
-            SDL_SetRenderTarget(app->window.renderer, NULL);
+        SDL_SetRenderTarget(app->window.renderer, target != NULL ? app->scene_mgr.target : NULL);
         SDL_SetTextureBlendMode(app->scene_mgr.target, SDL_BLENDMODE_BLEND);
-
         SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Resized rendering target.");
-        break;
+
+        // Pump a signal
+        Signal *signal             = signal_init(SIGNAL_WINDOW_RESIZED);
+        signal->window_resize.w    = app->window.w;
+        signal->window_resize.h    = app->window.h;
+        signal->window_resize.relx = app->window.w - old_w;
+        signal->window_resize.rely = app->window.h - old_h;
+        engine_push_signal(signal);
+    }
+    break;
     case SDL_EVENT_KEY_DOWN:
         app->input.keyboard[event->key.scancode] = true;
         break;

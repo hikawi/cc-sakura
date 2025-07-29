@@ -30,6 +30,7 @@ typedef enum
      * \see CollisionSignal
      */
     SIGNAL_COLLISION,
+    SIGNAL_WINDOW_RESIZED, ///< The user has resized their window. \see WindowResizeSignal
 } SignalType;
 
 /**
@@ -39,16 +40,22 @@ typedef enum
  */
 typedef struct
 {
-    /**
-     * The pair of colliders that have collided
-     */
-    CollisionPair pair;
-
-    /**
-     * The information of the collision that happened
-     */
-    Collision info;
+    CollisionPair pair; ///< The pair of colliders that collided
+    Collision info;     ///< Information on how that collision happened
 } CollisionSignal;
+
+/**
+ * Represents a signal called when the window is resized.
+ *
+ * \see SIGNAL_WINDOW_RESIZED
+ */
+typedef struct
+{
+    int w;    ///< The original X position
+    int h;    ///< The original Y position
+    int relx; ///< The relative movement compared to the original X
+    int rely; ///< The relative movement compared to the original Y
+} windowResizeSignal;
 
 /**
  * Represents a signal of the engine.
@@ -57,18 +64,12 @@ typedef struct
  */
 typedef struct
 {
-    /**
-     * The signal's type, basically event type.
-     */
-    SignalType type;
-
-    /**
-     * The signal's timestamp, when it happened.
-     */
-    Uint64 timestamp;
+    SignalType type;  ///< The signal's type, basically event type
+    Uint64 timestamp; ///< The signal's timestamp, when it happened
     union
     {
         CollisionSignal collision;
+        windowResizeSignal window_resize;
     };
 } Signal;
 

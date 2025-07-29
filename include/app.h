@@ -14,6 +14,7 @@
 
 #define APPLICATION_NAME            "Sakura and the Clow Cards"
 #define APPLICATION_IDENTIFIER      "dev.luny.ccsakura"
+#define APPLICATION_VERSION         "0.3"
 #define APPLICATION_ORGANIZATION    "Luny"
 #define APPLICATION_APP_NAME        "Cardcaptor Sakura"
 

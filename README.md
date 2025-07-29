@@ -77,7 +77,7 @@ To put it simply:
 
 This is to show videos, or screenshots of what is being done as days passed.
 
-### Week 1
+### Month 1
 
 <details>
     <summary>Day 3 - July 2, 2025 (Sprite Rendering and Movement)</summary>
@@ -100,8 +100,6 @@ https://github.com/user-attachments/assets/6bc00f98-53f8-477e-8300-f21fcaf703d6
 
 </details>
 
-### Week 2
-
 <details>
     <summary>Day 10 - July 9, 2025 (Map Load and Autotile)</summary>
 
@@ -123,8 +121,6 @@ https://github.com/user-attachments/assets/89be68a7-c340-4a58-99b9-2672e3a3a4fe
 
 </details>
 
-### Week 3
-
 <details>
     <summary>Day 18 - July 17, 2025 (Signals system in scenes)</summary>
 
@@ -133,8 +129,15 @@ https://github.com/user-attachments/assets/881e791a-f1d1-45a7-8bc7-eb9bb9d3c4dd
 </details>
 
 <details>
-    <summary>Day 21, July 20, 2025 (Centralized Loading Screen)</summary>
+    <summary>Day 21 - July 20, 2025 (Centralized Loading Screen)</summary>
 
 https://github.com/user-attachments/assets/ad2798eb-8ad4-4717-bd43-390a95b9a4e4
+
+</details>
+
+<details>
+    <summary>Day 24 - July 23, 2025 (Doxygen Documentation)</summary>
+
+https://cc-sakura.luny.dev/
 
 </details>

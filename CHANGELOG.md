@@ -3,6 +3,7 @@
 - Added a generic hash map for generic keys and values (`misc/genhashmap.h`).
 - Added a settings struct.
 - Added debug rendering for colliders.
+- Added a window icon and executable icon for MacOS. Windows and Linux still researching.
 
 ### Removals
 
