@@ -21,7 +21,7 @@ void scene_fps_ondraw(Scene *scene, SDL_Renderer *renderer)
 
     char buf[10];
     SDL_snprintf(buf, 10, "%d FPS", appstate->frame_data.fps);
-    font_engine_render_text((FontRenderingOptions){
+    text_render((FontRenderingOptions){
         .color  = data->color,
         .origin = RENDER_ORIGIN_TOP_RIGHT,
         .text   = buf,

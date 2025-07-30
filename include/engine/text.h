@@ -106,16 +106,23 @@ typedef struct
  * \param app the application to create with
  * \returns true if it was initialized correctly
  */
-bool font_engine_init(AppState *app);
+bool text_init(AppState *app);
+
+/**
+ * Preloads a font.
+ *
+ * \param font the font to load
+ */
+void text_preload(Font font);
 
 /**
  * Renders a text with options.
  *
  * \param opts the rendering options
  */
-void font_engine_render_text(FontRenderingOptions opts);
+void text_render(FontRenderingOptions opts);
 
 /**
  * Destroys the initialized font engines.
  */
-void font_engine_destroy(void);
+void text_destroy(void);

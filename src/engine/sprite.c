@@ -6,11 +6,11 @@
 #include "misc/genhashmap.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
-#include "SDL3/SDL_filesystem.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_storage.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_image/SDL_image.h"
 
@@ -182,11 +182,39 @@ Sprite *sprite_load(const char *name)
 {
     SDL_Renderer *renderer = app_get()->window.renderer;
     char buf[1024]         = {0};
-    SDL_snprintf(buf, sizeof(buf), "%sassets/spr/%s.sprite", SDL_GetBasePath(), name);
+    SDL_snprintf(buf, sizeof(buf), "assets/spr/%s.sprite", name);
 
-    SDL_IOStream *fp = SDL_IOFromFile(buf, "rb");
+    // Try to open a file in SDL's storage.
+    // Why is this so complicated?
+    SDL_Storage *storage = SDL_OpenTitleStorage(NULL, 0);
+    while (!SDL_StorageReady(storage))
+    {
+        SDL_Delay(1);
+    }
+
+    uint64_t spr_len;
+    if (!SDL_GetStorageFileSize(storage, buf, &spr_len))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to query file size for %s", buf);
+        SDL_CloseStorage(storage);
+        return NULL;
+    }
+
+    char *spr_file = SDL_malloc(sizeof(char) * spr_len);
+    if (!SDL_ReadStorageFile(storage, buf, spr_file, spr_len))
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to read the sprite %s", buf);
+        SDL_CloseStorage(storage);
+        return NULL;
+    }
+
+    // We're done with the storage
+    SDL_CloseStorage(storage);
+
+    SDL_IOStream *fp = SDL_IOFromConstMem(spr_file, sizeof(char) * spr_len);
     if (!fp)
     {
+        SDL_free(spr_file);
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Couldn't open sprite asset with name %s", buf);
         return NULL;
     }
@@ -194,6 +222,7 @@ Sprite *sprite_load(const char *name)
     Sprite *spr = SDL_calloc(1, sizeof(Sprite));
     if (!spr)
     {
+        SDL_free(spr_file);
         SDL_CloseIO(fp);
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate enough memory for Sprite %s.", name);
         return NULL;
@@ -214,6 +243,7 @@ Sprite *sprite_load(const char *name)
         break;
     }
 
+    SDL_free(spr_file);
     SDL_CloseIO(fp);
     if (!status)
     {

@@ -307,7 +307,7 @@ bool engine_init(AppState *app)
     signals_queue = list_init();
     signals_mutex = SDL_CreateMutex();
 
-    if (!font_engine_init(app))
+    if (!text_init(app))
     {
         success = false;
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to start font engine");
@@ -323,5 +323,5 @@ bool engine_init(AppState *app)
 
 void engine_destroy(void)
 {
-    font_engine_destroy();
+    text_destroy();
 }

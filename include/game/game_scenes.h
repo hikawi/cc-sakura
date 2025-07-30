@@ -39,10 +39,12 @@ Scene *scene_fps(const SDL_Color color);
  * intermediary. When the thread STARTS transitioning out, the callback is called with the provided user data.
  *
  * \param mutex the mutex to try acquiring
+ * \param min the minimum duration of time to wait until we transition to next scene, to not flash the user on quick
+ * transitions. This is in seconds.
  * \param callback the callback to call when transitioning out
  * \param userdata the userdata to call the callback with
  * \returns a loading scene configured
  */
-Scene *scene_loading(SDL_Mutex *mutex, void (*callback)(void *), void *userdata);
+Scene *scene_loading(SDL_Mutex *mutex, double min, void (*callback)(void *), void *userdata);
 
 Scene *scene_000_main(void); // Scene 000: The main menu.

@@ -5,12 +5,15 @@
 #include "misc/mathex.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
-#include "SDL3/SDL_filesystem.h"
+#include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_storage.h"
 #include "SDL3/SDL_surface.h"
 #include "SDL3_ttf/SDL_ttf.h"
+
+#include <string.h>
 
 #define MAX_FONT_NODES 50
 
@@ -21,6 +24,8 @@ typedef struct FontNode
 {
     Font font;
     TTF_Font *ttf_font;
+    char *ttf_buf;
+
     struct FontNode *next;
 } FontNode;
 
@@ -45,7 +50,7 @@ const char *get_font_file_name(FontFace face)
     }
 }
 
-bool font_engine_init(AppState *app)
+bool text_init(AppState *app)
 {
     (void)app;
     text_engine = TTF_CreateSurfaceTextEngine();
@@ -72,11 +77,12 @@ int font_hash(Font font)
 /**
  * Initializes a new font node.
  */
-FontNode *font_node_init(Font font, TTF_Font *ttf)
+FontNode *font_node_init(Font font, TTF_Font *ttf, char *ttf_buf)
 {
     FontNode *node = SDL_malloc(sizeof(FontNode));
     node->font     = font;
     node->ttf_font = ttf;
+    node->ttf_buf  = ttf_buf;
     node->next     = NULL;
     return node;
 }
@@ -102,14 +108,14 @@ FontNode *font_node_get(Font font)
  * Puts a new font with a TTF font. This replaces the existing node if already
  * there.
  */
-void font_node_put(Font font, TTF_Font *ttf)
+void font_node_put(Font font, TTF_Font *ttf, char *ttf_buf)
 {
     int idx = font_hash(font);
 
     // Nothing in that bucket, just smash it in.
     if (!font_nodes[idx])
     {
-        font_nodes[idx] = font_node_init(font, ttf);
+        font_nodes[idx] = font_node_init(font, ttf, ttf_buf);
         return;
     }
 
@@ -119,13 +125,16 @@ void font_node_put(Font font, TTF_Font *ttf)
         if (font_eq(cur->font, font))
         {
             TTF_CloseFont(cur->ttf_font);
+            SDL_free(cur->ttf_buf);
+
             cur->ttf_font = ttf;
+            cur->ttf_buf  = ttf_buf;
             break;
         }
 
         if (!cur->next)
         {
-            cur->next = font_node_init(font, ttf);
+            cur->next = font_node_init(font, ttf, ttf_buf);
             break;
         }
 
@@ -140,10 +149,36 @@ FontNode *font_node_get_or_create(Font font)
     // No cache font. We start to create it.
     if (!node)
     {
-        char buf[1024];
-        SDL_snprintf(buf, sizeof(buf), "%s%s", SDL_GetBasePath(), get_font_file_name(font.face));
+        const char *filepath = get_font_file_name(font.face);
 
-        TTF_Font *ttf = TTF_OpenFont(buf, font.sp);
+        // Read the font file up using SDL_Storage
+        SDL_Storage *storage = SDL_OpenTitleStorage(NULL, 0);
+        while (!SDL_StorageReady(storage))
+        {
+            SDL_Delay(1);
+        }
+
+        uint64_t filelen;
+        if (!SDL_GetStorageFileSize(storage, filepath, &filelen))
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to query for font file size %s.", filepath);
+            SDL_CloseStorage(storage);
+            return NULL;
+        }
+
+        // M-alloc an array for the font file.
+        char *filebuf = SDL_malloc(sizeof(char) * filelen);
+        if (!SDL_ReadStorageFile(storage, filepath, filebuf, filelen))
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to read storage file %s.", filepath);
+            SDL_CloseStorage(storage);
+            return NULL;
+        }
+
+        // We're done with the storage
+        SDL_CloseStorage(storage);
+
+        TTF_Font *ttf = TTF_OpenFontIO(SDL_IOFromConstMem(filebuf, sizeof(char) * filelen), true, font.sp);
         TTF_SetFontHinting(ttf, TTF_HINTING_LIGHT_SUBPIXEL);
         TTF_SetFontStyle(ttf, font.style);
 
@@ -153,7 +188,7 @@ FontNode *font_node_get_or_create(Font font)
             return NULL;
         }
 
-        font_node_put(font, ttf);
+        font_node_put(font, ttf, filebuf);
         node = font_node_get(font);
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Cached a font style");
     }
@@ -173,18 +208,18 @@ void font_node_remove(Font font)
         // We should remove here.
         if (font_eq(cur->font, font))
         {
+            TTF_CloseFont(cur->ttf_font);
+            SDL_free(cur->ttf_buf);
             if (prev)
             {
-                TTF_CloseFont(cur->ttf_font);
-                SDL_free(cur);
                 prev->next = cur->next;
             }
             else
             {
                 // It's the head of the list.
-                SDL_free(cur);
                 font_nodes[idx] = cur->next;
             }
+            SDL_free(cur);
             break;
         }
 
@@ -199,11 +234,17 @@ void font_node_destroy(FontNode *node)
         return;
 
     TTF_CloseFont(node->ttf_font);
+    SDL_free(node->ttf_buf);
     font_node_destroy(node->next);
     SDL_free(node);
 }
 
-void font_engine_render_text(FontRenderingOptions opts)
+void text_preload(Font font)
+{
+    font_node_get_or_create(font);
+}
+
+void text_render(FontRenderingOptions opts)
 {
     AppState *state = app_get();
 
@@ -211,7 +252,7 @@ void font_engine_render_text(FontRenderingOptions opts)
     SDL_assert(node != NULL);
 
     // Create the text.
-    SDL_Surface *surface = TTF_RenderText_Solid(node->ttf_font, opts.text, SDL_strlen(opts.text), opts.color);
+    SDL_Surface *surface = TTF_RenderText_Blended(node->ttf_font, opts.text, SDL_strlen(opts.text), opts.color);
 
     // Calculate the position for the text.
     double x = opts.x, y = opts.y;
@@ -233,7 +274,7 @@ void font_engine_render_text(FontRenderingOptions opts)
     SDL_DestroyTexture(texture);
 }
 
-void font_engine_destroy(void)
+void text_destroy(void)
 {
     for (int i = 0; i < MAX_FONT_NODES; i++)
     {

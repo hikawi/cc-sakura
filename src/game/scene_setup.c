@@ -1,11 +1,12 @@
 #include "app.h"
+#include "common.h"
 #include "engine/scene.h"
+#include "engine/text.h"
 #include "game/game_scenes.h"
 #include "misc/threading.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_mutex.h"
 #include "SDL3/SDL_thread.h"
-#include "SDL3/SDL_timer.h"
 
 // Only sets up the first time.
 static bool setup = false;
@@ -15,11 +16,15 @@ void setup_next_scene(void *userdata)
     Scene *main              = scene_000_main();
     SceneTransitionInfo info = {
         .scene    = main,
-        .curve    = ANIMATION_CURVE_LINEAR,
-        .duration = 2,
+        .curve    = ANIMATION_CURVE_EASE_IN,
+        .duration = 0.5,
         .entry    = true,
-        .type     = TRANSITION_SLIDE_DOWN,
+        .type     = TRANSITION_FADE,
     };
+    scene_mgr_start_transition(userdata, info);
+
+    Scene *fps = scene_fps(rgba(0, 0, 255, 255));
+    info.scene = fps;
     scene_mgr_start_transition(userdata, info);
 }
 
@@ -34,11 +39,13 @@ int fake_thread_busy(void *lol)
     SDL_BroadcastCondition(data->started);
     SDL_UnlockMutex(data->started_mutex);
 
-    for (int i = 0; i < 100; i++)
-    {
-        SDL_Delay(50);
-        SDL_Log("Logging from fake thread: %d", i);
-    }
+    // Loads the necessary font.
+    Font font = {
+        .face  = FONT_FACE_RAINY_HEARTS,
+        .sp    = 24,
+        .style = TTF_STYLE_ITALIC,
+    };
+    text_preload(font);
 
     // First we unlock the mutex. Now the loading scene should know that the
     // mutex is now available.
@@ -73,7 +80,7 @@ void scene_setup(void)
     SDL_UnlockMutex(td.started_mutex);
 
     SceneTransitionInfo info = {
-        .scene    = scene_loading(td.mutex, setup_next_scene, &app->scene_mgr),
+        .scene    = scene_loading(td.mutex, 0.5, setup_next_scene, &app->scene_mgr),
         .entry    = true,
         .type     = TRANSITION_NONE,
         .duration = 2,

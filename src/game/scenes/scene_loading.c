@@ -13,18 +13,21 @@
 #include "SDL3/SDL_mutex.h"
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_stdinc.h"
+#include "SDL3/SDL_timer.h"
 
 typedef enum
 {
-    SCENE_LOADING_SPR_OBJECT,
-} SceneLoadingEntity;
+    SPR_SAKURA_FLOWER,
+} SceneLoadingSprite;
 
 typedef struct
 {
     SDL_Mutex *mutex;
+    uint64_t start_time;
+    double min;
     void (*callback)(void *);
     void *userdata;
-} SceneLoading;
+} SceneLoadingData;
 
 void scene_loading_oninit(Scene *s)
 {
@@ -35,20 +38,26 @@ void scene_loading_oninit(Scene *s)
         return;
     }
 
-    hash_map_put(s->sprites, SCENE_LOADING_SPR_OBJECT, spr);
+    hash_map_put(s->sprites, SPR_SAKURA_FLOWER, spr);
     sprite_select_tag(spr, "sakura");
+
+    // Mark the start time
+    SceneLoadingData *data = (SceneLoadingData *)s->data;
+    data->start_time       = SDL_GetTicks();
 }
 
 void scene_loading_ontick(Scene *s, double dt)
 {
-    AppState *app      = app_get();
-    SceneLoading *data = (SceneLoading *)s->data;
+    AppState *app          = app_get();
+    SceneLoadingData *data = (SceneLoadingData *)s->data;
 
-    if (data->mutex && SDL_TryLockMutex(data->mutex))
+    double elapsed = (SDL_GetTicks() - data->start_time) / 1000.0;
+    if (elapsed >= data->min && data->mutex && SDL_TryLockMutex(data->mutex))
     {
-        SDL_Log("Succeeded in locking mutex");
+        SDL_Log("Succeeded in locking mutex, transitioning out.");
         SDL_UnlockMutex(data->mutex);
         SDL_DestroyMutex(data->mutex);
+
         data->mutex = NULL;
 
         // Transition itself out.
@@ -71,8 +80,8 @@ void scene_loading_ontick(Scene *s, double dt)
 
     // Regardless of failing or succeeding, we keep rendering, so even when
     // fading out, the animation stays smooth.
-    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
-    spr_object->rotation += 12 * SDL_PI_D * dt;
+    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SPR_SAKURA_FLOWER);
+    spr_object->rotation += 64 * SDL_PI_D * dt;
 }
 
 void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
@@ -87,7 +96,7 @@ void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
     botright.x = winst.w - 64;
     botright.y = winst.h - 64;
 
-    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SCENE_LOADING_SPR_OBJECT);
+    Sprite *spr_object = (Sprite *)hash_map_get(s->sprites, SPR_SAKURA_FLOWER);
 
     SpriteRenderProperties props;
     props.renderer = renderer;
@@ -99,7 +108,7 @@ void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
 
 void scene_loading_ondestroy(Scene *s)
 {
-    SceneLoading *data = (SceneLoading *)s->data;
+    SceneLoadingData *data = (SceneLoadingData *)s->data;
 
     if (data->mutex)
     {
@@ -108,12 +117,13 @@ void scene_loading_ondestroy(Scene *s)
     }
 }
 
-Scene *scene_loading(SDL_Mutex *mutex, void (*callback)(void *), void *userdata)
+Scene *scene_loading(SDL_Mutex *mutex, double min, void (*callback)(void *), void *userdata)
 {
     SDL_assert(mutex != NULL);
+    SDL_assert(min > 0);
 
-    Scene *s           = scene_init();
-    SceneLoading *data = SDL_malloc(sizeof(SceneLoading));
+    Scene *s               = scene_init();
+    SceneLoadingData *data = SDL_malloc(sizeof(SceneLoadingData));
 
     if (!s || !data)
     {
@@ -123,9 +133,11 @@ Scene *scene_loading(SDL_Mutex *mutex, void (*callback)(void *), void *userdata)
         return NULL;
     }
 
-    data->mutex    = mutex;
-    data->callback = callback;
-    data->userdata = userdata;
+    data->mutex      = mutex;
+    data->start_time = 0;
+    data->min        = min;
+    data->callback   = callback;
+    data->userdata   = userdata;
 
     s->captures_focus = true;
     s->data           = data;

@@ -39,18 +39,19 @@ else()
     add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 endif()
 
-# Set warnings as error
-if(MSVC)
-    target_compile_options(CCSakura PRIVATE /W4 /O2)
-else()
-    target_compile_options(CCSakura PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
-endif()
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(CCSakura PRIVATE -fsanitize=address
-        -fsanitize=undefined -fno-omit-frame-pointer)
-    target_link_options(CCSakura PRIVATE -fsanitize=address
-        -fsanitize=undefined)
+    if(MSVC)
+        target_compile_options(CCSakura PRIVATE /W4 /Werror /O0 /fsanitize=address)
+    else()
+        target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -Werror -O0 -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_link_options(CCSakura PRIVATE -fsanitize=address,undefined)
+    endif()
+else()
+    if(MSVC)
+        target_compile_options(CCSakura PRIVATE /W4 /Werror /O3)
+    else()
+        target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -Werror -O3)
+    endif()
 endif()
 
 # Link SDL3 libraries
