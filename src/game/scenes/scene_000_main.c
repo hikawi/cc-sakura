@@ -29,9 +29,6 @@ void scene_000_oninit(Scene *s)
     data->started      = false;
 
     s->data = data;
-
-    // Setup colliders
-    Collider *start_btn = SDL_calloc(1, sizeof(Collider));
 }
 
 void scene_000_onstart(Scene *s)
