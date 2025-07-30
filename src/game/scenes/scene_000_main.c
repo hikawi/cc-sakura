@@ -3,6 +3,7 @@
 // This is to hold data for the main scenes of the main menu.
 
 #include "app.h"
+#include "engine/collision.h"
 #include "engine/renderer.h"
 #include "engine/scene.h"
 #include "engine/signal.h"
@@ -28,6 +29,9 @@ void scene_000_oninit(Scene *s)
     data->started      = false;
 
     s->data = data;
+
+    // Setup colliders
+    Collider *start_btn = SDL_calloc(1, sizeof(Collider));
 }
 
 void scene_000_onstart(Scene *s)
