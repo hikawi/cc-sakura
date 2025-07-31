@@ -7,6 +7,7 @@
 #pragma once
 
 #include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_storage.h"
 
 #include <stdint.h>
 
@@ -61,3 +62,12 @@ SDL_FColor color_to_fcolor(SDL_Color color);
  * \returns the hash value of a string
  */
 uint64_t strhash(const char *str);
+
+/**
+ * Attempts to open SDL's provisioned user storage.
+ *
+ * This also blocks until the user storage is available to be read.
+ *
+ * \returns a storage when fully functional, null if it failed
+ */
+SDL_Storage *open_user_storage(void);

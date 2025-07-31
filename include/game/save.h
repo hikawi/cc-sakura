@@ -9,19 +9,17 @@
 #include "app.h"
 
 /**
- * Saves the application.
+ * Saves the application's settings state.
  *
- * \param app the app to save
- * \param slot the slot to save to
- * \warning This uses a mutex to lock access.
+ * \param settings the settings to save
+ * \returns true if the game settings saved correctly
  */
-bool game_save(const AppState *app, const uint8_t slot);
+bool game_settings_save(const Settings settings);
 
 /**
- * Loads the application's save file.
+ * Loads the application's settings from the storage.
  *
- * \param app the app to load into
- * \param slot the slot to pick from
- * \returns true if the load was successful, false if the slot did not succeed
+ * \param settings the settings to save into
+ * \returns true if it was loaded correctly
  */
-bool game_load(AppState *app, const uint8_t slot);
+bool game_settings_load(Settings *settings);

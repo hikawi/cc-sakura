@@ -3,6 +3,7 @@
 #include "engine/scene.h"
 #include "engine/text.h"
 #include "game/game_scenes.h"
+#include "game/save.h"
 #include "misc/threading.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_mutex.h"
@@ -28,7 +29,7 @@ void setup_next_scene(void *userdata)
     scene_mgr_start_transition(userdata, info);
 }
 
-int fake_thread_busy(void *lol)
+int setup_thread(void *lol)
 {
     ThreadData *data = (ThreadData *)lol;
 
@@ -46,6 +47,9 @@ int fake_thread_busy(void *lol)
         .style = TTF_STYLE_ITALIC,
     };
     text_preload(font);
+
+    // Loads the necessary settings.
+    game_settings_load(&app_get()->settings);
 
     // First we unlock the mutex. Now the loading scene should know that the
     // mutex is now available.
@@ -72,7 +76,7 @@ void scene_setup(void)
     AppState *app = app_get();
 
     // Test loading screen.
-    ThreadData td = thread_background_init(fake_thread_busy, "fakethread", NULL);
+    ThreadData td = thread_background_init(setup_thread, "fakethread", NULL);
 
     SDL_DetachThread(td.thread);
     SDL_LockMutex(td.started_mutex);

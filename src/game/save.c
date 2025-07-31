@@ -1,169 +1,144 @@
 #include "game/save.h"
 
 #include "app.h"
+#include "common.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_iostream.h"
 #include "SDL3/SDL_log.h"
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_storage.h"
-#include "SDL3/SDL_timer.h"
 
-char *serialize_app_v1(const AppState *app, uint64_t *buflen)
+void serialize_settings_v1(const Settings settings, SDL_IOStream *io)
 {
+    SDL_assert(io != NULL);
+
+    SDL_WriteU32LE(io, 1); // version
+    SDL_WriteU32LE(io, settings.max_fps);
+    SDL_WriteIO(io, &settings.scale, sizeof(double));
+    SDL_WriteIO(io, &settings.show_debug_colliders, sizeof(bool));
+}
+
+void deserialize_settings_v1(Settings *settings, SDL_IOStream *io)
+{
+    SDL_assert(io != NULL);
+
+    SDL_ReadU32LE(io, &settings->max_fps);
+    SDL_ReadIO(io, &settings->scale, sizeof(double));
+    SDL_ReadIO(io, &settings->show_debug_colliders, sizeof(bool));
+}
+
+bool game_settings_save(const Settings settings)
+{
+    bool ret = false;
+
+    SDL_Storage *storage = open_user_storage();
+    if (!storage)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open user storage for saving.");
+        goto err_free_none;
+    }
+
+    // Write into a file.
     SDL_IOStream *io = SDL_IOFromDynamicMem();
     if (!io)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open an IO for dynamic writing. %s", SDL_GetError());
-        return NULL;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open stream for settings serialization.");
+        goto err_free_storage;
     }
 
-    // Write the version
-    SDL_WriteU32LE(io, 1);
+    serialize_settings_v1(settings, io);
 
-    // Write the app's settings
-    SDL_WriteU32LE(io, app->settings.max_fps);
-    SDL_WriteIO(io, &app->settings.scale, sizeof(double));
-    SDL_WriteIO(io, &app->settings.show_debug_colliders, sizeof(bool));
-
-    // Okay, now we flush it down to a normal char *.
-    int64_t iolen = SDL_GetIOSize(io);
-    if (iolen < 0)
+    // Convert to buffer.
+    int64_t buflen = SDL_GetIOSize(io);
+    if (buflen < 0)
     {
-        SDL_CloseIO(io);
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to read IO size from dynamic writes. %s", SDL_GetError());
-        return NULL;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Can't see stream size for writing settings file");
+        goto err_free_io;
     }
 
-    char *buf = SDL_malloc(sizeof(char) * (uint64_t)iolen);
-    SDL_ReadIO(io, buf, (uint64_t)iolen);
-    SDL_CloseIO(io);
-
-    *buflen = (uint64_t)iolen;
-    return buf;
-}
-
-void deserialize_app_v1(AppState *app, SDL_IOStream *io)
-{
-    (void)app;
-    (void)io;
-
-    SDL_ReadU32LE(io, &app->settings.max_fps);
-    SDL_ReadIO(io, &app->settings.scale, sizeof(double));
-    SDL_ReadIO(io, &app->settings.show_debug_colliders, sizeof(bool));
-}
-
-bool game_save(const AppState *app, const uint8_t slot)
-{
-    SDL_assert(slot <= 3);
-    SDL_assert(app != NULL);
-
-    SDL_Storage *storage = SDL_OpenUserStorage(APPLICATION_ORGANIZATION, APPLICATION_APP_NAME, 0);
-    if (!storage)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to open user storage for saving. %s", SDL_GetError());
-        return false;
-    }
-
-    while (!SDL_StorageReady(storage))
-    {
-        SDL_Delay(1);
-    }
-
-    // We're using v1 of the serializer.
-    uint64_t buflen;
-    char *buf = serialize_app_v1(app, &buflen);
+    char *buf = SDL_malloc(sizeof(char) * (uint64_t)buflen);
     if (!buf)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to serialize app.");
-        SDL_CloseStorage(storage);
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for settings file");
+        goto err_free_io;
     }
 
-    // Check if the directory can be written to.
-    SDL_CreateStorageDirectory(storage, "saves");
+    SDL_SeekIO(io, 0, SDL_IO_SEEK_SET);
+    SDL_ReadIO(io, buf, (uint64_t)buflen);
 
-    char namebuf[20] = {0};
-    SDL_snprintf(namebuf, sizeof(namebuf), "saves/%d", slot);
-    if (!SDL_WriteStorageFile(storage, namebuf, buf, buflen))
+    if (!SDL_WriteStorageFile(storage, "settings", buf, (uint64_t)buflen))
     {
-        SDL_CloseStorage(storage);
-        SDL_free(buf);
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to write into storage to save.");
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to write settings file.");
+    }
+    else
+    {
+        ret = true;
     }
 
-    SDL_CloseStorage(storage);
     SDL_free(buf);
-    return true;
+err_free_io:
+    SDL_CloseIO(io);
+err_free_storage:
+    SDL_CloseStorage(storage);
+err_free_none:
+    return ret;
 }
 
-bool game_load(AppState *app, const uint8_t slot)
+bool game_settings_load(Settings *settings)
 {
-    SDL_assert(app != NULL && slot <= 3);
+    const char *filepath = "settings";
+    bool ret             = false;
 
-    SDL_Storage *storage = SDL_OpenUserStorage(APPLICATION_ORGANIZATION, APPLICATION_APP_NAME, 0);
+    SDL_Storage *storage = open_user_storage();
     if (!storage)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Unable to open user storage for saving. %s", SDL_GetError());
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open user storage for loading settings.");
+        goto err_free_none;
     }
-
-    while (!SDL_StorageReady(storage))
-    {
-        SDL_Delay(1);
-    }
-
-    char namebuf[20] = {0};
-    SDL_snprintf(namebuf, sizeof(namebuf), "saves/%d", slot);
 
     SDL_PathInfo info;
-    if (!SDL_GetStoragePathInfo(storage, namebuf, &info))
+    if (!SDL_GetStoragePathInfo(storage, filepath, &info))
     {
-        // File doesn't exist.
-        SDL_LogWarn(SDL_LOG_CATEGORY_SYSTEM, "Can't load a save file at slot %d because it doesn't exist.", slot);
-        SDL_CloseStorage(storage);
-        return false;
+        SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Couldn't find a settings file to load.");
+        goto err_free_storage;
     }
 
     char *filebuf = SDL_malloc(sizeof(char) * info.size);
     if (!filebuf)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory to read a save file at slot %d.", slot);
-        SDL_CloseStorage(storage);
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for settings file");
+        goto err_free_storage;
     }
 
-    if (!SDL_ReadStorageFile(storage, namebuf, filebuf, info.size))
+    if (!SDL_ReadStorageFile(storage, filepath, filebuf, info.size))
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to read save file at %s.", namebuf);
-        SDL_free(filebuf);
-        SDL_CloseStorage(storage);
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to read storage file settings. %s", SDL_GetError());
+        goto err_free_filebuf;
     }
 
-    // We don't need the storage anymore.
-    SDL_CloseStorage(storage);
-
-    // Open an IOStream for the thing.
     SDL_IOStream *io = SDL_IOFromConstMem(filebuf, info.size);
     if (!io)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to open an IOStream to read save file.");
-        SDL_free(filebuf);
-        return false;
+        SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Failed to open IOStream for settings file. %s", SDL_GetError());
+        goto err_free_filebuf;
     }
 
-    uint32_t version;
+    uint32_t version = 0;
     SDL_ReadU32LE(io, &version);
     switch (version)
     {
     case 1:
-        deserialize_app_v1(app, io);
+        deserialize_settings_v1(settings, io);
         break;
     }
 
-    SDL_free(filebuf);
+    ret = true;
     SDL_CloseIO(io);
-    return true;
+err_free_filebuf:
+    SDL_free(filebuf);
+err_free_storage:
+    SDL_CloseStorage(storage);
+err_free_none:
+    return ret;
 }

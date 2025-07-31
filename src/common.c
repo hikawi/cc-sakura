@@ -1,7 +1,10 @@
 #include "common.h"
 
+#include "app.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_pixels.h"
+#include "SDL3/SDL_storage.h"
+#include "SDL3/SDL_timer.h"
 
 SDL_Color rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
@@ -51,4 +54,15 @@ uint64_t strhash(const char *str)
     }
 
     return sum;
+}
+
+SDL_Storage *open_user_storage(void)
+{
+    SDL_Storage *storage = SDL_OpenUserStorage(APPLICATION_ORGANIZATION, APPLICATION_APP_NAME, 0);
+    while (storage && !SDL_StorageReady(storage))
+    {
+        SDL_Delay(1);
+    }
+
+    return storage;
 }

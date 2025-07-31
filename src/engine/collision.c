@@ -758,7 +758,7 @@ Collider collision_convert_to_aabb(const Collider *collider)
     break;
     case COLLIDER_SHAPE_TYPE_CAPSULE:
     {
-        CapsuleCollider cap;
+        CapsuleCollider cap = collider->capsule;
 
         // I have no clue how this works.
 

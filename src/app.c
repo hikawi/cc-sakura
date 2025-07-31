@@ -2,6 +2,7 @@
 
 #include "engine/collision.h"
 #include "engine/scene.h"
+#include "game/save.h"
 #include "misc/list.h"
 #include "SDL3/SDL_assert.h"
 #include "SDL3/SDL_blendmode.h"
@@ -118,6 +119,8 @@ void app_destroy(AppState *state)
 {
     if (!state)
         return;
+
+    game_settings_save(state->settings);
 
     scene_mgr_destroy(state->scene_mgr);
     SDL_DestroyWindow(state->window.window);
