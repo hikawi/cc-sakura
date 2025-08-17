@@ -14,6 +14,7 @@
 #include "SDL3/SDL_main.h"
 #include "SDL3_ttf/SDL_ttf.h"
 
+#include <SDL3_image/SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -40,6 +41,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         return SDL_APP_FAILURE;
     }
     SDL_INIT_SUCCESS = true;
+
+    // Echo out versions.
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL v%d", SDL_VERSION);
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL_image v%d", SDL_IMAGE_VERSION);
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL_ttf v%d", SDL_TTF_VERSION);
 
     if (!TTF_Init())
     {
