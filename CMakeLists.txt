@@ -38,9 +38,6 @@ if(APPLE)
     set(MACOSX_BUNDLE_SHORT_VERSION_STRING "0.3")
     add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
 elseif(WIN32)
-    set_target_properties(CCSakura PROPERTIES
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-    )
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
 else()
     add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})

@@ -83,7 +83,7 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
     }
 
     spr->texture = img_texture;
-    SDL_SetTextureScaleMode(img_texture, SDL_SCALEMODE_PIXELART);
+    SDL_SetTextureScaleMode(img_texture, SDL_SCALEMODE_NEAREST);
     SDL_ReadU32LE(fp, &spr->w);
     SDL_ReadU32LE(fp, &spr->h);
 

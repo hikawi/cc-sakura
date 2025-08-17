@@ -261,7 +261,7 @@ void text_render(FontRenderingOptions opts)
 
     // Create the surface to render.
     SDL_Texture *texture = SDL_CreateTextureFromSurface(state->window.renderer, surface);
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_PIXELART);
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
     SDL_FRect dstrect = {
         .x = (float)x,
         .y = (float)y,
