@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
-project(CCSakura C ASM)
+project(CCSakura C)
 
 # Set C standard
 set(CMAKE_C_STANDARD 17)
@@ -15,11 +15,15 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Add SDL3 and related libraries
-set(SDLTTF_VENDORED ON)
-add_subdirectory(vendored/SDL      EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
+# set(SDLTTF_VENDORED ON)
+# add_subdirectory(vendored/SDL      EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
+find_package(SDL3_ttf CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # Add your source files
 file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.c)
@@ -34,6 +38,9 @@ if(APPLE)
     set(MACOSX_BUNDLE_SHORT_VERSION_STRING "0.3")
     add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
 elseif(WIN32)
+    set_target_properties(CCSakura PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+    )
     add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
 else()
     add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
@@ -57,9 +64,10 @@ endif()
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE
     SDL3::SDL3
-    SDL3_image::SDL3_image
-    SDL3_mixer::SDL3_mixer
+    $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
+    # SDL3_mixer::SDL3_mixer
     SDL3_ttf::SDL3_ttf
+    ZLIB::ZLIB
 )
 
 # Include directories
