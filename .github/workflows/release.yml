@@ -70,13 +70,12 @@ jobs:
         run: |
           ls -R build
 
-      # - name: Package artifacts (Ubuntu)
-      #   if: matrix.os == 'ubuntu-latest'
-      #   run: |
-      #     mkdir -p CCSakura-Linux
-      #     mv -v build/bin/* CCSakura-Linux
-      #     mv -v build/lib/* CCSakura-Linux
-      #     cp -R -v assets CCSakura-Linux
+      - name: Package artifacts (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p CCSakura-Linux
+          mv -v build/bin/* CCSakura-Linux
+          cp -R -v assets CCSakura-Linux
 
       - name: Package artifacts (MacOS)
         if: matrix.os == 'macos-latest'
@@ -90,7 +89,6 @@ jobs:
         run: |
           mkdir -p CCSakura-Win
           mv -Verbose "build\bin\Release\*" "CCSakura-Win"
-          mv -Verbose "build\lib\Release\*" "CCSakura-Win"
           cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
 
       - name: Upload Artifacts
@@ -100,4 +98,5 @@ jobs:
           path: |
             ./CCSakura-Win/
             ./CCSakura.app/
+            ./CCSakura-Linux/
           retention-days: 30
