@@ -33,10 +33,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential git make \
+          sudo apt-get install build-essential git make autoconf automake libtool m4 \
             pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
             libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
-            libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
+            libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libltdl-dev \
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
@@ -66,38 +66,42 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake"
           cmake --build build --config Release -j
 
-      - name: Package artifacts (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Final steps
         run: |
-          mkdir -p CCSakura-Linux
-          mv -v build/bin/* CCSakura-Linux
-          mv -v build/lib/* CCSakura-Linux
-          cp -R -v assets CCSakura-Linux
+          ls -R build
 
-      - name: Package artifacts (MacOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          mv build/bin/CCSakura.app CCSakura.app
-          mkdir -p CCSakura.app/Contents/Frameworks
-          mkdir -p CCSakura.app/Contents/Resources
-          mv -v build/lib/* CCSakura.app/Contents/Frameworks
-          cp -R -v assets CCSakura.app/Contents/Resources
-          install_name_tool -add_rpath "@executable_path/../Frameworks" "./CCSakura.app/Contents/MacOS/CCSakura"
+      # - name: Package artifacts (Ubuntu)
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: |
+      #     mkdir -p CCSakura-Linux
+      #     mv -v build/bin/* CCSakura-Linux
+      #     mv -v build/lib/* CCSakura-Linux
+      #     cp -R -v assets CCSakura-Linux
 
-      - name: Package artifacts (Windows)
-        if: matrix.os == 'self-hosted'
-        run: |
-          mkdir -p CCSakura-Win
-          mv -Verbose "build\bin\Release\*" "CCSakura-Win"
-          mv -Verbose "build\lib\Release\*" "CCSakura-Win"
-          cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
+      # - name: Package artifacts (MacOS)
+      #   if: matrix.os == 'macos-latest'
+      #   run: |
+      #     mv build/bin/CCSakura.app CCSakura.app
+      #     mkdir -p CCSakura.app/Contents/Frameworks
+      #     mkdir -p CCSakura.app/Contents/Resources
+      #     mv -v build/lib/* CCSakura.app/Contents/Frameworks
+      #     cp -R -v assets CCSakura.app/Contents/Resources
+      #     install_name_tool -add_rpath "@executable_path/../Frameworks" "./CCSakura.app/Contents/MacOS/CCSakura"
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: CCSakura-${{ runner.os }}
-          path: |
-            ./CCSakura-Win/
-            ./CCSakura.app/
-            ./CCSakura-Linux/
-          retention-days: 30
+      # - name: Package artifacts (Windows)
+      #   if: matrix.os == 'self-hosted'
+      #   run: |
+      #     mkdir -p CCSakura-Win
+      #     mv -Verbose "build\bin\Release\*" "CCSakura-Win"
+      #     mv -Verbose "build\lib\Release\*" "CCSakura-Win"
+      #     cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
+
+      # - name: Upload Artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: CCSakura-${{ runner.os }}
+      #     path: |
+      #       ./CCSakura-Win/
+      #       ./CCSakura.app/
+      #       ./CCSakura-Linux/
+      #     retention-days: 30
