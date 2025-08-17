@@ -46,7 +46,7 @@ jobs:
         with:
           path: |
             ${{ github.workspace }}/vcpkg
-            ${{ github.workspace }}/vcpkg_installed
+            ${{ github.workspace }}/build/vcpkg_installed
           key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}
 
       - name: Setup vcpkg (Unix)
@@ -78,30 +78,26 @@ jobs:
       #     mv -v build/lib/* CCSakura-Linux
       #     cp -R -v assets CCSakura-Linux
 
-      # - name: Package artifacts (MacOS)
-      #   if: matrix.os == 'macos-latest'
-      #   run: |
-      #     mv build/bin/CCSakura.app CCSakura.app
-      #     mkdir -p CCSakura.app/Contents/Frameworks
-      #     mkdir -p CCSakura.app/Contents/Resources
-      #     mv -v build/lib/* CCSakura.app/Contents/Frameworks
-      #     cp -R -v assets CCSakura.app/Contents/Resources
-      #     install_name_tool -add_rpath "@executable_path/../Frameworks" "./CCSakura.app/Contents/MacOS/CCSakura"
+      - name: Package artifacts (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mv build/bin/CCSakura.app CCSakura.app
+          mkdir -p CCSakura.app/Contents/Resources
+          cp -R -v assets CCSakura.app/Contents/Resources
 
-      # - name: Package artifacts (Windows)
-      #   if: matrix.os == 'self-hosted'
-      #   run: |
-      #     mkdir -p CCSakura-Win
-      #     mv -Verbose "build\bin\Release\*" "CCSakura-Win"
-      #     mv -Verbose "build\lib\Release\*" "CCSakura-Win"
-      #     cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
+      - name: Package artifacts (Windows)
+        if: matrix.os == 'self-hosted'
+        run: |
+          mkdir -p CCSakura-Win
+          mv -Verbose "build\bin\Release\*" "CCSakura-Win"
+          mv -Verbose "build\lib\Release\*" "CCSakura-Win"
+          cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
 
-      # - name: Upload Artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: CCSakura-${{ runner.os }}
-      #     path: |
-      #       ./CCSakura-Win/
-      #       ./CCSakura.app/
-      #       ./CCSakura-Linux/
-      #     retention-days: 30
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CCSakura-${{ runner.os }}
+          path: |
+            ./CCSakura-Win/
+            ./CCSakura.app/
+          retention-days: 30

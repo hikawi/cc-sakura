@@ -11,15 +11,8 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # Add SDL3 and related libraries
-# set(SDLTTF_VENDORED ON)
-# add_subdirectory(vendored/SDL      EXCLUDE_FROM_ALL)
-# add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
-# add_subdirectory(vendored/SDL_mixer EXCLUDE_FROM_ALL)
-# add_subdirectory(vendored/SDL_ttf   EXCLUDE_FROM_ALL)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
@@ -62,7 +55,6 @@ endif()
 target_link_libraries(CCSakura PRIVATE
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
-    # SDL3_mixer::SDL3_mixer
     SDL3_ttf::SDL3_ttf
     ZLIB::ZLIB
 )
@@ -70,8 +62,4 @@ target_link_libraries(CCSakura PRIVATE
 # Include directories
 target_include_directories(CCSakura PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/vendored/SDL/include
-    ${CMAKE_SOURCE_DIR}/vendored/SDL_image/include
-    ${CMAKE_SOURCE_DIR}/vendored/SDL_mixer/include
-    ${CMAKE_SOURCE_DIR}/vendored/SDL_ttf/include
 )

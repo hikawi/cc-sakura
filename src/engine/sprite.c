@@ -66,7 +66,6 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
     }
 
     SDL_Surface *img_surface = IMG_Load_IO(img_io, true);
-    SDL_free(img_buf); // We can free the image buffer now.
     if (!img_surface)
     {
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to create surface from IO: %s", SDL_GetError());
@@ -74,6 +73,7 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
     }
 
     // GPU-accelerated texture, we don't need the surface anymore!
+    SDL_free(img_buf); // We can free the image buffer now.
     SDL_Texture *img_texture = SDL_CreateTextureFromSurface(renderer, img_surface);
     SDL_DestroySurface(img_surface); // We can destroy the surface now.
     if (!img_texture)
