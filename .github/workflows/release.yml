@@ -47,7 +47,7 @@ jobs:
           path: |
             ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/vcpkg_installed
-          key: ${{ runner-os }}-${{ hashFiles('./vcpkg.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}
 
       - name: Setup vcpkg (Unix)
         if: steps.vcpkg-cache.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
