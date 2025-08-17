@@ -86,7 +86,7 @@ jobs:
           cp -R -v assets CCSakura.app/Contents/Resources
 
       - name: Package artifacts (Windows)
-        if: matrix.os == 'self-hosted'
+        if: matrix.os == 'windows-latest'
         run: |
           mkdir -p CCSakura-Win
           mv -Verbose "build\bin\Release\*" "CCSakura-Win"
