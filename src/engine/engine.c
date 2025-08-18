@@ -200,7 +200,7 @@ void engine_iterate(AppState *app)
 {
     // Calculate delta time
     uint64_t cur_frame              = SDL_GetTicks();
-    double dt                       = (cur_frame - app->frame_data.last_frame_tick) / 1000.0;
+    double dt                       = (double)(cur_frame - app->frame_data.last_frame_tick) / 1000.0;
     app->frame_data.last_frame_tick = cur_frame;
 
     if (dt > 0.1)

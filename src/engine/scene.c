@@ -275,10 +275,10 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr, SceneTransition *
     // Render the scene in an offset to animate it moving, depending on the
     // transition type.
     SDL_FRect dstrect = {
-        .x = trans->info.entry ? win.w : 0,
+        .x = trans->info.entry ? (float)win.w : 0,
         .y = 0,
-        .h = win.h,
-        .w = win.w,
+        .h = (float)win.h,
+        .w = (float)win.w,
     };
     dstrect.x -= (float)(progress * win.w);
     SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
@@ -297,10 +297,10 @@ void scene_mgr_transition_render_slide_right(SceneManager *mgr, SceneTransition 
     // Render the scene in an offset to animate it moving, depending on the
     // transition type.
     SDL_FRect dstrect = {
-        .x = trans->info.entry ? -win.w : 0,
+        .x = trans->info.entry ? (float)-win.w : 0,
         .y = 0,
-        .h = win.h,
-        .w = win.w,
+        .h = (float)win.h,
+        .w = (float)win.w,
     };
     dstrect.x += (float)(progress * win.w);
     SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
@@ -319,9 +319,9 @@ void scene_mgr_transition_render_slide_up(SceneManager *mgr, SceneTransition *tr
     // transition type.
     SDL_FRect dstrect = {
         .x = 0,
-        .y = trans->info.entry ? win.h : 0,
-        .h = win.h,
-        .w = win.w,
+        .y = trans->info.entry ? (float)win.h : 0,
+        .h = (float)win.h,
+        .w = (float)win.w,
     };
     dstrect.y -= (float)(progress * win.h);
     SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
@@ -340,9 +340,9 @@ void scene_mgr_transition_render_slide_down(SceneManager *mgr, SceneTransition *
     // transition type.
     SDL_FRect dstrect = {
         .x = 0,
-        .y = trans->info.entry ? -win.h : 0,
-        .h = win.h,
-        .w = win.w,
+        .y = trans->info.entry ? (float)-win.h : 0,
+        .h = (float)win.h,
+        .w = (float)win.w,
     };
     dstrect.y += (float)(progress * win.h);
     SDL_RenderTexture(win.renderer, trans->texture, NULL, &dstrect);
@@ -362,14 +362,14 @@ void scene_mgr_transition_render_split_horiz(SceneManager *mgr, SceneTransition 
     SDL_FRect topsrc = {
         .x = 0,
         .y = 0,
-        .h = win.h / 2.0f,
-        .w = win.w,
+        .h = (float)win.h / 2.0f,
+        .w = (float)win.w,
     };
     SDL_FRect btmsrc = {
         .x = 0,
-        .y = win.h / 2.0f,
-        .h = win.h / 2.0f,
-        .w = win.w,
+        .y = (float)win.h / 2.0f,
+        .h = (float)win.h / 2.0f,
+        .w = (float)win.w,
     };
 
     // If it's an entry then the split should close in, otherwise it should
@@ -381,9 +381,9 @@ void scene_mgr_transition_render_split_horiz(SceneManager *mgr, SceneTransition 
     if (trans->info.entry)
     {
         // Close in.
-        topdst.y = -win.h / 2.0f;
+        topdst.y = (float)-win.h / 2.0f;
         topdst.y += (float)progress * topdst.h;
-        btmdst.y = win.h;
+        btmdst.y = (float)win.h;
         btmdst.y -= (float)progress * topdst.h;
     }
     else
@@ -391,7 +391,7 @@ void scene_mgr_transition_render_split_horiz(SceneManager *mgr, SceneTransition 
         // Recede.
         topdst.y = 0;
         topdst.y -= (float)progress * topdst.h;
-        btmdst.y = win.h / 2.0f;
+        btmdst.y = (float)win.h / 2.0f;
         btmdst.y += (float)progress * topdst.h;
     }
 

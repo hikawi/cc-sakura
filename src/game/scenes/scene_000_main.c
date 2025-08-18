@@ -3,7 +3,6 @@
 // This is to hold data for the main scenes of the main menu.
 
 #include "app.h"
-#include "engine/collision.h"
 #include "engine/renderer.h"
 #include "engine/scene.h"
 #include "engine/signal.h"

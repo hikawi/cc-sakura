@@ -17,11 +17,33 @@
 #include <SDL3_image/SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <zlib.h>
 
 static bool SDL_INIT_SUCCESS    = false;
 static bool TTF_INIT_SUCCESS    = false;
 static bool APP_INIT_SUCCESS    = false;
 static bool ENGINE_INIT_SUCCESS = false;
+
+void log_lib_version(void)
+{
+    int major, minor, patch;
+    major = SDL_VERSIONNUM_MAJOR(SDL_VERSION);
+    minor = SDL_VERSIONNUM_MINOR(SDL_VERSION);
+    patch = SDL_VERSIONNUM_MICRO(SDL_VERSION);
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL v%d.%d.%d", major, minor, patch);
+
+    major = SDL_VERSIONNUM_MAJOR(SDL_TTF_VERSION);
+    minor = SDL_VERSIONNUM_MINOR(SDL_TTF_VERSION);
+    patch = SDL_VERSIONNUM_MICRO(SDL_TTF_VERSION);
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL TTF v%d.%d.%d", major, minor, patch);
+
+    major = SDL_VERSIONNUM_MAJOR(SDL_IMAGE_VERSION);
+    minor = SDL_VERSIONNUM_MINOR(SDL_IMAGE_VERSION);
+    patch = SDL_VERSIONNUM_MICRO(SDL_IMAGE_VERSION);
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL Image v%d.%d.%d", major, minor, patch);
+
+    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using ZLIB v%s", zlibVersion());
+}
 
 /**
  * Calls when the program starts.
@@ -43,9 +65,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     SDL_INIT_SUCCESS = true;
 
     // Echo out versions.
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL v%d", SDL_VERSION);
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL_image v%d", SDL_IMAGE_VERSION);
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL_ttf v%d", SDL_TTF_VERSION);
+    log_lib_version();
 
     if (!TTF_Init())
     {
