@@ -38,7 +38,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(MSVC)
-        target_compile_options(CCSakura PRIVATE /W4 /Werror /O0 /fsanitize=address)
+        target_compile_options(CCSakura PRIVATE /W4 /WX /O0 /fsanitize=address)
     else()
         target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -Werror -O0 -fsanitize=address,undefined -fno-omit-frame-pointer)
         target_link_options(CCSakura PRIVATE -fsanitize=address,undefined)

@@ -15,6 +15,8 @@
 #include "SDL3/SDL_stdinc.h"
 #include "SDL3/SDL_timer.h"
 
+#include <stdint.h>
+
 typedef enum
 {
     SPR_SAKURA_FLOWER,
@@ -71,7 +73,7 @@ void scene_loading_ontick(Scene *s, double dt)
         scene_mgr_start_transition(&app->scene_mgr, trans);
 
         // Callbacks.
-        SDL_Log("Running a callback on %p", (void *)data->callback);
+        SDL_Log("Running a callback on %lu", (uintptr_t)data->callback);
         if (data->callback)
         {
             data->callback(data->userdata);

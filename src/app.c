@@ -85,7 +85,7 @@ AppState *app_init(void)
     }
     else
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Unable to apply a window icon. Error %s", SDL_GetError());
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Unable to apply a window icon. Error: %s", SDL_GetError());
     }
 
     // Create scene manager.
