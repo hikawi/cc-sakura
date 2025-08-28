@@ -45,12 +45,12 @@ void scene_loading_oninit(Scene *s)
 
     // Mark the start time
     SceneLoadingData *data = (SceneLoadingData *)s->data;
-    data->start_time       = SDL_GetTicks();
+    data->start_time = SDL_GetTicks();
 }
 
 void scene_loading_ontick(Scene *s, double dt)
 {
-    AppState *app          = app_get();
+    AppState *app = app_get();
     SceneLoadingData *data = (SceneLoadingData *)s->data;
 
     double elapsed = (SDL_GetTicks() - data->start_time) / 1000.0;
@@ -64,11 +64,11 @@ void scene_loading_ontick(Scene *s, double dt)
 
         // Transition itself out.
         SceneTransitionInfo trans = {
-            .scene    = s,
-            .curve    = ANIMATION_CURVE_LINEAR,
+            .scene = s,
+            .curve = ANIMATION_CURVE_LINEAR,
             .duration = 2,
-            .entry    = false,
-            .type     = TRANSITION_FADE,
+            .entry = false,
+            .type = TRANSITION_FADE,
         };
         scene_mgr_start_transition(&app->scene_mgr, trans);
 
@@ -102,9 +102,9 @@ void scene_loading_ondraw(Scene *s, SDL_Renderer *renderer)
 
     SpriteRenderProperties props;
     props.renderer = renderer;
-    props.pos      = botright;
-    props.spr      = spr_object;
-    props.origin   = RENDER_ORIGIN_BOTTOM_RIGHT;
+    props.pos = botright;
+    props.spr = spr_object;
+    props.origin = RENDER_ORIGIN_BOTTOM_RIGHT;
     sprite_render(props);
 }
 
@@ -124,7 +124,7 @@ Scene *scene_loading(SDL_Mutex *mutex, double min, void (*callback)(void *), voi
     SDL_assert(mutex != NULL);
     SDL_assert(min > 0);
 
-    Scene *s               = scene_init();
+    Scene *s = scene_init();
     SceneLoadingData *data = SDL_malloc(sizeof(SceneLoadingData));
 
     if (!s || !data)
@@ -135,18 +135,18 @@ Scene *scene_loading(SDL_Mutex *mutex, double min, void (*callback)(void *), voi
         return NULL;
     }
 
-    data->mutex      = mutex;
+    data->mutex = mutex;
     data->start_time = 0;
-    data->min        = min;
-    data->callback   = callback;
-    data->userdata   = userdata;
+    data->min = min;
+    data->callback = callback;
+    data->userdata = userdata;
 
     s->captures_focus = true;
-    s->data           = data;
-    s->oninit         = scene_loading_oninit;
-    s->ontick         = scene_loading_ontick;
-    s->ondraw         = scene_loading_ondraw;
-    s->ondestroy      = scene_loading_ondestroy;
+    s->data = data;
+    s->oninit = scene_loading_oninit;
+    s->ontick = scene_loading_ontick;
+    s->ondraw = scene_loading_ondraw;
+    s->ondestroy = scene_loading_ondestroy;
 
     return s;
 }

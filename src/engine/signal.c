@@ -8,7 +8,7 @@ Signal *signal_init(SignalType type)
     Signal *signal = SDL_malloc(sizeof(Signal));
 
     signal->timestamp = SDL_GetTicks();
-    signal->type      = type;
+    signal->type = type;
 
     return signal;
 }

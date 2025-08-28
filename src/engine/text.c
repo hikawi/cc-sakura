@@ -68,9 +68,9 @@ bool font_eq(Font f1, Font f2)
 int font_hash(Font font)
 {
     int hash = 17;
-    hash     = hash * 31 + (int)font.face;
-    hash     = hash * 31 + (int)font.style;
-    hash     = hash * 31 + (int)font.sp;
+    hash = hash * 31 + (int)font.face;
+    hash = hash * 31 + (int)font.style;
+    hash = hash * 31 + (int)font.sp;
     return hash % MAX_FONT_NODES;
 }
 
@@ -80,10 +80,10 @@ int font_hash(Font font)
 FontNode *font_node_init(Font font, TTF_Font *ttf, char *ttf_buf)
 {
     FontNode *node = SDL_malloc(sizeof(FontNode));
-    node->font     = font;
+    node->font = font;
     node->ttf_font = ttf;
-    node->ttf_buf  = ttf_buf;
-    node->next     = NULL;
+    node->ttf_buf = ttf_buf;
+    node->next = NULL;
     return node;
 }
 
@@ -92,7 +92,7 @@ FontNode *font_node_init(Font font, TTF_Font *ttf, char *ttf_buf)
  */
 FontNode *font_node_get(Font font)
 {
-    int idx       = font_hash(font);
+    int idx = font_hash(font);
     FontNode *cur = font_nodes[idx];
     while (cur)
     {
@@ -128,7 +128,7 @@ void font_node_put(Font font, TTF_Font *ttf, char *ttf_buf)
             SDL_free(cur->ttf_buf);
 
             cur->ttf_font = ttf;
-            cur->ttf_buf  = ttf_buf;
+            cur->ttf_buf = ttf_buf;
             break;
         }
 
@@ -201,7 +201,7 @@ void font_node_remove(Font font)
     int idx = font_hash(font);
 
     FontNode *prev = NULL;
-    FontNode *cur  = font_nodes[idx];
+    FontNode *cur = font_nodes[idx];
 
     while (cur)
     {
@@ -224,7 +224,7 @@ void font_node_remove(Font font)
         }
 
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 }
 

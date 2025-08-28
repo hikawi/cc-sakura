@@ -89,17 +89,17 @@ typedef struct
 
 Scene *scene_init(void)
 {
-    Scene *scene             = SDL_calloc(1, sizeof(Scene));
-    scene->zindex            = 0;
-    scene->quadtree          = NULL;
-    scene->data              = NULL;
-    scene->enabled           = true;
+    Scene *scene = SDL_calloc(1, sizeof(Scene));
+    scene->zindex = 0;
+    scene->quadtree = NULL;
+    scene->data = NULL;
+    scene->enabled = true;
     scene->accepting_signals = true;
-    scene->captures_focus    = false;
+    scene->captures_focus = false;
     scene->stops_propagation = false;
-    scene->moved_colliders   = list_init();
-    scene->colliders         = hash_map_init();
-    scene->sprites           = hash_map_init();
+    scene->moved_colliders = list_init();
+    scene->colliders = hash_map_init();
+    scene->sprites = hash_map_init();
     return scene;
 }
 
@@ -204,7 +204,7 @@ void scene_mgr_transition_render(SceneManager *mgr, SceneTransition *trans)
     (void)mgr;
 
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
 
     // Render it to the texture layer.
     SDL_Texture *target = SDL_GetRenderTarget(win.renderer);
@@ -224,7 +224,7 @@ void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
     (void)progress;
 
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Instantly end the transition.
@@ -240,7 +240,7 @@ void scene_mgr_transition_render_none(SceneManager *mgr, SceneTransition *trans,
 void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Then we start the fading based on the progress.
@@ -269,7 +269,7 @@ void scene_mgr_transition_render_fade(SceneManager *mgr, SceneTransition *trans,
 void scene_mgr_transition_render_slide_left(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -291,7 +291,7 @@ void scene_mgr_transition_render_slide_left(SceneManager *mgr, SceneTransition *
 void scene_mgr_transition_render_slide_right(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -312,7 +312,7 @@ void scene_mgr_transition_render_slide_right(SceneManager *mgr, SceneTransition 
 void scene_mgr_transition_render_slide_up(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -333,7 +333,7 @@ void scene_mgr_transition_render_slide_up(SceneManager *mgr, SceneTransition *tr
 void scene_mgr_transition_render_slide_down(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
     scene_mgr_transition_render(mgr, trans);
 
     // Render the scene in an offset to animate it moving, depending on the
@@ -354,7 +354,7 @@ void scene_mgr_transition_render_slide_down(SceneManager *mgr, SceneTransition *
 void scene_mgr_transition_render_split_horiz(SceneManager *mgr, SceneTransition *trans, double progress)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
 
     scene_mgr_transition_render(mgr, trans);
 
@@ -495,7 +495,7 @@ void scene_mgr_phys_tick(SceneManager *mgr)
 void scene_mgr_start_transition(SceneManager *mgr, SceneTransitionInfo info)
 {
     AppState *appstate = app_get();
-    WindowStatus win   = appstate->window;
+    WindowStatus win = appstate->window;
 
     if (info.duration < 0)
     {
@@ -510,9 +510,9 @@ void scene_mgr_start_transition(SceneManager *mgr, SceneTransitionInfo info)
     }
 
     SceneTransition *trans = SDL_calloc(1, sizeof(SceneTransition));
-    trans->info            = info;
-    trans->elapsed         = 0;
-    trans->active          = true;
+    trans->info = info;
+    trans->elapsed = 0;
+    trans->active = true;
     trans->texture = SDL_CreateTexture(win.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, win.w, win.h);
 
     if (!trans->texture)
@@ -565,7 +565,7 @@ void scene_mgr_reorder(SceneManager *mgr)
 
 void scene_mgr_draw(SceneManager *mgr)
 {
-    AppState *appstate     = app_get();
+    AppState *appstate = app_get();
     SDL_Renderer *renderer = appstate->window.renderer;
 
     // We're gonna go through each scene in the current active stack and render
@@ -590,8 +590,8 @@ void scene_mgr_draw(SceneManager *mgr)
             // Make sure these are rendered.
             // We can add interpolation functions here after.
             double progress = trans->info.duration == 0 ? 1 : trans->elapsed / trans->info.duration;
-            progress        = SDL_clamp(progress, 0, 1);
-            progress        = animation_curve_calc(trans->info.curve, progress);
+            progress = SDL_clamp(progress, 0, 1);
+            progress = animation_curve_calc(trans->info.curve, progress);
 
             // Clear up transitioning targets also.
             SDL_SetRenderTarget(renderer, trans->texture);
@@ -633,7 +633,7 @@ void scene_mgr_draw(SceneManager *mgr)
         // Draw overlays on colliders
         if (appstate->settings.show_debug_colliders)
         {
-            uint32_t *keys             = NULL;
+            uint32_t *keys = NULL;
             const Collider **colliders = NULL;
             hash_map_iterate(scene->colliders, &keys, (const void ***)&colliders);
 

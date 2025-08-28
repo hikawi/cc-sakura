@@ -4,6 +4,8 @@
 // updating should be delegated to other source files. Do not do actual handling
 // in this file.
 
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_version.h>
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "app.h"
@@ -17,32 +19,66 @@
 #include <SDL3_image/SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <zlib.h>
+#include <time.h>
+#include <zstd.h>
 
-static bool SDL_INIT_SUCCESS    = false;
-static bool TTF_INIT_SUCCESS    = false;
-static bool APP_INIT_SUCCESS    = false;
+static bool SDL_INIT_SUCCESS = false;
+static bool TTF_INIT_SUCCESS = false;
+static bool APP_INIT_SUCCESS = false;
 static bool ENGINE_INIT_SUCCESS = false;
 
 void log_lib_version(void)
 {
-    int major, minor, patch;
-    major = SDL_VERSIONNUM_MAJOR(SDL_VERSION);
-    minor = SDL_VERSIONNUM_MINOR(SDL_VERSION);
-    patch = SDL_VERSIONNUM_MICRO(SDL_VERSION);
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL v%d.%d.%d", major, minor, patch);
+    SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Using SDL v%d.%d.%d", SDL_MAJOR_VERSION, SDL_MINOR_VERSION,
+                 SDL_MICRO_VERSION);
+    SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Using SDL TTF v%d.%d.%d", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION,
+                 SDL_TTF_MICRO_VERSION);
+    SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Using SDL Image v%d.%d.%d", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION,
+                 SDL_IMAGE_MICRO_VERSION);
+    SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Using ZSTD v%s", ZSTD_versionString());
+}
 
-    major = SDL_VERSIONNUM_MAJOR(SDL_TTF_VERSION);
-    minor = SDL_VERSIONNUM_MINOR(SDL_TTF_VERSION);
-    patch = SDL_VERSIONNUM_MICRO(SDL_TTF_VERSION);
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL TTF v%d.%d.%d", major, minor, patch);
+void ccs_log(void *userdata, int category, SDL_LogPriority priority, const char *message)
+{
+    (void)userdata;
+    (void)category;
 
-    major = SDL_VERSIONNUM_MAJOR(SDL_IMAGE_VERSION);
-    minor = SDL_VERSIONNUM_MINOR(SDL_IMAGE_VERSION);
-    patch = SDL_VERSIONNUM_MICRO(SDL_IMAGE_VERSION);
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using SDL Image v%d.%d.%d", major, minor, patch);
+    time_t now;
+    time(&now);
+    struct tm localnow;
+    localtime_r(&now, &localnow);
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_SYSTEM, "Using ZLIB v%s", zlibVersion());
+    char timestr[24] = {0};
+    strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &localnow);
+
+    // Append the color for the priority
+    const char *color = "";
+    switch (priority)
+    {
+    case SDL_LOG_PRIORITY_TRACE:
+        color = "\033[90m"; // bright black / gray
+        break;
+    case SDL_LOG_PRIORITY_DEBUG:
+        color = "\033[36m"; // cyan
+        break;
+    case SDL_LOG_PRIORITY_INFO:
+        color = "\033[32m"; // green
+        break;
+    case SDL_LOG_PRIORITY_WARN:
+        color = "\033[33m"; // yellow
+        break;
+    case SDL_LOG_PRIORITY_ERROR:
+        color = "\033[31m"; // red
+        break;
+    case SDL_LOG_PRIORITY_CRITICAL:
+        color = "\033[1;31m"; // bold red (stronger than ERROR)
+        break;
+    default:
+        color = "\033[0m"; // reset / white (default terminal)
+        break;
+    }
+
+    printf("%s > %s%s%s\n", timestr, color, message, "\033[0m");
 }
 
 /**
@@ -53,7 +89,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    SDL_SetLogPriorities(SDL_LOG_PRIORITY_DEBUG);
+    SDL_SetLogOutputFunction(ccs_log, NULL);
     SDL_SetAppMetadata(APPLICATION_NAME, APPLICATION_VERSION, APPLICATION_IDENTIFIER);
 
     // Initializes components
@@ -75,7 +111,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     TTF_INIT_SUCCESS = true;
 
     AppState *app = app_init();
-    *appstate     = app;
+    *appstate = app;
 
     if (app == NULL)
     {
@@ -116,6 +152,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     // Always quit the app after.
     if (event->type == SDL_EVENT_QUIT)
     {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Quitting application on command");
         return SDL_APP_SUCCESS;
     }
 
@@ -131,16 +168,25 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
     AppState *app = (AppState *)appstate;
 
     if (ENGINE_INIT_SUCCESS)
+
+    {
         engine_destroy();
+    }
 
     if (APP_INIT_SUCCESS)
+    {
         app_destroy(app);
+    }
 
     if (TTF_INIT_SUCCESS)
+    {
         TTF_Quit();
+    }
 
     if (SDL_INIT_SUCCESS)
+    {
         SDL_Quit();
+    }
 
     if (result == SDL_APP_SUCCESS)
     {
@@ -148,6 +194,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
     }
     else
     {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Application failed");
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Application failed");
     }
 }

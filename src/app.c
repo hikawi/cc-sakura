@@ -27,26 +27,26 @@ static AppState *appstate = NULL;
 AppState *app_init(void)
 {
     AppState *state = SDL_malloc(sizeof(AppState));
-    appstate        = state;
+    appstate = state;
 
     // Setup frames data
-    state->frame_data.frame_count     = 0;
-    state->frame_data.frame_accum     = 0;
-    state->frame_data.frame_time      = 0;
+    state->frame_data.frame_count = 0;
+    state->frame_data.frame_accum = 0;
+    state->frame_data.frame_time = 0;
     state->frame_data.last_frame_tick = SDL_GetTicks();
-    state->frame_data.fps             = 0;
+    state->frame_data.fps = 0;
 
     // Memset keyboard state to all 0, since it's only bools.
     SDL_memset(&state->input, 0, sizeof(state->input));
 
     // Setup mouse.
     state->input.mouse.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
-    state->input.mouse.collider_type       = COLLIDER_TYPE_GHOST;
-    state->input.mouse.aabb                = (AABBCollider){
-                       .x = 0,
-                       .y = 0,
-                       .w = APP_MOUSE_DIMENSION,
-                       .h = APP_MOUSE_DIMENSION,
+    state->input.mouse.collider_type = COLLIDER_TYPE_GHOST;
+    state->input.mouse.aabb = (AABBCollider){
+        .x = 0,
+        .y = 0,
+        .w = APP_MOUSE_DIMENSION,
+        .h = APP_MOUSE_DIMENSION,
     };
 
     // Create window and renderer.
@@ -89,12 +89,12 @@ AppState *app_init(void)
     }
 
     // Create scene manager.
-    state->scene_mgr.scenes      = list_init();
+    state->scene_mgr.scenes = list_init();
     state->scene_mgr.transitions = list_init();
 
     // Set app settings
-    state->settings.max_fps              = 60;
-    state->settings.scale                = 2;
+    state->settings.max_fps = 60;
+    state->settings.scale = 2;
     state->settings.show_debug_colliders = true;
 
     state->running = true;

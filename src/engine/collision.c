@@ -134,15 +134,15 @@ Collision collision_aabb_circle(AABBCollider c1, CircleCollider c2)
     {
         // For this case, we calculate the distance between the center
         // to each of the AABB sides, the shortest one is the normal.
-        double left   = c2.x - (c1.x - c1.w / 2);
-        double right  = (c1.x + c1.w / 2) - c2.x;
-        double top    = c2.y - (c1.y - c1.h / 2);
+        double left = c2.x - (c1.x - c1.w / 2);
+        double right = (c1.x + c1.w / 2) - c2.x;
+        double top = c2.y - (c1.y - c1.h / 2);
         double bottom = (c1.y + c1.h / 2) - c2.y;
 
         // Find the minimum and its index.
         double vals[4] = {left, right, top, bottom};
-        double min     = left;
-        int idx        = 0;
+        double min = left;
+        int idx = 0;
 
         for (int i = 1; i < 4; i++)
         {
@@ -199,9 +199,9 @@ Collision collision_aabb_circle(AABBCollider c1, CircleCollider c2)
         // Normal case, the normal vector is the vector that points from
         // the circle center to the closest point.
         double sqrt_dist = SDL_sqrt(dist);
-        info.normal.x    = dx / sqrt_dist;
-        info.normal.y    = dy / sqrt_dist;
-        info.depth       = c2.r - sqrt_dist;
+        info.normal.x = dx / sqrt_dist;
+        info.normal.y = dy / sqrt_dist;
+        info.depth = c2.r - sqrt_dist;
     }
 
     return info;
@@ -238,7 +238,7 @@ Collision collision_circle_circle(CircleCollider c1, CircleCollider c2)
     if (dx * dx + dy * dy == 0)
     {
         info.normal = (Vector2){.x = 0, .y = -1};
-        info.depth  = c1.r + c2.r;
+        info.depth = c1.r + c2.r;
         return info;
     }
 
@@ -248,8 +248,8 @@ Collision collision_circle_circle(CircleCollider c1, CircleCollider c2)
     // I think this is a lot simpler, the depth is how much it's collided by
     // (distance - r1 - r2 = -depth), and the normal vector is already
     // calculated.
-    double dist   = SDL_sqrt(dx * dx + dy * dy);
-    info.depth    = -(dist - c1.r - c2.r);
+    double dist = SDL_sqrt(dx * dx + dy * dy);
+    info.depth = -(dist - c1.r - c2.r);
     info.normal.x = dx / dist;
     info.normal.y = dy / dist;
 
@@ -275,8 +275,8 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
 
     // Step 3. For each local axes, project all of them onto each other.
     Vector2 axes[4] = {local_x1, local_y1, local_x2, local_y2};
-    double overlap  = INFINITY;
-    int idx         = 0;
+    double overlap = INFINITY;
+    int idx = 0;
     for (int i = 0; i < 4; i++)
     {
         // Project c1.
@@ -302,7 +302,7 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
         if (r1 + r2 - s < overlap)
         {
             overlap = r1 + r2 - s;
-            idx     = i;
+            idx = i;
         }
     }
 
@@ -329,10 +329,10 @@ Collision collision_obb_obb(OBBCollider c1, OBBCollider c2)
 Collision collision_aabb_obb(AABBCollider c1, OBBCollider c2)
 {
     OBBCollider c3;
-    c3.x     = c1.x;
-    c3.y     = c1.y;
-    c3.w     = c1.w;
-    c3.h     = c1.h;
+    c3.x = c1.x;
+    c3.y = c1.y;
+    c3.w = c1.w;
+    c3.h = c1.h;
     c3.angle = 0;
 
     return collision_obb_obb(c3, c2);
@@ -347,7 +347,7 @@ Collision get_collision_obb_circle(OBBCollider c1, CircleCollider c2)
 {
     // Step 1. Transform the circle into local coordinate space
     Vector2 new_center = {.x = c2.x - c1.x, .y = c2.y - c1.y};
-    new_center         = vector2_rot(new_center, -c1.angle);
+    new_center = vector2_rot(new_center, -c1.angle);
 
     // Step 2. Treat the OBB as an AABB and check collisions.
     // The OBB is IN THE ORIGIN in its own coordinate space.
@@ -408,15 +408,15 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
         // I think this is similar to the AABB-Circle one.
         // Find where the minimum distance to each of the AABB edge is.
         // Just copied the code.
-        double left   = p.x - (c1.x - c1.w / 2);
-        double right  = (c1.x + c1.w / 2) - p.x;
-        double top    = p.y - (c1.y - c1.h / 2);
+        double left = p.x - (c1.x - c1.w / 2);
+        double right = (c1.x + c1.w / 2) - p.x;
+        double top = p.y - (c1.y - c1.h / 2);
         double bottom = (c1.y + c1.h / 2) - p.y;
 
         // Find the minimum and its index.
         double vals[4] = {left, right, top, bottom};
-        double min     = left;
-        int idx        = 0;
+        double min = left;
+        int idx = 0;
 
         for (int i = 1; i < 4; i++)
         {
@@ -451,7 +451,7 @@ Collision collision_aabb_capsule(AABBCollider c1, CapsuleCollider c2)
     {
         // Normal case.
         info.normal = vector2_norm(d);
-        info.depth  = c2.r - vector2_len(d);
+        info.depth = c2.r - vector2_len(d);
     }
 
     return info;
@@ -465,13 +465,13 @@ Collision collision_obb_capsule(OBBCollider c1, CapsuleCollider c2)
 {
     // Step 1. Undo the rotation.
     Vector2 obb_center = {.x = c1.x, .y = c1.y};
-    Vector2 p1_tl      = vector2_sub(c2.p1, obb_center);
-    Vector2 p2_tl      = vector2_sub(c2.p2, obb_center);
-    p1_tl              = vector2_rot(p1_tl, -c1.angle);
-    p2_tl              = vector2_rot(p2_tl, -c1.angle);
+    Vector2 p1_tl = vector2_sub(c2.p1, obb_center);
+    Vector2 p2_tl = vector2_sub(c2.p2, obb_center);
+    p1_tl = vector2_rot(p1_tl, -c1.angle);
+    p2_tl = vector2_rot(p2_tl, -c1.angle);
 
     // Step 2. Treat the OBB as an AABB.
-    AABBCollider aabb   = {.x = 0, .y = 0, .w = c1.w, .h = c1.h};
+    AABBCollider aabb = {.x = 0, .y = 0, .w = c1.w, .h = c1.h};
     CapsuleCollider cap = {.p1 = p1_tl, .p2 = p2_tl, .r = c2.r};
 
     // Step 3. Check collision, and transform back if needed.
@@ -518,14 +518,14 @@ Collision collision_circle_capsule(CircleCollider c1, CapsuleCollider c2)
     {
         // If length is close enough to 0, the center of the circle is on
         // the capsule's segment.
-        Vector2 in  = vector2_sub(c2.p1, c2.p2);
+        Vector2 in = vector2_sub(c2.p1, c2.p2);
         info.normal = vector2_norm(vector2_rot(in, -SDL_PI_D / 2));
-        info.depth  = c1.r + c2.r;
+        info.depth = c1.r + c2.r;
     }
     else
     {
         info.normal = vector2_norm(d);
-        info.depth  = c1.r + c2.r - vector2_len(d);
+        info.depth = c1.r + c2.r - vector2_len(d);
     }
 
     return info;
@@ -628,15 +628,15 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_shape_type)
         {
         case COLLIDER_SHAPE_TYPE_AABB:
-            info        = collision_aabb_capsule(c2->aabb, c1->capsule);
+            info = collision_aabb_capsule(c2->aabb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_SHAPE_TYPE_OBB:
-            info        = collision_obb_capsule(c2->obb, c1->capsule);
+            info = collision_obb_capsule(c2->obb, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_SHAPE_TYPE_CIRCLE:
-            info        = collision_circle_capsule(c2->circle, c1->capsule);
+            info = collision_circle_capsule(c2->circle, c1->capsule);
             info.normal = vector2_neg(info.normal);
             return info;
         default:
@@ -647,13 +647,13 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_shape_type)
         {
         case COLLIDER_SHAPE_TYPE_AABB:
-            info        = collision_aabb_circle(c2->aabb, c1->circle);
+            info = collision_aabb_circle(c2->aabb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_SHAPE_TYPE_CIRCLE:
             return collision_circle_circle(c1->circle, c2->circle);
         case COLLIDER_SHAPE_TYPE_OBB:
-            info        = get_collision_obb_circle(c2->obb, c1->circle);
+            info = get_collision_obb_circle(c2->obb, c1->circle);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_SHAPE_TYPE_CAPSULE:
@@ -666,7 +666,7 @@ Collision collision_check(const Collider *c1, const Collider *c2)
         switch (c2->collider_shape_type)
         {
         case COLLIDER_SHAPE_TYPE_AABB:
-            info        = collision_aabb_obb(c2->aabb, c1->obb);
+            info = collision_aabb_obb(c2->aabb, c1->obb);
             info.normal = vector2_neg(info.normal);
             return info;
         case COLLIDER_SHAPE_TYPE_CIRCLE:
@@ -689,12 +689,12 @@ Collider collision_convert_to_aabb(const Collider *collider)
 {
     Collider val;
     val.collider_shape_type = COLLIDER_SHAPE_TYPE_AABB;
-    val.collider_type       = COLLIDER_TYPE_GHOST;
-    val.aabb                = (AABBCollider){
-                       .h = 0,
-                       .w = 0,
-                       .x = 0,
-                       .y = 0,
+    val.collider_type = COLLIDER_TYPE_GHOST;
+    val.aabb = (AABBCollider){
+        .h = 0,
+        .w = 0,
+        .x = 0,
+        .y = 0,
     };
 
     if (!collider)
@@ -723,10 +723,10 @@ Collider collision_convert_to_aabb(const Collider *collider)
 
         Vector2 points[4];
 
-        points[0]      = (Vector2){.x = -collider->obb.w / 2, .y = -collider->obb.h / 2};
-        points[1]      = (Vector2){.x = collider->obb.w / 2, .y = -collider->obb.h / 2};
-        points[2]      = (Vector2){.x = collider->obb.w / 2, .y = collider->obb.h / 2};
-        points[3]      = (Vector2){.x = -collider->obb.w / 2, .y = collider->obb.h / 2};
+        points[0] = (Vector2){.x = -collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[1] = (Vector2){.x = collider->obb.w / 2, .y = -collider->obb.h / 2};
+        points[2] = (Vector2){.x = collider->obb.w / 2, .y = collider->obb.h / 2};
+        points[3] = (Vector2){.x = -collider->obb.w / 2, .y = collider->obb.h / 2};
         Vector2 center = {.x = collider->obb.x, .y = collider->obb.y};
 
         // Rotation values
@@ -829,8 +829,8 @@ uint64_t collision_pair_hash(const CollisionPair *pair)
     if (b > a)
     {
         uintptr_t tmp = b;
-        b             = a;
-        a             = tmp;
+        b = a;
+        a = tmp;
     }
 
     return a * 31 ^ b;
@@ -920,9 +920,9 @@ static void collider_render_obb(const OBBCollider obb, const SDL_FColor color, S
     SDL_Vertex vertices[4];
     for (int i = 0; i < 4; i++)
     {
-        points[i]         = vector2_rot_sincos(points[i], sint, cost);
-        points[i]         = vector2_add(points[i], center);
-        vertices[i]       = vector2_to_vertex(points[i]);
+        points[i] = vector2_rot_sincos(points[i], sint, cost);
+        points[i] = vector2_add(points[i], center);
+        vertices[i] = vector2_to_vertex(points[i]);
         vertices[i].color = color;
     }
 
@@ -949,11 +949,11 @@ static void collider_render_circle(const CircleCollider circle, const double sta
     // Each circle segment would be around 5 degrees? So PI / 36.
     // We calculate how many segments there are, based on the angle we need to draw.
     // THe number of vertices is segments + 2.
-    const double step             = SDL_PI_D / 36;
+    const double step = SDL_PI_D / 36;
     const uint32_t segments_count = (uint32_t)SDL_ceil((end - start) / step);
-    SDL_Vertex *vertices          = SDL_calloc(segments_count + 2, sizeof(SDL_Vertex));
-    int *indices                  = SDL_calloc(segments_count * 3, sizeof(int));
-    double cur                    = start;
+    SDL_Vertex *vertices = SDL_calloc(segments_count + 2, sizeof(SDL_Vertex));
+    int *indices = SDL_calloc(segments_count * 3, sizeof(int));
+    double cur = start;
 
     // Check for memory allocation success.
     if (!vertices || !indices)
@@ -972,10 +972,10 @@ static void collider_render_circle(const CircleCollider circle, const double sta
     }
 
     // We want to build the center vertex and the first vertex.
-    vertices[0].color      = color;
+    vertices[0].color = color;
     vertices[0].position.x = (float)circle.x;
     vertices[0].position.y = (float)circle.y;
-    vertices[1].color      = color;
+    vertices[1].color = color;
     vertices[1].position.x = (float)(SDL_cos(start) * circle.r + circle.x);
     vertices[1].position.y = (float)(SDL_sin(start) * circle.r + circle.y);
 
@@ -998,7 +998,7 @@ static void collider_render_circle(const CircleCollider circle, const double sta
         }
 
         // Build the indices, indices cover segments.
-        indices[i * 3]     = 0;
+        indices[i * 3] = 0;
         indices[i * 3 + 1] = (int)i + 1;
         indices[i * 3 + 2] = (int)i + 2;
     }
@@ -1020,10 +1020,10 @@ static void collider_render_capsule(const CapsuleCollider capsule, const SDL_FCo
     Vector2 line = vector2_sub(capsule.p1, capsule.p2);
 
     OBBCollider shaft;
-    shaft.x     = (capsule.p1.x + capsule.p2.x) / 2;
-    shaft.y     = (capsule.p1.y + capsule.p2.y) / 2;
-    shaft.w     = capsule.r * 2;
-    shaft.h     = vector2_len(line);
+    shaft.x = (capsule.p1.x + capsule.p2.x) / 2;
+    shaft.y = (capsule.p1.y + capsule.p2.y) / 2;
+    shaft.w = capsule.r * 2;
+    shaft.h = vector2_len(line);
     shaft.angle = vector2_get_rot(line);
 
     CircleCollider c1;
@@ -1049,7 +1049,7 @@ void collider_render(const Collider *collider, SDL_Renderer *renderer)
 {
     SDL_assert(collider != NULL && renderer != NULL);
 
-    SDL_Color color   = collision_get_debug_color(collider->collider_type);
+    SDL_Color color = collision_get_debug_color(collider->collider_type);
     SDL_FColor fcolor = color_to_fcolor(color);
     SDL_SetRenderDrawColorFloat(renderer, fcolor.r, fcolor.g, fcolor.b, fcolor.a);
 

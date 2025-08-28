@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 3.21)
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)
-project(CCSakura C)
+project(CCSakura VERSION 0.3.0 LANGUAGES C)
 
 # Set C standard
 set(CMAKE_C_STANDARD 17)
@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(ZSTD REQUIRED)
 
 # Add your source files
 file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.c)
@@ -24,42 +24,53 @@ file(GLOB_RECURSE GAME_HEADERS CONFIGURE_DEPENDS include/*.h)
 
 # Create the game executable
 if(APPLE)
-    set(CMAKE_MACOSX_RPATH ON)
+  set(CMAKE_MACOSX_RPATH ON)
 
-    set(MACOSX_BUNDLE_ICON_FILE "assets/icon.png")
-    set(MACOSX_BUNDLE_LONG_VERSION_STRING "0.3")
-    set(MACOSX_BUNDLE_SHORT_VERSION_STRING "0.3")
-    add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
+  set(MACOSX_BUNDLE_ICON_FILE "assets/icon.png")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "0.3")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "0.3")
+  add_executable(CCSakura MACOSX_BUNDLE ${GAME_SOURCES} ${GAME_HEADERS})
 elseif(WIN32)
-    add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
+  add_executable(CCSakura WIN32 ${GAME_SOURCES} ${GAME_HEADERS})
 else()
-    add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
+  add_executable(CCSakura ${GAME_SOURCES} ${GAME_HEADERS})
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(MSVC)
-        target_compile_options(CCSakura PRIVATE /W4 /WX /O0 /fsanitize=address)
-    else()
-        target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -Werror -O0 -fsanitize=address,undefined -fno-omit-frame-pointer)
-        target_link_options(CCSakura PRIVATE -fsanitize=address,undefined)
-    endif()
+  if(MSVC)
+    target_compile_options(CCSakura PRIVATE /W4 /WX /O0 /fsanitize=address)
+  else()
+    target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -Werror -O0 -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(CCSakura PRIVATE -fsanitize=address,undefined)
+  endif()
 else()
-    if(MSVC)
-        target_compile_options(CCSakura PRIVATE /W4 /O2)
-    else()
-        target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -O2)
-    endif()
+  if(MSVC)
+    target_compile_options(CCSakura PRIVATE /W4 /O2)
+  else()
+    target_compile_options(CCSakura PRIVATE -Wall -Wextra -pedantic -O2)
+  endif()
 endif()
+
+target_compile_definitions(CCSakura PRIVATE
+  APPLICATION_NAME="Sakura and the Clow Cards"
+  APPLICATION_IDENTIFIER="dev.luny.ccsakura"
+  APPLICATION_VERSION="${PROJECT_VERSION}"
+  APPLICATION_ORGANIZATION="dev.luny.ccsakura"
+  APPLICATION_APP_NAME="Cardcaptor Sakura"
+  APPLICATION_ORIGINAL_WIDTH=1200
+  APPLICATION_ORIGINAL_HEIGHT=1080
+)
 
 # Link SDL3 libraries
 target_link_libraries(CCSakura PRIVATE
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
     SDL3_ttf::SDL3_ttf
-    ZLIB::ZLIB
+    zstd::libzstd
 )
 
 # Include directories
 target_include_directories(CCSakura PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
+

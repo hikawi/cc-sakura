@@ -38,9 +38,9 @@ bool hash_map_has_value(const HashMap *map, const void *value)
 
 const void *hash_map_put(HashMap *map, const uint32_t key, const void *value)
 {
-    uint32_t idx      = hash_uint32(key);
+    uint32_t idx = hash_uint32(key);
     HashMapNode *prev = NULL;
-    HashMapNode *cur  = map->nodes[idx];
+    HashMapNode *cur = map->nodes[idx];
 
     while (cur)
     {
@@ -48,19 +48,19 @@ const void *hash_map_put(HashMap *map, const uint32_t key, const void *value)
         if (cur->key == key)
         {
             const void *ret = cur->value;
-            cur->value      = value;
+            cur->value = value;
             return ret;
         }
 
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
     // That key doesn't exist yet.
     HashMapNode *node = SDL_malloc(sizeof(HashMapNode));
-    node->key         = key;
-    node->value       = value;
-    node->next        = NULL;
+    node->key = key;
+    node->value = value;
+    node->next = NULL;
     if (prev)
     {
         // The chain is already started.
@@ -78,9 +78,9 @@ const void *hash_map_put(HashMap *map, const uint32_t key, const void *value)
 
 const void *hash_map_remove(HashMap *map, const uint32_t key)
 {
-    uint32_t idx      = hash_uint32(key);
+    uint32_t idx = hash_uint32(key);
     HashMapNode *prev = NULL;
-    HashMapNode *cur  = map->nodes[idx];
+    HashMapNode *cur = map->nodes[idx];
 
     while (cur)
     {
@@ -104,7 +104,7 @@ const void *hash_map_remove(HashMap *map, const uint32_t key)
         }
 
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
     return NULL;
@@ -126,7 +126,7 @@ void hash_map_iterate(const HashMap *map, uint32_t **keys, const void ***values)
 {
     SDL_assert(keys != NULL && values != NULL);
 
-    *keys   = SDL_malloc(sizeof(uint32_t) * map->size);
+    *keys = SDL_malloc(sizeof(uint32_t) * map->size);
     *values = SDL_malloc(sizeof(const void *) * map->size);
 
     uint32_t idx = 0;
@@ -135,7 +135,7 @@ void hash_map_iterate(const HashMap *map, uint32_t **keys, const void ***values)
         HashMapNode *node = map->nodes[i];
         while (node)
         {
-            (*keys)[idx]   = node->key;
+            (*keys)[idx] = node->key;
             (*values)[idx] = node->value;
             idx++;
             node = node->next;

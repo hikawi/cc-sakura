@@ -33,7 +33,7 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
     uint64_t img_read = 0;
     while (img_read < img_size)
     {
-        uint64_t to_read  = SDL_min(4096, img_size - img_read);
+        uint64_t to_read = SDL_min(4096, img_size - img_read);
         uint64_t buf_read = SDL_ReadIO(fp, img_buf + img_read, to_read);
 
         if (buf_read == 0)
@@ -104,8 +104,8 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
         SDL_LogError(SDL_LOG_CATEGORY_SYSTEM, "Unable to allocate memory for a frame tag lookup table.");
         return false;
     }
-    spr->tags_map->hash           = (HashFunction)strhash;
-    spr->tags_map->comparator     = (CompareFunction)SDL_strcmp;
+    spr->tags_map->hash = (HashFunction)strhash;
+    spr->tags_map->comparator = (CompareFunction)SDL_strcmp;
     spr->tags_map->destroys_value = true;
 
     // Loop through each tag.
@@ -181,7 +181,7 @@ bool sprite_load_v1(Sprite *spr, SDL_IOStream *fp, SDL_Renderer *renderer)
 Sprite *sprite_load(const char *name)
 {
     SDL_Renderer *renderer = app_get()->window.renderer;
-    char buf[1024]         = {0};
+    char buf[1024] = {0};
     SDL_snprintf(buf, sizeof(buf), "assets/spr/%s.sprite", name);
 
     // Try to open a file in SDL's storage.
@@ -228,7 +228,7 @@ Sprite *sprite_load(const char *name)
         return NULL;
     }
 
-    spr->name  = SDL_strdup(name);
+    spr->name = SDL_strdup(name);
     spr->scale = 1;
 
     // Read the version and delegate.
@@ -267,9 +267,9 @@ bool sprite_select_tag(Sprite *spr, const char *tag)
         return false;
     }
 
-    spr->sel_tag     = *tag_idx;
+    spr->sel_tag = *tag_idx;
     spr->frame_accum = 0;
-    spr->frame_idx   = spr->tags[spr->sel_tag].from;
+    spr->frame_idx = spr->tags[spr->sel_tag].from;
     return true;
 }
 
@@ -292,9 +292,9 @@ void sprite_advance_animation(Sprite *spr, double dt)
         spr->frame_accum -= duration;
         if (spr->tags_length > 0)
         {
-            SpriteFrameTag tag    = spr->tags[spr->sel_tag];
+            SpriteFrameTag tag = spr->tags[spr->sel_tag];
             uint32_t frame_window = (tag.to - tag.from) + 1;
-            spr->frame_idx        = ((spr->frame_idx + 1 - tag.from) % frame_window) + tag.from;
+            spr->frame_idx = ((spr->frame_idx + 1 - tag.from) % frame_window) + tag.from;
         }
         else
         {
@@ -310,7 +310,7 @@ void sprite_render(SpriteRenderProperties props)
     SDL_assert(props.renderer != NULL);
     SDL_assert(props.spr != NULL && props.spr->frames_length > 0);
 
-    AppState *app     = app_get();
+    AppState *app = app_get();
     SpriteFrame frame = props.spr->frames[props.spr->frame_idx];
 
     SDL_FRect frect;
@@ -326,14 +326,14 @@ void sprite_render(SpriteRenderProperties props)
     dstrect.h = frect.h * (float)(props.spr->scale * app->settings.scale);
 
     RenderingOptions opts;
-    opts.texture   = props.spr->texture;
-    opts.srcrect   = &frect;
-    opts.dstrect   = &dstrect;
-    opts.origin    = props.origin;
-    opts.rotation  = props.spr->rotation;
+    opts.texture = props.spr->texture;
+    opts.srcrect = &frect;
+    opts.dstrect = &dstrect;
+    opts.origin = props.origin;
+    opts.rotation = props.spr->rotation;
     opts.flip_hori = props.spr->flip_hori;
     opts.flip_vert = props.spr->flip_vert;
-    opts.renderer  = props.renderer;
+    opts.renderer = props.renderer;
     render_aligned_texture(opts);
 }
 

@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static List *signals_queue      = NULL;
+static List *signals_queue = NULL;
 static SDL_Mutex *signals_mutex = NULL;
 
 /**
@@ -48,8 +48,8 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, Ha
             if (collision_partial_check(&this, root->colliders->items[j]).is_colliding)
             {
                 CollisionPair *potential = SDL_malloc(sizeof(CollisionPair));
-                potential->a             = root->colliders->items[i];
-                potential->b             = root->colliders->items[j];
+                potential->a = root->colliders->items[i];
+                potential->b = root->colliders->items[j];
                 hash_set_add(potentials, potential);
             }
         }
@@ -60,8 +60,8 @@ void engine_broad_phase_collisions(const QuadtreeNode *root, List *ancestors, Ha
             if (collision_partial_check(&this, ancestors->items[j]).is_colliding)
             {
                 CollisionPair *potential = SDL_malloc(sizeof(CollisionPair));
-                potential->a             = root->colliders->items[i];
-                potential->b             = ancestors->items[j];
+                potential->a = root->colliders->items[i];
+                potential->b = ancestors->items[j];
                 hash_set_add(potentials, potential);
             }
         }
@@ -130,8 +130,8 @@ void engine_handle_collisions(AppState *app)
         // We do this by recursing through the quadtree as needed.
         HashSet *potentials = hash_set_init();
         potentials->compare = (CompareFunction)collision_pair_comp;
-        potentials->hash    = (HashFunction)collision_pair_hash;
-        List *ancestors     = list_init();
+        potentials->hash = (HashFunction)collision_pair_hash;
+        List *ancestors = list_init();
         engine_broad_phase_collisions(s->quadtree, ancestors, potentials);
         list_destroy(ancestors);
 
@@ -144,14 +144,14 @@ void engine_handle_collisions(AppState *app)
         for (uint32_t j = 0; j < potentials_length; j++)
         {
             CollisionPair *pair = (void *)potentials_list[j];
-            Collision info      = collision_check(pair->a, pair->b);
+            Collision info = collision_check(pair->a, pair->b);
             if (!info.is_colliding)
             {
                 continue;
             }
 
-            signal.timestamp      = SDL_GetTicks();
-            signal.type           = SIGNAL_COLLISION;
+            signal.timestamp = SDL_GetTicks();
+            signal.type = SIGNAL_COLLISION;
             signal.collision.pair = *pair;
             signal.collision.info = info;
 
@@ -178,7 +178,7 @@ void engine_pump_signals(AppState *app)
     SDL_LockMutex(signals_mutex);
 
     // Snapshot the current queue of signals.
-    uint32_t length  = signals_queue->length;
+    uint32_t length = signals_queue->length;
     Signal **signals = SDL_malloc(sizeof(Signal *) * length);
     SDL_assert(signals != NULL); // We can't do anything if there's no memory to handle the signals
     SDL_memcpy(signals, signals_queue->items, sizeof(Signal *) * length);
@@ -199,8 +199,8 @@ void engine_pump_signals(AppState *app)
 void engine_iterate(AppState *app)
 {
     // Calculate delta time
-    uint64_t cur_frame              = SDL_GetTicks();
-    double dt                       = (double)(cur_frame - app->frame_data.last_frame_tick) / 1000.0;
+    uint64_t cur_frame = SDL_GetTicks();
+    double dt = (double)(cur_frame - app->frame_data.last_frame_tick) / 1000.0;
     app->frame_data.last_frame_tick = cur_frame;
 
     if (dt > 0.1)
@@ -228,7 +228,7 @@ void engine_iterate(AppState *app)
     app->frame_data.frame_count++;
     if (app->frame_data.frame_time >= 1)
     {
-        app->frame_data.fps         = app->frame_data.frame_count;
+        app->frame_data.fps = app->frame_data.frame_count;
         app->frame_data.frame_count = 0;
         app->frame_data.frame_time -= 1;
     }
@@ -260,9 +260,9 @@ void engine_handle_event(AppState *app, SDL_Event *event)
         SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Resized rendering target.");
 
         // Pump a signal
-        Signal *signal             = signal_init(SIGNAL_WINDOW_RESIZED);
-        signal->window_resize.w    = app->window.w;
-        signal->window_resize.h    = app->window.h;
+        Signal *signal = signal_init(SIGNAL_WINDOW_RESIZED);
+        signal->window_resize.w = app->window.w;
+        signal->window_resize.h = app->window.h;
         signal->window_resize.relx = app->window.w - old_w;
         signal->window_resize.rely = app->window.h - old_h;
         engine_push_signal(signal);

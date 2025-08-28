@@ -88,7 +88,7 @@ err_free_none:
 bool game_settings_load(Settings *settings)
 {
     const char *filepath = "settings";
-    bool ret             = false;
+    bool ret = false;
 
     SDL_Storage *storage = open_user_storage();
     if (!storage)

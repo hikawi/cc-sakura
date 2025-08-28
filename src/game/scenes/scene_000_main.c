@@ -25,7 +25,7 @@ typedef struct
 void scene_000_oninit(Scene *s)
 {
     Scene000Data *data = SDL_calloc(1, sizeof(Scene000Data));
-    data->started      = false;
+    data->started = false;
 
     s->data = data;
 }
@@ -33,7 +33,7 @@ void scene_000_oninit(Scene *s)
 void scene_000_onstart(Scene *s)
 {
     Scene000Data *data = (Scene000Data *)s->data;
-    data->started      = true;
+    data->started = true;
 }
 
 void scene_000_ondraw(Scene *s, SDL_Renderer *r)
@@ -48,15 +48,15 @@ void scene_000_ondraw(Scene *s, SDL_Renderer *r)
 
     // Render the version string on the bottom left.
     FontRenderingOptions opts;
-    opts.text   = APPLICATION_IDENTIFIER " " APPLICATION_VERSION;
-    opts.x      = 24;
-    opts.y      = winst.h - 24;
+    opts.text = APPLICATION_IDENTIFIER " " APPLICATION_VERSION;
+    opts.x = 24;
+    opts.y = winst.h - 24;
     opts.origin = RENDER_ORIGIN_BOTTOM_LEFT;
-    opts.color  = rgba(0, 0, 0, 0);
-    opts.font   = (Font){
-          .face  = FONT_FACE_RAINY_HEARTS,
-          .sp    = 24,
-          .style = TTF_STYLE_ITALIC,
+    opts.color = rgba(0, 0, 0, 0);
+    opts.font = (Font){
+        .face = FONT_FACE_RAINY_HEARTS,
+        .sp = 24,
+        .style = TTF_STYLE_ITALIC,
     };
     text_render(opts);
 }
@@ -86,10 +86,10 @@ Scene *scene_000_main(void)
 {
     Scene *sc = scene_init();
 
-    sc->oninit     = scene_000_oninit;
+    sc->oninit = scene_000_oninit;
     sc->onphystick = scene_000_onphystick;
-    sc->ondraw     = scene_000_ondraw;
-    sc->onsignal   = scene_000_onsignal;
+    sc->ondraw = scene_000_ondraw;
+    sc->onsignal = scene_000_onsignal;
 
     return sc;
 }

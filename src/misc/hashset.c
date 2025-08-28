@@ -28,7 +28,7 @@ bool hash_set_add(HashSet *set, const void *item)
     // First node.
     if (!set->buckets[hash])
     {
-        set->buckets[hash]       = SDL_malloc(sizeof(HashSetNode));
+        set->buckets[hash] = SDL_malloc(sizeof(HashSetNode));
         set->buckets[hash]->item = item;
         set->buckets[hash]->next = NULL;
         set->length++;
@@ -36,7 +36,7 @@ bool hash_set_add(HashSet *set, const void *item)
     }
 
     // Find the end of the node, or ignore if already added.
-    HashSetNode *cur  = set->buckets[hash];
+    HashSetNode *cur = set->buckets[hash];
     HashSetNode *prev = NULL;
     while (cur)
     {
@@ -46,14 +46,14 @@ bool hash_set_add(HashSet *set, const void *item)
         }
 
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
     // Found the end, but not added.
     HashSetNode *node = SDL_malloc(sizeof(HashSetNode));
-    node->item        = item;
-    node->next        = NULL;
-    prev->next        = node;
+    node->item = item;
+    node->next = NULL;
+    prev->next = node;
     set->length++;
     return true;
 }
@@ -74,7 +74,7 @@ bool hash_set_remove(HashSet *set, const void *item)
     uint64_t hash = set->hash(item) % HASH_SET_MAX_BUCKETS;
 
     // Find the end of the node, or ignore if already added.
-    HashSetNode *cur  = set->buckets[hash];
+    HashSetNode *cur = set->buckets[hash];
     HashSetNode *prev = NULL;
     while (cur)
     {
@@ -95,7 +95,7 @@ bool hash_set_remove(HashSet *set, const void *item)
         }
 
         prev = cur;
-        cur  = cur->next;
+        cur = cur->next;
     }
 
     // Did not found
@@ -171,7 +171,7 @@ void hash_set_iterate(const HashSet *set, uint32_t *length, const void ***items)
         while (cur)
         {
             (*items)[len++] = cur->item;
-            cur             = cur->next;
+            cur = cur->next;
         }
     }
 }

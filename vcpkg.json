@@ -9,6 +9,6 @@
       "name": "sdl3-ttf",
       "features": ["harfbuzz"]
     },
-    "zlib"
+    "zstd"
   ]
 }

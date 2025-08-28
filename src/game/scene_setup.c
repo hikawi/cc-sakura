@@ -14,13 +14,13 @@ static bool setup = false;
 
 void setup_next_scene(void *userdata)
 {
-    Scene *main              = scene_000_main();
+    Scene *main = scene_000_main();
     SceneTransitionInfo info = {
-        .scene    = main,
-        .curve    = ANIMATION_CURVE_EASE_IN,
+        .scene = main,
+        .curve = ANIMATION_CURVE_EASE_IN,
         .duration = 0.5,
-        .entry    = true,
-        .type     = TRANSITION_FADE,
+        .entry = true,
+        .type = TRANSITION_FADE,
     };
     scene_mgr_start_transition(userdata, info);
 
@@ -42,8 +42,8 @@ int setup_thread(void *lol)
 
     // Loads the necessary font.
     Font font = {
-        .face  = FONT_FACE_RAINY_HEARTS,
-        .sp    = 24,
+        .face = FONT_FACE_RAINY_HEARTS,
+        .sp = 24,
         .style = TTF_STYLE_ITALIC,
     };
     text_preload(font);
@@ -84,11 +84,11 @@ void scene_setup(void)
     SDL_UnlockMutex(td.started_mutex);
 
     SceneTransitionInfo info = {
-        .scene    = scene_loading(td.mutex, 0.5, setup_next_scene, &app->scene_mgr),
-        .entry    = true,
-        .type     = TRANSITION_NONE,
+        .scene = scene_loading(td.mutex, 0.5, setup_next_scene, &app->scene_mgr),
+        .entry = true,
+        .type = TRANSITION_NONE,
         .duration = 2,
-        .curve    = ANIMATION_CURVE_LINEAR,
+        .curve = ANIMATION_CURVE_LINEAR,
     };
     scene_mgr_start_transition(&app->scene_mgr, info);
 }

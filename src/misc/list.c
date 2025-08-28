@@ -5,10 +5,10 @@
 
 List *list_init(void)
 {
-    List *list     = SDL_malloc(sizeof(List));
+    List *list = SDL_malloc(sizeof(List));
     list->capacity = 10;
-    list->items    = SDL_malloc(sizeof(void *) * list->capacity);
-    list->length   = 0;
+    list->items = SDL_malloc(sizeof(void *) * list->capacity);
+    list->length = 0;
     return list;
 }
 
@@ -23,11 +23,11 @@ void list_shrink(List *list)
     if (list->capacity / 4 <= list->length)
         return;
 
-    uint32_t new_capacity  = list->capacity / 2;
+    uint32_t new_capacity = list->capacity / 2;
     const void **new_items = SDL_realloc(list->items, sizeof(void *) * new_capacity);
     if (new_items)
     {
-        list->items    = new_items;
+        list->items = new_items;
         list->capacity = new_capacity;
     }
     else
@@ -156,8 +156,8 @@ void quick_sort(const void **array, int start, int end, int (*comparator)(const 
             break;
 
         const void *tmp = array[i];
-        array[i]        = array[j];
-        array[j]        = tmp;
+        array[i] = array[j];
+        array[j] = tmp;
     }
 
     // Conquer
