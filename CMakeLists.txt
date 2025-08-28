@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(SDL3_ttf CONFIG REQUIRED)
-find_package(ZSTD REQUIRED)
+find_package(zstd REQUIRED)
 
 # Add your source files
 file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS src/*.c)
