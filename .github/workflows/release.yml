@@ -56,7 +56,12 @@ jobs:
 
       - name: Test with CTest
         run: |
-          ctest -C Release --test-dir build --output-on-failure
+          cd build
+          ctest -C Release --output-on-failure
+
+      - name: Test with CTest (Windows)
+        run: |
+          ctest --test-dir build/bin/Release --output-on-failure
 
       - name: Final steps
         run: |
