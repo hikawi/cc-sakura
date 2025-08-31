@@ -38,7 +38,7 @@ bool init()
     sdl::log_info("Found SDL Image v{}.{}.{}", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION,
                   SDL_IMAGE_MICRO_VERSION);
     sdl::log_info("Found ZLIB v{}", zlibVersion());
-    sdl::log_info("Found ZSTD v{}", ZSTD_VERSION_STRING);
+    sdl::log_info("Found ZSTD v{}", ZSTD_versionString());
 
     return true;
 }

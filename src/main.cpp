@@ -1,10 +1,9 @@
-#include "sdl/sdl_init.h"
-#include "sdl/sdl_log.h"
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "app.h"
+#include "sdl/sdl_init.h"
+#include "sdl/sdl_log.h"
 
-#include <exception>
 #include <memory>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
@@ -25,7 +24,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         std::unique_ptr<ccsakura::app> app = std::make_unique<ccsakura::app>();
         *appstate = app.release();
     }
-    catch (std::exception &ex)
+    catch (...)
     {
         return SDL_APP_FAILURE;
     }
