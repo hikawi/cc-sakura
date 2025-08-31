@@ -37,7 +37,6 @@ bool init()
     sdl::log_info("Initialized SDL TTF v{}.{}.{}", SDL_TTF_MAJOR_VERSION, SDL_TTF_MINOR_VERSION, SDL_TTF_MICRO_VERSION);
     sdl::log_info("Found SDL Image v{}.{}.{}", SDL_IMAGE_MAJOR_VERSION, SDL_IMAGE_MINOR_VERSION,
                   SDL_IMAGE_MICRO_VERSION);
-    sdl::log_info("Found ZLIB v{}", zlibVersion());
     sdl::log_info("Found ZSTD v{}", ZSTD_versionString());
 
     return true;
