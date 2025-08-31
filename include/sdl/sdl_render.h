@@ -17,9 +17,48 @@ namespace sdl
 {
 
 /**
+ * Abstract interface for \ref sdl::renderer for mocking purposes.
+ */
+class irenderer
+{
+  public:
+    virtual ~irenderer() = default;
+
+    /**
+     * Sets the renderer's draw color to an RGBA set.
+     *
+     * \param r the red value
+     * \param g the green value
+     * \param b the blue value
+     * \param a the alpha value
+     */
+    virtual void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const = 0;
+
+    /**
+     * Sets the renderer's draw color to an RGBA set.
+     *
+     * \param r the red value
+     * \param g the green value
+     * \param b the blue value
+     * \param a the alpha value
+     */
+    virtual void set_color(const float r, const float g, const float b, const float a) const = 0;
+
+    /**
+     * Clears the rendering context.
+     */
+    virtual void clear() const = 0;
+
+    /**
+     * Updates the window with newly drawn context.
+     */
+    virtual void present() const = 0;
+};
+
+/**
  * Provides a 2D-accelerated rendering context.
  */
-class renderer
+class renderer : public irenderer
 {
   public:
     /**
@@ -29,38 +68,13 @@ class renderer
      * \param name the driver name to use. pass nullptr to let SDL automatically choose the best driver from the user's
      * machine
      */
-    renderer(const window &window, const char *name);
+    renderer(const iwindow &window, const char *name);
     ~renderer();
 
-    /**
-     * Sets the renderer's draw color to an RGBA set.
-     *
-     * \param r the red value
-     * \param g the green value
-     * \param b the blue value
-     * \param a the alpha value
-     */
-    void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const;
-
-    /**
-     * Sets the renderer's draw color to an RGBA set.
-     *
-     * \param r the red value
-     * \param g the green value
-     * \param b the blue value
-     * \param a the alpha value
-     */
-    void set_color(const float r, const float g, const float b, const float a) const;
-
-    /**
-     * Clears the rendering context.
-     */
-    void clear() const;
-
-    /**
-     * Updates the window with newly drawn context.
-     */
-    void present() const;
+    void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const override;
+    void set_color(const float r, const float g, const float b, const float a) const override;
+    void clear() const override;
+    void present() const override;
 
   private:
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> m_renderer;

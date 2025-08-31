@@ -1,13 +1,13 @@
+#include "sdl/sdl_timer.h"
 #define SDL_MAIN_USE_CALLBACKS
 
-#include "app.h"
+#include "engine/engine.h"
 #include "sdl/sdl_init.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
+#include "sdl/sdl_video.h"
 
-#include <cmath>
 #include <memory>
-#include <numbers>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
 
@@ -24,8 +24,17 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 
     try
     {
-        std::unique_ptr<ccsakura::app> app = std::make_unique<ccsakura::app>();
-        *appstate = app.release();
+        // Configure because dependency injection bruh.
+        std::unique_ptr<sdl::iwindow> window =
+            std::make_unique<sdl::window>(APPLICATION_NAME, APPLICATION_ORIGINAL_WIDTH, APPLICATION_ORIGINAL_HEIGHT,
+                                          sdl::window_flags::always_on_top | sdl::window_flags::resizable);
+        std::unique_ptr<sdl::irenderer> renderer = std::make_unique<sdl::renderer>(*window, nullptr);
+
+        std::unique_ptr<ccsakura::iapp> app = std::make_unique<ccsakura::app>(std::move(window), std::move(renderer));
+        std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(app));
+
+        // Release for SDL to manage.
+        *appstate = engine.release();
     }
     catch (...)
     {
@@ -37,30 +46,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    const ccsakura::app &app = *static_cast<ccsakura::app *>(appstate);
-    const sdl::renderer &renderer = app.get_renderer();
+    ccsakura::engine &engine = *static_cast<ccsakura::engine *>(appstate);
 
-    const float RAINBOW_SPEED = 0.001f;
-    static float phase = 0.0f;
-
-    phase += RAINBOW_SPEED;
-
-    // Ensure the phase doesn't grow indefinitely.
-    // Cycle it back to 0 when it exceeds 2 * PI to prevent precision issues.
-    if (phase > 2.0f * std::numbers::pi_v<float>)
+    // Iterate and render.
+    if (!engine.iterate(sdl::get_ticks()))
     {
-        phase -= 2.0f * std::numbers::pi_v<float>;
+        return SDL_APP_SUCCESS;
     }
-
-    // Calculate the value for each color channel using sine waves with different offsets
-    float red = 0.5f * (1.0f + std::sin(phase));
-    float green = 0.5f * (1.0f + std::sin(phase + (2.0f * std::numbers::pi_v<float> / 3.0f)));
-    float blue = 0.5f * (1.0f + std::sin(phase + (4.0f * std::numbers::pi_v<float> / 3.0f)));
-
-    // Apply the new color to the renderer
-    renderer.set_color(red, green, blue, 1.0f);
-    renderer.clear();
-    renderer.present();
+    engine.render();
 
     return SDL_APP_CONTINUE;
 }
@@ -82,7 +75,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     // Retake ownership
     {
-        std::unique_ptr<ccsakura::app> app(static_cast<ccsakura::app *>(appstate));
+        std::unique_ptr<ccsakura::engine> engine(static_cast<ccsakura::engine *>(appstate));
     }
 
     sdl::log_debug("Application termintated with result {}", (int)result);

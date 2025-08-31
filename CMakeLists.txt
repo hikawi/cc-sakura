@@ -41,8 +41,6 @@ target_compile_definitions(
   PRIVATE APPLICATION_NAME="Sakura and the Clow Cards"
           APPLICATION_IDENTIFIER="dev.luny.ccsakura"
           APPLICATION_VERSION="${PROJECT_VERSION}"
-          APPLICATION_ORGANIZATION="dev.luny.ccsakura"
-          APPLICATION_APP_NAME="Cardcaptor Sakura"
           APPLICATION_ORIGINAL_WIDTH=1200
           APPLICATION_ORIGINAL_HEIGHT=1080)
 
@@ -94,6 +92,13 @@ target_link_libraries(
     SDL3_ttf::SDL3_ttf
     zstd::libzstd)
 target_include_directories(CCSakura PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_compile_definitions(
+  CCSakura
+  PRIVATE APPLICATION_NAME="Sakura and the Clow Cards"
+          APPLICATION_IDENTIFIER="dev.luny.ccsakura"
+          APPLICATION_VERSION="${PROJECT_VERSION}"
+          APPLICATION_ORIGINAL_WIDTH=1200
+          APPLICATION_ORIGINAL_HEIGHT=1080)
 
 # CTest integration
 enable_testing()

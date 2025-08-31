@@ -10,7 +10,7 @@
 namespace sdl
 {
 
-renderer::renderer(const window &window, const char *name)
+renderer::renderer(const iwindow &window, const char *name)
     : m_renderer(SDL_CreateRenderer(window.get(), name), SDL_DestroyRenderer)
 {
     if (!m_renderer)

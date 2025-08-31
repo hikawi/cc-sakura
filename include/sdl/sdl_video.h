@@ -39,9 +39,25 @@ inline constexpr window_flags operator|(const window_flags lhs, const window_fla
 }
 
 /**
+ * Abstract interface for \ref sdl::window for mocking purposes.
+ */
+class iwindow
+{
+  public:
+    virtual ~iwindow() = default;
+
+    /**
+     * Retrieves the wrapped SDL_Window pointer.
+     *
+     * \returns the window pointer
+     */
+    virtual SDL_Window *get() const = 0;
+};
+
+/**
  * Wrapper for SDL_Window, the struct used as an opaque handle to a window.
  */
-class window
+class window : public iwindow
 {
   public:
     /**
@@ -54,14 +70,9 @@ class window
      * \see sdl::window_flags
      */
     window(const std::string &title, const int width, const int height, const window_flags flags);
-    ~window();
+    ~window() override;
 
-    /**
-     * Retrieves the wrapped SDL_Window pointer.
-     *
-     * \returns the window pointer
-     */
-    SDL_Window *get() const;
+    SDL_Window *get() const override;
 
   private:
     std::unique_ptr<SDL_Window, void (*)(SDL_Window *)> m_window;

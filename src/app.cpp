@@ -9,20 +9,27 @@
 namespace ccsakura
 {
 
-app::app()
-    : m_window(std::make_unique<sdl::window>(APPLICATION_NAME, APPLICATION_ORIGINAL_WIDTH, APPLICATION_ORIGINAL_HEIGHT,
-                                             sdl::window_flags::resizable | sdl::window_flags::always_on_top)),
-      m_renderer(std::make_unique<sdl::renderer>(*m_window, nullptr))
+app::app(std::unique_ptr<sdl::iwindow> window, std::unique_ptr<sdl::irenderer> renderer)
+    : m_window(std::move(window)), m_renderer(std::move(renderer))
 {
+    if (!m_window)
+    {
+        throw std::runtime_error("Unable to initialize application, window is not available");
+    }
+    if (!m_renderer)
+    {
+        throw std::runtime_error("Unable to initialize application, window is not available");
+    }
+
     sdl::log_trace("ccsakura::app constructed");
 }
 
-const sdl::window &app::get_window() const
+const sdl::iwindow &app::get_window() const
 {
     return *m_window.get();
 }
 
-const sdl::renderer &app::get_renderer() const
+const sdl::irenderer &app::get_renderer() const
 {
     return *m_renderer.get();
 }

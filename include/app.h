@@ -10,35 +10,48 @@
 #include "sdl/sdl_video.h"
 
 #include <memory>
+
 namespace ccsakura
 {
 
 /**
- * Represents the application with a state.
+ * Virtual interface for \ref ccsakura::app for mocking purposes.
  */
-class app
+class iapp
 {
   public:
-    app();
-    ~app();
+    virtual ~iapp() = default;
 
     /**
      * Retrieves the wrapped window.
      *
      * \returns the wrapped window
      */
-    const sdl::window &get_window() const;
+    virtual const sdl::iwindow &get_window() const = 0;
 
     /**
      * Retrieves the wrapped renderer.
      *
      * \returns the wrapped renderer
      */
-    const sdl::renderer &get_renderer() const;
+    virtual const sdl::irenderer &get_renderer() const = 0;
+};
+
+/**
+ * Represents the application with a state.
+ */
+class app : public iapp
+{
+  public:
+    app(std::unique_ptr<sdl::iwindow> window, std::unique_ptr<sdl::irenderer> renderer);
+    ~app() override;
+
+    const sdl::iwindow &get_window() const override;
+    const sdl::irenderer &get_renderer() const override;
 
   private:
-    std::unique_ptr<sdl::window> m_window;
-    std::unique_ptr<sdl::renderer> m_renderer;
+    std::unique_ptr<sdl::iwindow> m_window;
+    std::unique_ptr<sdl::irenderer> m_renderer;
 };
 
 }; // namespace ccsakura
