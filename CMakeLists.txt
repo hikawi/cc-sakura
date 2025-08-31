@@ -94,3 +94,9 @@ target_link_libraries(
     SDL3_ttf::SDL3_ttf
     zstd::libzstd)
 target_include_directories(CCSakura PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+# CTest integration
+enable_testing()
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
