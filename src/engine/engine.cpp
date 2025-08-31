@@ -5,6 +5,7 @@
 #include "sdl/sdl_render.h"
 
 #include <algorithm>
+#include <cmath>
 #include <numbers>
 #include <stdexcept>
 

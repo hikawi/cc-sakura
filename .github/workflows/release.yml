@@ -56,7 +56,7 @@ jobs:
 
       - name: Test with CTest
         run: |
-          ctest --test-dir build --output-on-failure
+          ctest -C Release --test-dir build --output-on-failure
 
       - name: Final steps
         run: |
