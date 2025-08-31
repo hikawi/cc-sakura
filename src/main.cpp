@@ -1,4 +1,3 @@
-#include <SDL3/SDL_stdinc.h>
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "app.h"
@@ -8,6 +7,7 @@
 
 #include <cmath>
 #include <memory>
+#include <numbers>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
 
@@ -47,15 +47,15 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
     // Ensure the phase doesn't grow indefinitely.
     // Cycle it back to 0 when it exceeds 2 * PI to prevent precision issues.
-    if (phase > 2.0f * (float)M_PI)
+    if (phase > 2.0f * std::numbers::pi_v<float>)
     {
-        phase -= 2.0f * (float)M_PI;
+        phase -= 2.0f * std::numbers::pi_v<float>;
     }
 
     // Calculate the value for each color channel using sine waves with different offsets
     float red = 0.5f * (1.0f + std::sin(phase));
-    float green = 0.5f * (1.0f + std::sin(phase + (2.0f * (float)M_PI / 3.0f)));
-    float blue = 0.5f * (1.0f + std::sin(phase + (4.0f * (float)M_PI / 3.0f)));
+    float green = 0.5f * (1.0f + std::sin(phase + (2.0f * std::numbers::pi_v<float> / 3.0f)));
+    float blue = 0.5f * (1.0f + std::sin(phase + (4.0f * std::numbers::pi_v<float> / 3.0f)));
 
     // Apply the new color to the renderer
     renderer.set_color(red, green, blue, 1.0f);
