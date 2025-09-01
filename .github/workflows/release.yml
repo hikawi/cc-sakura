@@ -59,10 +59,6 @@ jobs:
           cd build
           ctest -C Release --output-on-failure
 
-      - name: Test with CTest (Windows)
-        run: |
-          ctest --test-dir build/bin/Release --output-on-failure
-
       - name: Final steps
         run: |
           ls -R build

@@ -1,5 +1,12 @@
 find_package(GTest CONFIG REQUIRED)
 
+if(MSVC)
+  set(gtest_force_shared_crt
+      ON
+      CACHE BOOL "" FORCE)
+endif()
+include(GoogleTest)
+
 message(${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
      ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -23,5 +30,4 @@ target_link_libraries(
     GTest::gmock
     GTest::gmock_main)
 
-include(GoogleTest)
 gtest_discover_tests(CCSakuraTest)
