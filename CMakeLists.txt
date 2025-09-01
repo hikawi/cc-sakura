@@ -61,7 +61,7 @@ endif()
 # Don't optimize for debug builds and use O2 for release builds.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   if(MSVC)
-    target_compile_options(CCSakura PRIVATE /W4 /WX /O0 /fsanitize=address)
+    target_compile_options(CCSakura PRIVATE /W4 /WX /Od /fsanitize=address)
   else()
     target_compile_options(
       CCSakura
