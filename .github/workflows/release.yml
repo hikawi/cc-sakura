@@ -28,40 +28,48 @@ jobs:
         with:
           fetch-depth: 0 # Needed for version tagging
 
-      - name: Cache vcpkg
-        uses: actions/cache@v4
-        id: vcpkg-cache
+      - name: Restore cached vcpkg packages
+        id: cache-vcpkg-restore
+        uses: actions/cache/restore@v4
         with:
+          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}
           path: |
             ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
-          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}
 
       - name: Setup vcpkg (Unix)
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
         run: |
           git clone https://github.com/microsoft/vcpkg ./vcpkg
           ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Setup vcpkg (Windows)
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
           git clone https://github.com/microsoft/vcpkg ./vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
 
-      - name: Build with CMake
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DBUILD_TESTING=ON
-          cmake --build build --config Release -j
+      - name: Configure CMake build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DBUILD_TESTING=ON
+
+      - name: Build CMake project
+        run: cmake --build build --config Release -j
 
       - name: Test with CTest
-        run: |
-          cd build
-          ctest -C Release --output-on-failure
+        run: ctest -C Release --test-dir build --output-on-failure
+
+      - name: Save vcpkg packaages
+        id: cache-vcpkg-save
+        if: always() && steps.cache-vcpkg-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-vcpkg-restore.outputs.cache-primary-key }}
+          path: |
+            ${{ github.workspace }}/vcpkg
+            ${{ github.workspace }}/build/vcpkg_installed
 
       - name: Final steps
-        run: |
-          ls -R build
+        run: ls -R build
 
       - name: Package artifacts (Ubuntu)
         if: matrix.os == 'ubuntu-latest'

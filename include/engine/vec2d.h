@@ -163,10 +163,7 @@ struct vec2d
      * \param rhs the vector to check against
      * \returns true if two vectors are meaningfully equal
      */
-    constexpr bool operator==(const vec2d &rhs) const noexcept
-    {
-        return double_equal(x, rhs.x) && double_equal(y, rhs.y);
-    }
+    bool operator==(const vec2d &rhs) const noexcept;
 
     /**
      * Checks if two vectors are not equal.
@@ -174,10 +171,7 @@ struct vec2d
      * \param rhs the vector to check against
      * \returns true if two vectors are not equal
      */
-    constexpr bool operator!=(const vec2d &rhs) const noexcept
-    {
-        return !double_equal(x, rhs.x) || !double_equal(y, rhs.y);
-    }
+    bool operator!=(const vec2d &rhs) const noexcept;
 
     /**
      * Computes the length of the vector.

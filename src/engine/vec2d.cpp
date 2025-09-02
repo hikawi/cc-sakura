@@ -1,9 +1,21 @@
 #include "engine/vec2d.h"
 
+#include "utils.h"
+
 #include <cmath>
 
 namespace ccsakura
 {
+
+bool vec2d::operator==(const vec2d &rhs) const noexcept
+{
+    return double_equal(x, rhs.x) && double_equal(y, rhs.y);
+}
+
+bool vec2d::operator!=(const vec2d &rhs) const noexcept
+{
+    return !double_equal(x, rhs.x) || !double_equal(y, rhs.y);
+}
 
 [[nodiscard]] double vec2d::length() const noexcept
 {
