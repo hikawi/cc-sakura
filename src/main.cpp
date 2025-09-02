@@ -10,6 +10,7 @@
 #include <memory>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_main.h>
+#include <version>
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
@@ -20,6 +21,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     *appstate = nullptr;
 
     // Setup SDL before the app.
+    sdl::clear_log_priority_prefix();
     sdl::init();
 
     try
@@ -40,6 +42,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     {
         return SDL_APP_FAILURE;
     }
+
+    // Check for weird shit just to know, because why not.
+#ifdef __cpp_lib_constexpr_cmath
+    sdl::log_info("C++ feature: constexpr_math supported");
+#else
+    sdl::log_warn("C++ feature: constexpr_math not found");
+#endif
 
     return SDL_APP_CONTINUE;
 }

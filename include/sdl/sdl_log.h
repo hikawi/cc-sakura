@@ -14,6 +14,11 @@ namespace sdl
 {
 
 /**
+ * Clears all log messages' prefix at all priorities.
+ */
+void clear_log_priority_prefix();
+
+/**
  * Logs a message at the TRACE level.
  *
  * These messages should be included in very deep and granular object lifecycles to track.
@@ -24,7 +29,7 @@ namespace sdl
 template <typename... Args> void log_trace(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogTrace(SDL_LOG_CATEGORY_APPLICATION, "\033[94m%s\033[0m", msg.c_str());
+    SDL_LogTrace(SDL_LOG_CATEGORY_APPLICATION, "\033[94mTRACE > %s\033[0m", msg.c_str());
 }
 
 /**
@@ -38,7 +43,7 @@ template <typename... Args> void log_trace(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_debug(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "\033[92m%s\033[0m", msg.c_str());
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "\033[92mDEBUG > %s\033[0m", msg.c_str());
 }
 
 /**
@@ -54,7 +59,7 @@ template <typename... Args> void log_debug(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_info(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "\033[96m%s\033[0m", msg.c_str());
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "\033[96mINFO  > %s\033[0m", msg.c_str());
 }
 
 /**
@@ -70,7 +75,7 @@ template <typename... Args> void log_info(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_warn(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "\033[93m%s\033[0m", msg.c_str());
+    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "\033[93mWARN  > %s\033[0m", msg.c_str());
 }
 
 /**
@@ -85,7 +90,7 @@ template <typename... Args> void log_warn(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_error(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "\033[91m%s\033[0m", msg.c_str());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "\033[91m%sERROR > \033[0m", msg.c_str());
 }
 
 /**
@@ -100,7 +105,7 @@ template <typename... Args> void log_error(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_critical(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "\033[95m%s\033[0m", msg.c_str());
+    SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "\033[95mCRIT  > %s\033[0m", msg.c_str());
 }
 
 } // namespace sdl

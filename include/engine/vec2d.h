@@ -184,10 +184,7 @@ struct vec2d
      *
      * \returns the vector length
      */
-    [[nodiscard]] constexpr double length() const noexcept
-    {
-        return std::sqrt(length_squared());
-    }
+    [[nodiscard]] double length() const noexcept;
 
     /**
      * Computes the squared length of the vector.
@@ -217,11 +214,7 @@ struct vec2d
      *
      * \returns a new normalized vector
      */
-    [[nodiscard]] constexpr vec2d normalized() const noexcept
-    {
-        const double len = length();
-        return len > 0 ? *this / len : *this;
-    }
+    [[nodiscard]] vec2d normalized() const noexcept;
 
     /**
      * Computes the distance between two points in space.
@@ -229,10 +222,7 @@ struct vec2d
      * \param rhs the other point
      * \returns the distance between this and the other point
      */
-    [[nodiscard]] constexpr double distance(const vec2d &rhs) const noexcept
-    {
-        return (rhs - *this).length();
-    }
+    [[nodiscard]] double distance(const vec2d &rhs) const noexcept;
 
     /**
      * Computes the squared distance between two points in space.

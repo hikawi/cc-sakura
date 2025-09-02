@@ -12,7 +12,7 @@ class window_mock : public sdl::iwindow
   public:
     SDL_Window *get() const override
     {
-        return reinterpret_cast<SDL_Window *>(0xAAAABBBB);
+        return reinterpret_cast<SDL_Window *>(0xAAAABBBBAAAABBBB);
     }
 };
 

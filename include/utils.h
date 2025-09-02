@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <cstdlib>
-
 namespace ccsakura
 {
 
@@ -20,10 +18,7 @@ static constexpr double epsilon = 1e-9;
  * \param b the second value
  * \returns true if they are equal enough
  */
-inline constexpr bool float_equal(const float a, const float b) noexcept
-{
-    return std::abs(a - b) < static_cast<float>(epsilon);
-}
+bool float_equal(const float a, const float b) noexcept;
 
 /**
  * Checks if two doubles are equal if they are similar enough to an epsilon.
@@ -32,9 +27,6 @@ inline constexpr bool float_equal(const float a, const float b) noexcept
  * \param b the second value
  * \returns true if they are equal enough
  */
-inline constexpr bool double_equal(const double a, const double b) noexcept
-{
-    return std::abs(a - b) < epsilon;
-}
+bool double_equal(const double a, const double b) noexcept;
 
 } // namespace ccsakura
