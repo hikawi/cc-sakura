@@ -1,128 +1,59 @@
 /**
  * \file engine/text.h
  *
- * The engine's text rendering module. This is used to draw various texts on surfaces with multiple variants of font
- * faces.
+ * Font-rendering module of the engine.
  */
 
 #pragma once
 
-#include "app.h"
-#include "engine/renderer.h"
-#include "SDL3/SDL_pixels.h"
-#include "SDL3_ttf/SDL_ttf.h"
+#include "sdl/sdl_stdinc.h"
 
-#include <stdbool.h>
+#include <functional>
 
-/**
- * Represents a font face to be loaded.
- */
-typedef enum
+namespace ccsakura
 {
-    /**
-     * Main font face of the game.
-     */
-    FONT_FACE_RAINY_HEARTS,
-
-    /**
-     * Font face for decorative text pieces.
-     */
-    FONT_FACE_DAYDREAM,
-
-    /**
-     * Debug font that can display all Unicode characters.
-     */
-    FONT_FACE_UNIFONT,
-} FontFace;
 
 /**
- * Represents a normal font with various styles.
- *
- * This is used as a key to cache. All fields in this struct is used in the hashing function.
+ * Enumerations for available typefaces in the engine/
  */
-typedef struct
+enum class typeface
 {
-    /**
-     * The font face to use.
-     */
-    FontFace face;
-
-    /**
-     * The font's size in points.
-     */
-    float sp;
-
-    /**
-     * The font style flags.
-     *
-     * Font weight does not seem to be properly supported in variable fonts.
-     */
-    TTF_FontStyleFlags style;
-} Font;
+    rainy_hearts, ///< the main typeface of the game
+    daydream,     ///< the typeface for large decorative text pieces
+    unifont,      ///< unicode-compatible typeface, mostly for debugging purposes
+};
 
 /**
- * Represents an options passed in for handling rendering fonts.
+ * Represents a combination of options for a font.
+ *
+ * This is cached. You can always reuse fonts by specifying the same
  */
-typedef struct
+struct font
 {
-    /**
-     * The hashed font to use.
-     *
-     * If the font has not been used yet, it will be created on the fly.
-     */
-    Font font;
-
-    /**
-     * The text to render.
-     *
-     * \warning Sending NULL or leave it dangling is undefined behavior.
-     */
-    const char *text;
-
-    /**
-     * The X co-ord to place the text.
-     */
-    double x;
-
-    /**
-     * The Y co-ord to place the text.
-     */
-    double y;
-
-    /**
-     * The color to display the text in.
-     */
-    SDL_Color color;
-
-    /**
-     * Where to place the text's origin point.
-     */
-    RenderingOriginType origin;
-} FontRenderingOptions;
+    typeface typeface; ///< the typeface of the font
+    float sp;          ///< the font's size in sp
+};
 
 /**
- * Initializes the engine needed to create fonts.
- *
- * \param app the application to create with
- * \returns true if it was initialized correctly
+ * Represents a piece of text on the screen using a font, rendered with a font engine.
  */
-bool text_init(AppState *app);
+class text
+{
+};
 
-/**
- * Preloads a font.
- *
- * \param font the font to load
- */
-void text_preload(Font font);
+} // namespace ccsakura
 
-/**
- * Renders a text with options.
- *
- * \param opts the rendering options
- */
-void text_render(FontRenderingOptions opts);
+namespace std
+{
 
-/**
- * Destroys the initialized font engines.
- */
-void text_destroy(void);
+template <> struct hash<ccsakura::font>
+{
+    std::size_t operator()(const ccsakura::font &f) const noexcept
+    {
+        uint32_t hash = sdl::murmur3(static_cast<uint32_t>(f.typeface));
+        hash = sdl::murmur3(f.sp, hash);
+        return static_cast<std::size_t>(hash);
+    }
+};
+
+} // namespace std

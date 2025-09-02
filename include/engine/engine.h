@@ -7,49 +7,98 @@
 #pragma once
 
 #include "app.h"
-#include "SDL3/SDL_events.h"
+
+#include <cstdint>
+#include <memory>
+
+namespace ccsakura
+{
 
 /**
- * Initializes the engine of this application.
- *
- * \param app the application
- * \returns true if the engine was initialized correctly
+ * Holds various information about the engine's frame data.
  */
-bool engine_init(AppState *app);
+struct frame_data
+{
+    uint64_t last_tick = 0; ///< last iteration time in ms
+    double accumulator = 0; ///< frame's accumulator, in seconds
+    double frame_time =
+        0; ///< frame counter to isolate from accumulator, we count frames per SECOND, not frames per PHYSICAL TICK
+    uint32_t cur_frames = 0; ///< the current second's frame count
+    uint32_t fps = 0;        ///< the frames per second, updated every second
+};
 
 /**
- * Pushes a signal to the engine to be handled on the next frame.
- *
- * The engine will pump and handle signals the first thing in each frame. So any signals pushed from this frame will not
- * be handled on the same frame.
- *
- * \param signal the signal to push
+ * Abstracted interface of \ref ccsakura::engine for mocking purposes.
  */
-void engine_push_signal(Signal *signal);
+class iengine
+{
+  public:
+    /**
+     * Maximum duration allowed for a variable time step.
+     */
+    static constexpr const double s_max_dt = 0.1;
+
+    /**
+     * Fixed time step for each physical call.
+     */
+    static constexpr const double s_time_step = 1 / 60.0;
+
+    virtual ~iengine() = default;
+
+    /**
+     * Retrieves the engine's current frame data.
+     *
+     * \returns the current frame data
+     */
+    virtual frame_data get_frame_data() const = 0;
+
+    /**
+     * Iterates one frame of the engine.
+     *
+     * This iterates as many times as the machine allows per second, delegating to tick-based system. But, physical
+     * ticks shall only be called once every 17ms or so.
+     *
+     * \warning This function's call stack should never throw an exception.
+     * \param tick the tick in milliseconds ever since SDL is initialized
+     * \returns true if the engine should continue, false otherwise
+     */
+    virtual bool iterate(const uint64_t tick) noexcept = 0;
+
+    /**
+     * Renders the current state of the program.
+     *
+     * This iterates as many times as \ref engine::iterate is called.
+     *
+     * \warning This function's call stack should never throw an exception.
+     */
+    virtual void render() const noexcept = 0;
+};
 
 /**
- * Parses the event the application caught.
+ * The engine of the game.
  *
- * \param app the application
- * \param event the SDl event to parse
+ * This is mainly a scene-based engine, using variable ticks (with deltatime) and physical ticks. This should provide
+ * the abstraction towards SDL for the application.
  */
-void engine_handle_event(AppState *app, SDL_Event *event);
+class engine : public iengine
+{
+  public:
+    /**
+     * Initializes the engine, and also the application.
+     *
+     * This utilizes the pattern Inversion of Control, apparently, but I don't know why. It just feels natural this way.
+     * Throws an exception if app failed to initialize.
+     */
+    engine(std::unique_ptr<ccsakura::iapp> app);
+    ~engine() noexcept override;
 
-/**
- * Make the engine run one iteration of the application.
- *
- * \param app the application
- */
-void engine_iterate(AppState *app);
+    struct frame_data get_frame_data() const override;
+    bool iterate(const uint64_t tick) noexcept override;
+    void render() const noexcept override;
 
-/**
- * Called when the app needs to render on the window.
- *
- * \param app the application
- */
-void engine_render(AppState *app);
+  private:
+    std::unique_ptr<iapp> m_app;
+    struct frame_data m_frame_data;
+};
 
-/**
- * Destroys the game engine and shuts down all components.
- */
-void engine_destroy(void);
+} // namespace ccsakura
