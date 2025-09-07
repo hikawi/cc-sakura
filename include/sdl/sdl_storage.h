@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <SDL3/SDL_storage.h>
+#include <string>
 #include <vector>
 
 namespace sdl

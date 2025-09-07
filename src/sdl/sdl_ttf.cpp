@@ -35,4 +35,9 @@ void font::set_size(const float sp) const noexcept
     TTF_SetFontSize(m_font.get(), sp);
 }
 
+void font::set_hint(const font_hint hint) const noexcept
+{
+    TTF_SetFontHinting(m_font.get(), static_cast<TTF_HintingFlags>(hint));
+}
+
 } // namespace sdl::ttf

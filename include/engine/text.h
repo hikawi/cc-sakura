@@ -17,7 +17,7 @@ namespace ccsakura
 {
 
 /**
- * Enumerations for available typefaces in the engine/
+ * Enumerations for available typefaces in the engine.
  */
 enum class typeface
 {
@@ -33,8 +33,8 @@ enum class typeface
  */
 struct font
 {
-    typeface typeface; ///< the typeface of the font
-    float sp;          ///< the font's size in sp
+    typeface face; ///< the typeface of the font
+    float sp;      ///< the font's size in sp
 
     bool operator==(const font &other) const noexcept;
     bool operator!=(const font &other) const noexcept;
@@ -64,7 +64,7 @@ template <> struct hash<ccsakura::font>
 {
     std::size_t operator()(const ccsakura::font &f) const noexcept
     {
-        uint32_t hash = sdl::murmur3(static_cast<uint32_t>(f.typeface));
+        uint32_t hash = sdl::murmur3(static_cast<uint32_t>(f.face));
         hash = sdl::murmur3(f.sp, hash);
         return static_cast<std::size_t>(hash);
     }

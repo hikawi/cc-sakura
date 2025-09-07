@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <string>
 
 namespace sdl::ttf
 {
@@ -28,12 +29,29 @@ enum class font_style
 };
 
 /**
+ * Hints at the TTF font for better rendering resolutions.
+ */
+enum class font_hint
+{
+    none = TTF_HINTING_NONE,                     ///< don't use any grid-fitting
+    mono = TTF_HINTING_MONO,                     ///< monochrome, hints to render better at low resolutions
+    normal = TTF_HINTING_NORMAL,                 ///< standard grid-fitting font
+    light = TTF_HINTING_LIGHT,                   ///< use subtle adjustments when rendering
+    light_subpixel = TTF_HINTING_LIGHT_SUBPIXEL, ///< use subtle adjustments when rendering at subpixel level
+    invalid = TTF_HINTING_INVALID,               ///< just invalid font hint lol
+};
+
+/**
  * Combines multiple font styles together.
  *
  * \param lhs the font style on the left
  * \param rhs the font style on the right
  */
 font_style operator|(const font_style lhs, const font_style rhs) noexcept;
+
+class ifont
+{
+};
 
 /**
  * Represents a font with a specified sp.
@@ -62,6 +80,15 @@ class font
      * \param sp the font size to set to
      */
     void set_size(const float sp) const noexcept;
+
+    /**
+     * Hints at the font rendering.
+     *
+     * \param hint the hint to tell the TTF renderer
+     */
+    void set_hint(const font_hint hint) const noexcept;
+
+    void render_text_blended(const std::string text) const noexcept;
 
   private:
     std::unique_ptr<TTF_Font, void (*)(TTF_Font *)> m_font;
