@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 
 namespace sdl
@@ -17,5 +18,12 @@ namespace sdl
  * \returns the current ticks
  */
 uint64_t get_ticks() noexcept;
+
+/**
+ * Delays the system synchronously for a duration.
+ *
+ * \param duration the duration to wait
+ */
+void delay(std::chrono::milliseconds duration) noexcept;
 
 } // namespace sdl

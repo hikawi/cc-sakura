@@ -2,6 +2,7 @@
 
 #include "sdl/sdl_log.h"
 
+#include <memory>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
@@ -9,6 +10,27 @@
 
 namespace sdl
 {
+
+texture::texture(std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> texture_ptr) : m_texture(std::move(texture_ptr))
+{
+    if (!m_texture)
+    {
+        sdl::log_critical("Unable to setup SDL texture: {}", SDL_GetError());
+        throw std::runtime_error("Unable to setup SDL Texture");
+    }
+}
+
+blend_mode texture::get_blend_mode() const noexcept
+{
+    SDL_BlendMode mode;
+    SDL_GetTextureBlendMode(m_texture.get(), &mode);
+    return static_cast<blend_mode>(mode);
+}
+
+void texture::set_blend_mode(const blend_mode mode) const noexcept
+{
+    SDL_SetTextureBlendMode(m_texture.get(), static_cast<SDL_BlendMode>(mode));
+}
 
 renderer::renderer(const iwindow &window, const char *name)
     : m_renderer(SDL_CreateRenderer(window.get(), name), SDL_DestroyRenderer)
@@ -21,6 +43,14 @@ renderer::renderer(const iwindow &window, const char *name)
 
     sdl::log_trace("sdl::renderer constructed with window {} named {}", SDL_GetWindowTitle(window.get()),
                    SDL_GetRendererName(m_renderer.get()));
+}
+
+std::unique_ptr<itexture> renderer::create_texture(pixel_format format, texture_access access, int w, int h) const
+{
+    SDL_Texture *txt = SDL_CreateTexture(m_renderer.get(), static_cast<SDL_PixelFormat>(format),
+                                         static_cast<SDL_TextureAccess>(access), w, h);
+    auto texture_ptr = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)>(txt, SDL_DestroyTexture);
+    return std::make_unique<texture>(std::move(texture_ptr));
 }
 
 void renderer::set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const

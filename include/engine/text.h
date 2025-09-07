@@ -6,9 +6,12 @@
 
 #pragma once
 
+#include "sdl/sdl_render.h"
 #include "sdl/sdl_stdinc.h"
 
 #include <functional>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <string>
 
 namespace ccsakura
 {
@@ -32,6 +35,9 @@ struct font
 {
     typeface typeface; ///< the typeface of the font
     float sp;          ///< the font's size in sp
+
+    bool operator==(const font &other) const noexcept;
+    bool operator!=(const font &other) const noexcept;
 };
 
 /**
@@ -39,6 +45,14 @@ struct font
  */
 class text
 {
+  public:
+    text(const font font, const std::string text);
+    text &operator=(const std::string text) noexcept;
+    void render(const sdl::irenderer &renderer) const noexcept;
+
+  private:
+    font m_font;
+    std::string m_text;
 };
 
 } // namespace ccsakura
