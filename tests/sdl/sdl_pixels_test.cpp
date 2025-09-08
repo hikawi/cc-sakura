@@ -6,7 +6,6 @@
 TEST(FColor, ConvertsToColor)
 {
     sdl::fcolor fcolor(0.5, 0.5, 0.5, 1);
-    ASSERT_NO_THROW(sdl::color color(fcolor));
     sdl::color color = fcolor;
     ASSERT_EQ(color.r, 128);
     ASSERT_EQ(color.g, 128);
@@ -14,10 +13,13 @@ TEST(FColor, ConvertsToColor)
     ASSERT_EQ(color.a, 255);
 }
 
-TEST(FColor, DiesWhenFailedToConvertToColor)
+TEST(FColor, GetsClamped)
 {
-    sdl::fcolor fcolor(2, 2, 2, 2);
-    ASSERT_DEATH(sdl::color color(fcolor), "Assertion failed");
+    sdl::fcolor fcolor(2, 2, -1, 500);
+    ASSERT_FLOAT_EQ(fcolor.r, 1);
+    ASSERT_FLOAT_EQ(fcolor.g, 1);
+    ASSERT_FLOAT_EQ(fcolor.b, 0);
+    ASSERT_FLOAT_EQ(fcolor.a, 1);
 }
 
 TEST(Color, ConvertsToFColor)

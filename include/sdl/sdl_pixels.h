@@ -5,7 +5,6 @@
  */
 
 #include <cassert>
-#include <cmath>
 #include <cstdint>
 
 namespace sdl
@@ -40,20 +39,14 @@ struct color
      * \param b the blue component
      * \param a the alpha component
      */
-    constexpr color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) noexcept
-    {
-        this->r = r;
-        this->g = g;
-        this->b = b;
-        this->a = a;
-    }
+    color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) noexcept;
 
     /**
      * Converts a floating point color to a integer-based color.
      *
      * \param color the fcolor to convert
      */
-    constexpr color(const fcolor &color) noexcept;
+    color(const fcolor &color) noexcept;
 };
 
 struct fcolor
@@ -71,40 +64,14 @@ struct fcolor
      * \param b the blue component
      * \param a the alpha component
      */
-    constexpr fcolor(const float r, const float g, const float b, const float a) noexcept
-    {
-        this->r = r;
-        this->g = g;
-        this->b = b;
-        this->a = a;
-    }
+    fcolor(const float r, const float g, const float b, const float a) noexcept;
 
     /**
      * Converts an integer-based color to a floating point color.
      *
      * \param color the color to convert
      */
-    constexpr fcolor(const color &color) noexcept;
+    fcolor(const color &color) noexcept;
 };
-
-constexpr color::color(const fcolor &color) noexcept
-{
-    assert(color.r >= 0 && color.r <= 1);
-    assert(color.g >= 0 && color.g <= 1);
-    assert(color.b >= 0 && color.b <= 1);
-    assert(color.a >= 0 && color.a <= 1);
-    r = static_cast<uint8_t>(std::lround(color.r * 255));
-    g = static_cast<uint8_t>(std::lround(color.g * 255));
-    b = static_cast<uint8_t>(std::lround(color.b * 255));
-    a = static_cast<uint8_t>(std::lround(color.a * 255));
-}
-
-constexpr fcolor::fcolor(const color &color) noexcept
-{
-    r = static_cast<float>(color.r) / 255;
-    g = static_cast<float>(color.g) / 255;
-    b = static_cast<float>(color.b) / 255;
-    a = static_cast<float>(color.a) / 255;
-}
 
 } // namespace sdl
