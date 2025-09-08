@@ -24,12 +24,12 @@ app::app(std::unique_ptr<sdl::iwindow> window, std::unique_ptr<sdl::irenderer> r
     sdl::log_trace("ccsakura::app constructed");
 }
 
-const sdl::iwindow &app::get_window() const
+const sdl::iwindow &app::get_window() const noexcept
 {
     return *m_window.get();
 }
 
-const sdl::irenderer &app::get_renderer() const
+const sdl::irenderer &app::get_renderer() const noexcept
 {
     return *m_renderer.get();
 }

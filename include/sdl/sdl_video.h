@@ -51,7 +51,7 @@ class iwindow
      *
      * \returns the window pointer
      */
-    virtual SDL_Window *get() const = 0;
+    virtual SDL_Window *get() const noexcept = 0;
 };
 
 /**
@@ -72,7 +72,7 @@ class window : public iwindow
     window(const std::string &title, const int width, const int height, const window_flags flags);
     ~window() override;
 
-    SDL_Window *get() const override;
+    SDL_Window *get() const noexcept override;
 
   private:
     std::unique_ptr<SDL_Window, void (*)(SDL_Window *)> m_window;

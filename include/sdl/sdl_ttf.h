@@ -8,6 +8,7 @@
 #pragma once
 
 #include "sdl/sdl_iostream.h"
+#include "sdl/sdl_pixels.h"
 
 #include <memory>
 #include <SDL3_ttf/SDL_ttf.h>
@@ -49,8 +50,13 @@ enum class font_hint
  */
 font_style operator|(const font_style lhs, const font_style rhs) noexcept;
 
+/**
+ * Virtual interface as a wrapper for a TTF Font.
+ */
 class ifont
 {
+  public:
+    virtual ~ifont() = default;
 };
 
 /**
@@ -88,7 +94,7 @@ class font
      */
     void set_hint(const font_hint hint) const noexcept;
 
-    void render_text_blended(const std::string text) const noexcept;
+    void render_text_blended(const std::string text, const sdl::color color) const noexcept;
 
   private:
     std::unique_ptr<TTF_Font, void (*)(TTF_Font *)> m_font;

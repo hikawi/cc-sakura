@@ -8,7 +8,7 @@ add_executable(CCSakuraTest ${TEST_SOURCES})
 
 target_include_directories(
   CCSakuraTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/
-                       ${GTest_INCLUDE_DIRS})
+                       ${GTest_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
   CCSakuraTest
   PRIVATE

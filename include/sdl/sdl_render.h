@@ -54,6 +54,8 @@ enum class blend_mode
     invalid = SDL_BLENDMODE_INVALID, ///< placeholder for invalid mode
 };
 
+class irenderer;
+
 /**
  * Abstract interface for \ref sdl::texture for mocking purposes.
  */
@@ -77,10 +79,14 @@ class itexture
     virtual void set_blend_mode(const blend_mode mode) const noexcept = 0;
 };
 
+/**
+ * Concrete implementation of an SDL texture.
+ */
 class texture : public itexture
 {
   public:
     explicit texture(std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> texture);
+    ~texture();
 
     blend_mode get_blend_mode() const noexcept override;
     void set_blend_mode(const blend_mode mode) const noexcept override;
@@ -89,13 +95,17 @@ class texture : public itexture
     std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> m_texture;
 };
 
-/**
- * Abstract interface for \ref sdl::renderer for mocking purposes.
- */
 class irenderer
 {
   public:
     virtual ~irenderer() = default;
+
+    /**
+     * Retrieves the underlying SDL_Renderer.
+     *
+     * \returns the sdl renderer
+     */
+    virtual SDL_Renderer *get() const noexcept = 0;
 
     /**
      * Creates a new texture for this renderer.
@@ -107,7 +117,7 @@ class irenderer
      * \returns a new texture
      */
     virtual std::unique_ptr<itexture> create_texture(pixel_format format, texture_access access, int w,
-                                                     int h) const = 0;
+                                                     int h) const noexcept = 0;
 
     /**
      * Sets the renderer's draw color to an RGBA set.
@@ -117,7 +127,7 @@ class irenderer
      * \param b the blue value
      * \param a the alpha value
      */
-    virtual void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const = 0;
+    virtual void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept = 0;
 
     /**
      * Sets the renderer's draw color to an RGBA set.
@@ -127,17 +137,17 @@ class irenderer
      * \param b the blue value
      * \param a the alpha value
      */
-    virtual void set_color(const float r, const float g, const float b, const float a) const = 0;
+    virtual void set_color(const float r, const float g, const float b, const float a) const noexcept = 0;
 
     /**
      * Clears the rendering context.
      */
-    virtual void clear() const = 0;
+    virtual void clear() const noexcept = 0;
 
     /**
      * Updates the window with newly drawn context.
      */
-    virtual void present() const = 0;
+    virtual void present() const noexcept = 0;
 };
 
 /**
@@ -153,17 +163,20 @@ class renderer : public irenderer
      * \param name the driver name to use. pass nullptr to let SDL automatically choose the best driver from the user's
      * machine
      */
-    renderer(const iwindow &window, const char *name);
+    explicit renderer(const iwindow &window, const char *name);
     ~renderer();
 
-    std::unique_ptr<itexture> create_texture(pixel_format format, texture_access access, int w, int h) const override;
-    void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const override;
-    void set_color(const float r, const float g, const float b, const float a) const override;
-    void clear() const override;
-    void present() const override;
+    SDL_Renderer *get() const noexcept override;
+    std::unique_ptr<itexture> create_texture(pixel_format format, texture_access access, int w,
+                                             int h) const noexcept override;
+    void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
+    void set_color(const float r, const float g, const float b, const float a) const noexcept override;
+    void clear() const noexcept override;
+    void present() const noexcept override;
 
   private:
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> m_renderer;
+    std::string m_name;
 };
 
 } // namespace sdl

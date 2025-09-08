@@ -6,6 +6,7 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdexcept>
+#include <string>
 
 namespace sdl::ttf
 {
@@ -38,6 +39,11 @@ void font::set_size(const float sp) const noexcept
 void font::set_hint(const font_hint hint) const noexcept
 {
     TTF_SetFontHinting(m_font.get(), static_cast<TTF_HintingFlags>(hint));
+}
+
+void font::render_text_blended(const std::string text, const sdl::color color) const noexcept
+{
+    TTF_RenderText_Blended(m_font.get(), text.c_str(), text.length(), {color.r, color.g, color.b, color.a});
 }
 
 } // namespace sdl::ttf

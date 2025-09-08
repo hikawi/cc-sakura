@@ -27,14 +27,14 @@ class iapp
      *
      * \returns the wrapped window
      */
-    virtual const sdl::iwindow &get_window() const = 0;
+    virtual const sdl::iwindow &get_window() const noexcept = 0;
 
     /**
      * Retrieves the wrapped renderer.
      *
      * \returns the wrapped renderer
      */
-    virtual const sdl::irenderer &get_renderer() const = 0;
+    virtual const sdl::irenderer &get_renderer() const noexcept = 0;
 };
 
 /**
@@ -46,8 +46,8 @@ class app : public iapp
     app(std::unique_ptr<sdl::iwindow> window, std::unique_ptr<sdl::irenderer> renderer);
     ~app() override;
 
-    const sdl::iwindow &get_window() const override;
-    const sdl::irenderer &get_renderer() const override;
+    const sdl::iwindow &get_window() const noexcept override;
+    const sdl::irenderer &get_renderer() const noexcept override;
 
   private:
     std::unique_ptr<sdl::iwindow> m_window;

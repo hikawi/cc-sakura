@@ -72,7 +72,6 @@ bool font::operator!=(const font &font) const noexcept
 
 text::text(const font font, const std::string text) : m_font(font), m_text(text)
 {
-    get_cached_font(font);
 }
 
 text &text::operator=(const std::string text) noexcept
@@ -83,7 +82,7 @@ text &text::operator=(const std::string text) noexcept
 
 void text::render(const sdl::irenderer &renderer) const noexcept
 {
-    (void)renderer;
+    sdl::ttf::font &font = get_cached_font(m_font);
 }
 
 } // namespace ccsakura

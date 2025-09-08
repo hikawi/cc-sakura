@@ -18,6 +18,13 @@ texture::texture(std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> texture_p
         sdl::log_critical("Unable to setup SDL texture: {}", SDL_GetError());
         throw std::runtime_error("Unable to setup SDL Texture");
     }
+
+    sdl::log_trace("sdl::texture constructed");
+}
+
+texture::~texture()
+{
+    sdl::log_trace("sdl::texture destroyed");
 }
 
 blend_mode texture::get_blend_mode() const noexcept
@@ -43,9 +50,16 @@ renderer::renderer(const iwindow &window, const char *name)
 
     sdl::log_trace("sdl::renderer constructed with window {} named {}", SDL_GetWindowTitle(window.get()),
                    SDL_GetRendererName(m_renderer.get()));
+    m_name = SDL_GetRendererName(m_renderer.get());
 }
 
-std::unique_ptr<itexture> renderer::create_texture(pixel_format format, texture_access access, int w, int h) const
+SDL_Renderer *renderer::get() const noexcept
+{
+    return m_renderer.get();
+}
+
+std::unique_ptr<itexture> renderer::create_texture(pixel_format format, texture_access access, int w,
+                                                   int h) const noexcept
 {
     SDL_Texture *txt = SDL_CreateTexture(m_renderer.get(), static_cast<SDL_PixelFormat>(format),
                                          static_cast<SDL_TextureAccess>(access), w, h);
@@ -53,23 +67,27 @@ std::unique_ptr<itexture> renderer::create_texture(pixel_format format, texture_
     return std::make_unique<texture>(std::move(texture_ptr));
 }
 
-void renderer::set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const
+void renderer::set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept
 {
+    sdl::log_trace("sdl::renderer {} color set to {}, {}, {}, {}", m_name, r, g, b, a);
     SDL_SetRenderDrawColor(m_renderer.get(), r, g, b, a);
 }
 
-void renderer::set_color(const float r, const float g, const float b, const float a) const
+void renderer::set_color(const float r, const float g, const float b, const float a) const noexcept
 {
+    sdl::log_trace("sdl::renderer {} color set to {}, {}, {}, {}", m_name, r, g, b, a);
     SDL_SetRenderDrawColorFloat(m_renderer.get(), r, g, b, a);
 }
 
-void renderer::clear() const
+void renderer::clear() const noexcept
 {
+    sdl::log_trace("sdl::renderer {} clear", m_name);
     SDL_RenderClear(m_renderer.get());
 }
 
-void renderer::present() const
+void renderer::present() const noexcept
 {
+    sdl::log_trace("sdl::renderer {} present", m_name);
     SDL_RenderPresent(m_renderer.get());
 }
 
