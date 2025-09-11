@@ -34,11 +34,11 @@ std::expected<uint64_t, std::string> storage::get_file_size(const std::string pa
     uint64_t size = 0;
     if (!SDL_GetStorageFileSize(m_storage.get(), path.c_str(), &size))
     {
-        return size;
+        sdl::log_error("Unable to read file size at path {}", path);
+        return std::unexpected(SDL_GetError());
     }
 
-    sdl::log_error("Unable to read file size at path {}", path);
-    return std::unexpected(SDL_GetError());
+    return size;
 }
 
 std::optional<std::vector<std::byte>> storage::read_file(const std::string path) const noexcept

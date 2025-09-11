@@ -7,10 +7,15 @@
 
 #pragma once
 
+#include "engine/render.h"
+#include "engine/vec2d.h"
+#include "sdl/sdl_rect.h"
+#include "sdl/sdl_surface.h"
 #include "sdl/sdl_video.h"
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <SDL3/SDL_blendmode.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_render.h>
@@ -54,7 +59,17 @@ enum class blend_mode
     invalid = SDL_BLENDMODE_INVALID, ///< placeholder for invalid mode
 };
 
+/**
+ * Virtual interface for a renderer.
+ */
 class irenderer;
+
+/**
+ * Represents options for rendering a piece of texture using a renderer.
+ *
+ * This provides method chaining options for constructing a render.
+ */
+struct texture_render_options;
 
 /**
  * Abstract interface for \ref sdl::texture for mocking purposes.
@@ -63,6 +78,13 @@ class itexture
 {
   public:
     virtual ~itexture() = default;
+
+    /**
+     * Retrieves the underlying SDL texture pointer.
+     *
+     * \returns the underlying pointer
+     */
+    virtual SDL_Texture *get() const noexcept = 0;
 
     /**
      * Retrieves the current blend mode for the texture.
@@ -88,6 +110,7 @@ class texture : public itexture
     explicit texture(std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> texture);
     ~texture();
 
+    SDL_Texture *get() const noexcept override;
     blend_mode get_blend_mode() const noexcept override;
     void set_blend_mode(const blend_mode mode) const noexcept override;
 
@@ -116,8 +139,23 @@ class irenderer
      * \param h the texture's height
      * \returns a new texture
      */
-    virtual std::unique_ptr<itexture> create_texture(pixel_format format, texture_access access, int w,
-                                                     int h) const noexcept = 0;
+    virtual std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access,
+                                                     const int w, const int h) const noexcept = 0;
+
+    /**
+     * Creates a new texture for this renderer, using a surface.
+     *
+     * \param surface the surface to create from
+     * \returns a new texture
+     */
+    virtual std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const noexcept = 0;
+
+    /**
+     * Renders a texture based on the provided options.
+     *
+     * \param options the options for rendering
+     */
+    virtual void render_texture(const texture_render_options &options) const noexcept = 0;
 
     /**
      * Sets the renderer's draw color to an RGBA set.
@@ -167,8 +205,10 @@ class renderer : public irenderer
     ~renderer();
 
     SDL_Renderer *get() const noexcept override;
-    std::unique_ptr<itexture> create_texture(pixel_format format, texture_access access, int w,
-                                             int h) const noexcept override;
+    std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
+                                             const int h) const noexcept override;
+    std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const noexcept override;
+    void render_texture(const texture_render_options &options) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;
     void clear() const noexcept override;
@@ -177,6 +217,84 @@ class renderer : public irenderer
   private:
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> m_renderer;
     std::string m_name;
+};
+
+struct texture_render_options
+{
+    sdl::itexture &m_texture;                               ///< the texture to be rendered
+    std::optional<sdl::frect> m_srcrect = std::nullopt;     ///< where to render from the texture
+    std::optional<sdl::frect> m_dstrect = std::nullopt;     ///< where to render to on the renderer
+    std::optional<ccsakura::vec2d> m_origin = std::nullopt; ///< the origin to rotate the texture by
+    ccsakura::render_origin m_render_origin =
+        ccsakura::render_origin::top_left;   ///< the rendering origin to shift the destination by
+    sdl::flip m_flip_mode = sdl::flip::none; ///< whether to flip the texture
+    double m_rotation = 0;                   ///< the rotation angle of the texture
+
+    /**
+     * Constructs a simple texture rendering options.
+     *
+     * \param texture the texture to render
+     * \param renderer the renderer to use
+     */
+    texture_render_options(sdl::itexture &texture);
+
+    /**
+     * Sets the source rectangle for rendering.
+     *
+     * \param rect The source rectangle within the texture.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &srcrect(const sdl::frect rect) noexcept;
+
+    /**
+     * Sets the destination position for rendering.
+     *
+     * The destination rectangle will be sized to the source rectangle.
+     *
+     * \param pos The position of the top-left corner of the destination.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &dst(const ccsakura::vec2d pos) noexcept;
+
+    /**
+     * Sets the destination rectangle for rendering.
+     *
+     * \param rect The destination rectangle on the renderer.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &dstrect(const sdl::frect rect) noexcept;
+
+    /**
+     * Sets the rotation origin for the texture.
+     *
+     * \param pos The position of the rotation origin.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &origin(const ccsakura::vec2d pos) noexcept;
+
+    /**
+     * Sets the rotation origin based on a predefined enumeration.
+     *
+     * \param origin The predefined render origin.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &render_origin(const ccsakura::render_origin origin) noexcept;
+
+    /**
+     * Sets the flip mode for the texture.
+     *
+     * \param flipmode The flip mode to apply (e.g., horizontal or vertical).
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &flip(const sdl::flip flipmode) noexcept;
+
+    /**
+     * Sets the rotation angle for the texture.
+     *
+     * \param angle The rotation angle in degrees.
+     * \returns A reference to the current object for method chaining.
+     */
+    texture_render_options &rotate(const double angle) noexcept;
 };
 
 } // namespace sdl

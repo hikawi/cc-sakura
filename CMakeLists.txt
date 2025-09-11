@@ -42,7 +42,7 @@ target_compile_definitions(
           APPLICATION_IDENTIFIER="dev.luny.ccsakura"
           APPLICATION_VERSION="${PROJECT_VERSION}"
           APPLICATION_ORIGINAL_WIDTH=1200
-          APPLICATION_ORIGINAL_HEIGHT=1080)
+          APPLICATION_ORIGINAL_HEIGHT=720)
 
 # Create the game executable
 if(APPLE)
@@ -98,7 +98,7 @@ target_compile_definitions(
           APPLICATION_IDENTIFIER="dev.luny.ccsakura"
           APPLICATION_VERSION="${PROJECT_VERSION}"
           APPLICATION_ORIGINAL_WIDTH=1200
-          APPLICATION_ORIGINAL_HEIGHT=1080)
+          APPLICATION_ORIGINAL_HEIGHT=720)
 
 # CTest integration
 enable_testing()

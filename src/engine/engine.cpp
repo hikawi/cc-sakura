@@ -1,12 +1,12 @@
 #include "engine/engine.h"
 
 #include "app.h"
+#include "engine/text.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 
 #include <algorithm>
-#include <cmath>
-#include <numbers>
+#include <format>
 #include <stdexcept>
 
 namespace ccsakura
@@ -18,6 +18,8 @@ engine::engine(std::unique_ptr<iapp> app) : m_app(std::move(app))
     {
         throw std::runtime_error("Unable to initialize application");
     }
+
+    sdl::log_trace("ccsakura::engine constructed");
 }
 
 frame_data engine::get_frame_data() const
@@ -47,7 +49,7 @@ bool engine::iterate(const uint64_t tick) noexcept
     }
 
     // TODO:
-    // Add variable tick handling here
+    // Add tick handling here
 
     // Handle FPS
     m_frame_data.cur_frames++;
@@ -67,26 +69,14 @@ void engine::render() const noexcept
 {
     const sdl::irenderer &renderer = m_app->get_renderer();
 
-    const float RAINBOW_SPEED = 0.001f;
-    static float phase = 0.0f;
-
-    phase += RAINBOW_SPEED;
-
-    // Ensure the phase doesn't grow indefinitely.
-    // Cycle it back to 0 when it exceeds 2 * PI to prevent precision issues.
-    if (phase > 2.0f * std::numbers::pi_v<float>)
-    {
-        phase -= 2.0f * std::numbers::pi_v<float>;
-    }
-
-    // Calculate the value for each color channel using sine waves with different offsets
-    float red = 0.5f * (1.0f + std::sin(phase));
-    float green = 0.5f * (1.0f + std::sin(phase + (2.0f * std::numbers::pi_v<float> / 3.0f)));
-    float blue = 0.5f * (1.0f + std::sin(phase + (4.0f * std::numbers::pi_v<float> / 3.0f)));
-
-    // Apply the new color to the renderer
-    renderer.set_color(red, green, blue, 1.0f);
+    renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
+
+    std::string str = std::format("{} FPS", m_frame_data.fps);
+    ccsakura::text fps_text({ccsakura::typeface::rainy_hearts, 16}, str);
+    std::unique_ptr<sdl::itexture> fps_texture = fps_text.render(renderer);
+    renderer.render_texture(sdl::texture_render_options(*fps_texture).dst({0, 0}));
+
     renderer.present();
 }
 

@@ -6,13 +6,22 @@
 
 #pragma once
 
-#include "sdl/sdl_render.h"
-
 #include <memory>
 #include <SDL3/SDL_surface.h>
 
 namespace sdl
 {
+
+/**
+ * Represents the flipping mode of a surface or a texture.
+ */
+enum class flip
+{
+    horizontal = SDL_FLIP_HORIZONTAL,               ///< flips it horizontally
+    vertical = SDL_FLIP_VERTICAL,                   ///< flips it vertically
+    both = SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL, ///< flips both ways
+    none = SDL_FLIP_NONE,                           ///< don't flip it
+};
 
 /**
  * Virtual interface for a wrapper of an SDL surface.
@@ -23,11 +32,11 @@ class isurface
     virtual ~isurface() = default;
 
     /**
-     * Renders the surface using the provided renderer.
+     * Retrieves the underlying SDL_Surface pointer.
      *
-     * \param renderer the renderer to use
+     * \returns the SDL surface pointer
      */
-    virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
+    virtual SDL_Surface *get() const noexcept = 0;
 };
 
 /**
@@ -42,8 +51,9 @@ class surface : public isurface
      * \param surface the surface pointer to take ownership of
      */
     surface(std::unique_ptr<SDL_Surface, void (*)(SDL_Surface *)> surface);
+    ~surface();
 
-    void render(const sdl::irenderer &renderer) const noexcept override;
+    SDL_Surface *get() const noexcept override;
 
   private:
     std::unique_ptr<SDL_Surface, void (*)(SDL_Surface *)> m_surface;

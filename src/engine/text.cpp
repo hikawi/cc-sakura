@@ -15,7 +15,12 @@
 namespace ccsakura
 {
 
-static std::unordered_map<font, std::unique_ptr<sdl::ttf::font>> font_cache;
+static std::unordered_map<font, std::unique_ptr<sdl::ttf::font>> font_cache{};
+
+void clear_cache_fonts()
+{
+    font_cache.clear();
+}
 
 std::string get_font_path(const typeface typeface)
 {
@@ -51,13 +56,13 @@ sdl::ttf::font &get_cached_font(const font font)
         throw std::runtime_error("Failed to read font file to cache a font");
     }
 
-    sdl::iostream io_buf(ttf_buf.value());
+    std::shared_ptr<sdl::iiostream> io_buf = std::make_shared<sdl::iostream>(std::move(ttf_buf.value()));
     std::unique_ptr<sdl::ttf::font> ttf_font = std::make_unique<sdl::ttf::font>(io_buf, font.sp);
     ttf_font->set_hint(sdl::ttf::font_hint::light_subpixel);
     font_cache[font] = std::move(ttf_font);
 
     sdl::log_debug("Cached a font style: {} - {}sp", static_cast<int>(font.face), font.sp);
-    return *font_cache[font];
+    return *font_cache.at(font);
 }
 
 bool font::operator==(const font &font) const noexcept
@@ -70,19 +75,38 @@ bool font::operator!=(const font &font) const noexcept
     return face != font.face || !float_equal(sp, font.sp);
 }
 
-text::text(const font font, const std::string text) : m_font(font), m_text(text)
+text::text(const font font, const std::string text) : m_font(font), m_text(text), m_color(0, 0, 0, 255), m_pos(0, 0)
 {
+    sdl::log_trace("ccsakura::text constructed with text {}", text);
 }
 
-text &text::operator=(const std::string text) noexcept
+text::~text()
+{
+    sdl::log_trace("ccsakura::text destroyed");
+}
+
+void text::set_color(const sdl::color color) noexcept
+{
+    m_color = color;
+}
+
+void text::set_text(const std::string text) noexcept
 {
     m_text = text;
-    return *this;
 }
 
-void text::render(const sdl::irenderer &renderer) const noexcept
+void text::set_position(const ccsakura::vec2d pos) noexcept
+{
+    m_pos = pos;
+}
+
+std::unique_ptr<sdl::itexture> text::render(const sdl::irenderer &renderer) const noexcept
 {
     sdl::ttf::font &font = get_cached_font(m_font);
+    std::unique_ptr<sdl::isurface> surface = font.render_text_blended(m_text, m_color);
+    std::unique_ptr<sdl::itexture> texture = renderer.create_texture(*surface);
+    texture->set_blend_mode(sdl::blend_mode::blend);
+    return texture;
 }
 
 } // namespace ccsakura
