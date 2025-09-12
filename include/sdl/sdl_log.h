@@ -90,7 +90,7 @@ template <typename... Args> void log_warn(std::string_view fmt, Args &&...args)
 template <typename... Args> void log_error(std::string_view fmt, Args &&...args)
 {
     std::string msg = std::vformat(fmt, std::make_format_args(args...));
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "\033[91m%sERROR > \033[0m", msg.c_str());
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "\033[91mERROR > %s\033[0m", msg.c_str());
 }
 
 /**

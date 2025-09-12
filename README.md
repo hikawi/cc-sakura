@@ -7,7 +7,7 @@ A self-designed, built from the ground up 2D platformer game, using C and SDL3
 ![GitHub repo size](https://img.shields.io/github/repo-size/hikawi/cc-sakura)
 ![GitHub branch check runs](https://img.shields.io/github/check-runs/hikawi/cc-sakura/main)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/hikawi/cc-sakura/docs.yml?label=docs)
-![](https://tokei.rs/b1/github/hikawi//cc-sakura?category=code)
+![Lines count](https://tokei.rs/b1/github/hikawi//cc-sakura?category=code)
 [![CodeFactor](https://www.codefactor.io/repository/github/hikawi/cc-sakura/badge)](https://www.codefactor.io/repository/github/hikawi/cc-sakura)
 
 </div>
@@ -37,9 +37,14 @@ Public Wiki is available [here](https://cc-sakura.luny.dev/).
 
 Prerequisites
 
-- SDL3: vendored in by Git Submodules.
-- C Compiler (GCC or Clang): I do not recommend MSVC as MSVC is a lot more behind compared to GCC and Clang (unless you're on Windows). Make sure your compiler supports C++23 features.
+- C++ Compiler (GCC or Clang): I do not recommend MSVC as MSVC is a lot more behind compared to GCC and Clang (unless you're on Windows). Make sure your compiler supports C++23 features.
 - CMake
+- vcpkg (Package manager for C/C++ projects):
+  - ZStandard
+  - GoogleTest
+  - SDL3
+  - SDL3_image
+  - SDL3_ttf
 
 Clone this repository.
 

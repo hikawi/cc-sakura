@@ -21,7 +21,7 @@ window::window(const std::string &title, const int width, const int height, cons
     sdl::log_trace("sdl::window constructed at {}x{}", width, height);
 }
 
-SDL_Window *window::get() const
+SDL_Window *window::get() const noexcept
 {
     return m_window.get();
 }
