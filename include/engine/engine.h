@@ -7,6 +7,9 @@
 #pragma once
 
 #include "app.h"
+#include "engine/text.h"
+#include "sdl/sdl_render.h"
+#include "sdl/sdl_video.h"
 
 #include <cstdint>
 #include <memory>
@@ -25,6 +28,26 @@ struct frame_data
         0; ///< frame counter to isolate from accumulator, we count frames per SECOND, not frames per PHYSICAL TICK
     uint32_t cur_frames = 0; ///< the current second's frame count
     uint32_t fps = 0;        ///< the frames per second, updated every second
+};
+
+/**
+ * A shopping list of all the dependencies needed for the engine to run.
+ */
+struct engine_deps
+{
+    std::unique_ptr<sdl::iwindow> m_window;     ///< the window of the application
+    std::unique_ptr<sdl::irenderer> m_renderer; ///< the renderer of the application
+    std::unique_ptr<iapp> m_app;                ///< the application itself
+    std::unique_ptr<ifont_cache> m_font_cache;  ///< the font cache
+
+    /**
+     * Checks if the dependency struct is valid.
+     *
+     * It is only valid if all pointers passed in are non-null.
+     *
+     * \returns true if valid, false otherwise
+     */
+    bool is_valid() const noexcept;
 };
 
 /**
@@ -88,17 +111,19 @@ class engine : public iengine
      *
      * This utilizes the pattern Inversion of Control, apparently, but I don't know why. It just feels natural this way.
      * Throws an exception if app failed to initialize.
+     *
+     * \param deps the dependencies of the engine
      */
-    engine(std::unique_ptr<ccsakura::iapp> app);
+    engine(engine_deps &&deps);
     ~engine() noexcept override;
 
-    struct frame_data get_frame_data() const override;
+    frame_data get_frame_data() const override;
     bool iterate(const uint64_t tick) noexcept override;
     void render() const noexcept override;
 
   private:
-    std::unique_ptr<iapp> m_app;
-    struct frame_data m_frame_data;
+    engine_deps m_deps;
+    frame_data m_frame_data;
 };
 
 } // namespace ccsakura

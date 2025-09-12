@@ -1,7 +1,7 @@
-#include "engine/text.h"
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "engine/engine.h"
+#include "engine/text.h"
 #include "sdl/sdl_init.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
@@ -29,12 +29,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
     try
     {
         // Configure because dependency injection bruh.
-        std::unique_ptr<sdl::iwindow> window = std::make_unique<sdl::window>(
-            APPLICATION_NAME, APPLICATION_ORIGINAL_WIDTH, APPLICATION_ORIGINAL_HEIGHT, sdl::window_flags::resizable);
-        std::unique_ptr<sdl::irenderer> renderer = std::make_unique<sdl::renderer>(*window, nullptr);
+        ccsakura::engine_deps deps;
+        deps.m_window = std::make_unique<sdl::window>(APPLICATION_NAME, APPLICATION_ORIGINAL_WIDTH,
+                                                      APPLICATION_ORIGINAL_HEIGHT, sdl::window_flags::resizable);
+        deps.m_renderer = std::make_unique<sdl::renderer>(*deps.m_window, nullptr);
+        deps.m_app = std::make_unique<ccsakura::app>();
+        deps.m_font_cache = std::make_unique<ccsakura::font_cache>();
 
-        std::unique_ptr<ccsakura::iapp> app = std::make_unique<ccsakura::app>(std::move(window), std::move(renderer));
-        std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(app));
+        std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(deps));
 
         // Release for SDL to manage.
         *appstate = engine.release();
@@ -86,7 +88,6 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
     // Retake ownership
     {
-        ccsakura::clear_cache_fonts();
         std::unique_ptr<ccsakura::engine> engine(static_cast<ccsakura::engine *>(appstate));
     }
 

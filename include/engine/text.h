@@ -11,17 +11,12 @@
 #include "sdl/sdl_stdinc.h"
 #include "sdl/sdl_ttf.h"
 
-#include <functional>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <string>
+#include <unordered_map>
 
 namespace ccsakura
 {
-
-/**
- * Explicitly clears all cached fonts.
- */
-void clear_cache_fonts();
 
 /**
  * Enumerations for available typefaces in the engine.
@@ -58,6 +53,76 @@ struct font
      * \returns true if both are not equal
      */
     bool operator!=(const font &other) const noexcept;
+};
+
+} // namespace ccsakura
+
+// Moved this up to make font hashable.
+namespace std
+{
+
+template <> struct hash<ccsakura::font>
+{
+    std::size_t operator()(const ccsakura::font &f) const noexcept
+    {
+        uint32_t hash = sdl::murmur3(static_cast<uint32_t>(f.face));
+        hash = sdl::murmur3(f.sp, hash);
+        return static_cast<std::size_t>(hash);
+    }
+};
+
+} // namespace std
+
+namespace ccsakura
+{
+
+/**
+ * Virtual interface for a font cache to use.
+ *
+ * A text should always use a font cache to reduce storage IO. For an embedded controller, maybe reading storage IO is
+ * better, but come on.
+ */
+class ifont_cache
+{
+  public:
+    virtual ~ifont_cache() = default;
+
+    /**
+     * Retrieves the cached font instance inside the cache if it exists.
+     *
+     * Or inserts if it doesn't exist yet.
+     *
+     * \param font the font to query
+     * \returns a reference to the cached font
+     */
+    virtual sdl::ttf::ifont &operator[](const font font) = 0;
+
+    /**
+     * Clears the cache map.
+     *
+     * This still gets called by the end of the destructor automatically, but you can clear it at anytime for better
+     * control of destruction.
+     */
+    virtual void clear() = 0;
+};
+
+/**
+ * Concrete implementation of a font cache that uses a simple map.
+ */
+class font_cache : public ifont_cache
+{
+  public:
+    /**
+     * Constructs an empty font cache with an empty font map.
+     */
+    font_cache();
+    ~font_cache();
+
+    sdl::ttf::ifont &operator[](const font font) override;
+    void clear() override;
+
+  private:
+    std::unordered_map<font, std::unique_ptr<sdl::ttf::ifont>> m_font_map;
 };
 
 /**
@@ -111,8 +176,9 @@ class text : public itext
      *
      * \param font the font to use
      * \param text the starting text
+     * \param cache the cache to use for the text
      */
-    text(const font font, const std::string text);
+    text(const font font, const std::string text, ifont_cache &cache);
     ~text();
 
     void set_text(const std::string text) noexcept override;
@@ -124,22 +190,8 @@ class text : public itext
     font m_font;
     std::string m_text;
     sdl::color m_color;
-    ccsakura::vec2d m_pos;
+    vec2d m_pos;
+    ifont_cache &m_cache;
 };
 
 } // namespace ccsakura
-
-namespace std
-{
-
-template <> struct hash<ccsakura::font>
-{
-    std::size_t operator()(const ccsakura::font &f) const noexcept
-    {
-        uint32_t hash = sdl::murmur3(static_cast<uint32_t>(f.face));
-        hash = sdl::murmur3(f.sp, hash);
-        return static_cast<std::size_t>(hash);
-    }
-};
-
-} // namespace std

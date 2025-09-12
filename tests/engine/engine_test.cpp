@@ -1,16 +1,30 @@
 #include "engine/engine.h"
 #include "mocks/mock_app.h"
+#include "mocks/mock_font_cache.h"
+#include "mocks/mock_renderer.h"
+#include "mocks/mock_window.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-TEST(Engine, ThrowsWithNullApp)
+static ccsakura::engine_deps setup_deps()
+{
+    ccsakura::engine_deps deps;
+
+    deps.m_window = std::make_unique<mock_window>();
+    deps.m_renderer = std::make_unique<mock_renderer>();
+    deps.m_app = std::make_unique<mock_app>();
+    deps.m_font_cache = std::make_unique<mock_font_cache>();
+
+    return deps;
+}
+
+TEST(Engine, ThrowsWithNullDependencies)
 {
     using namespace ::testing;
 
-    std::unique_ptr<mock_app> app_unique_ptr;
-    ASSERT_THROW(std::unique_ptr<ccsakura::iengine> engine =
-                     std::make_unique<ccsakura::engine>(std::move(app_unique_ptr)),
+    ccsakura::engine_deps deps;
+    ASSERT_THROW(std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(deps)),
                  std::runtime_error);
 }
 
@@ -18,8 +32,8 @@ TEST(Engine, CanCountFPS)
 {
     using namespace ::testing;
 
-    std::unique_ptr<mock_app> app_unique_ptr = std::make_unique<mock_app>();
-    std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(app_unique_ptr));
+    ccsakura::engine_deps deps = setup_deps();
+    std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(deps));
 
     for (uint64_t i = 0; i < 1000; i += 3)
     {

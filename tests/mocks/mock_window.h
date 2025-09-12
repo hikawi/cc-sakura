@@ -4,7 +4,7 @@
 
 #include <gmock/gmock.h>
 
-class window_mock : public sdl::iwindow
+class mock_window : public sdl::iwindow
 {
   public:
     MOCK_METHOD(SDL_Window *, get, (), (const, noexcept, override));

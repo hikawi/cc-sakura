@@ -4,7 +4,7 @@
 
 #include <gmock/gmock.h>
 
-class mock_font : public sdl::ttf::font
+class mock_font : public sdl::ttf::ifont
 {
   public:
     MOCK_METHOD(TTF_Font *, get, (), (const, noexcept, override));
