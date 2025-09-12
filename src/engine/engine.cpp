@@ -54,7 +54,7 @@ bool engine::iterate(const uint64_t tick) noexcept
     }
 
     // TODO:
-    // Add tick handling here
+    // Add variable tick handling here
 
     // Handle FPS
     m_frame_data.cur_frames++;
