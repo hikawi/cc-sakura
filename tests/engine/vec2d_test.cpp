@@ -99,3 +99,40 @@ TEST(Vec2d, ComputesAlgorithmsCorrectly)
     ASSERT_EQ(a.rotated(-std::numbers::pi / 2), -a.perpendicular());
     ASSERT_EQ(vec2d::zero().lerp(vec2d::one(), 0.5), vec2d(0.5, 0.5));
 }
+
+TEST(Vec2d, CanCalculateClosestPointToSegment)
+{
+    vec2d a1(0, 0), b1(2, 0), p1(1, 1);
+    vec2d a2(5, 5), b2(10, 10), p2(5, 5);
+
+    vec2d q1 = ccsakura::closest_point_on_segment(a1, b1, p1);
+    vec2d q2 = ccsakura::closest_point_on_segment(a2, b2, p2);
+    ASSERT_EQ(q1, vec2d(1, 0));
+    ASSERT_EQ(q2, vec2d(5, 5));
+}
+
+TEST(Vec2d, PointsBetweenSegmentsNonOverlap)
+{
+    vec2d a(0, 0), b(1, 1), c(2, 1), d(3, 0);
+    auto [p, q] = ccsakura::closest_points_between_segments(a, b, c, d);
+    ASSERT_EQ(p, vec2d(1, 1));
+    ASSERT_EQ(q, vec2d(2, 1));
+}
+
+TEST(Vec2d, PointsBetweenSegmentsOverlap)
+{
+    vec2d a(0, 0), b(1, 1), c(0, 1), d(1, 0);
+    auto [p, q] = ccsakura::closest_points_between_segments(a, b, c, d);
+    ASSERT_EQ(p, vec2d(0.5, 0.5));
+    ASSERT_EQ(q, vec2d(0.5, 0.5));
+}
+
+TEST(Vec2d, PointsBetweenSegmentsParallel)
+{
+    vec2d a(0, 0), b(5, 0), c(0, 2), d(5, 2);
+    auto [p, q] = ccsakura::closest_points_between_segments(a, b, c, d);
+
+    // We actually don't know what end of the segment it chooses.
+    // So we check against the distance
+    ASSERT_DOUBLE_EQ(p.distance(q), 2);
+}
