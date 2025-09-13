@@ -1,12 +1,15 @@
-name: Build & Test
+name: Build
 
-on: push
+on:
+  push:
+  pull_request:
+    branches: ["main"]
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  test:
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +25,7 @@ jobs:
             c_compiler: clang
             cpp_compiler: clang++
     runs-on: ${{ matrix.os }}
+    name: Test with CTest
     steps:
       - name: Checkout with Submodules
         uses: actions/checkout@v4
@@ -39,25 +43,27 @@ jobs:
             libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
-      - name: Restore cached vcpkg packages
-        id: cache-vcpkg-restore
-        uses: actions/cache/restore@v4
+      - name: Cache Dependencies
+        uses: actions/cache@v4
         with:
-          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-${{ github.run_id }}
           path: |
             ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-
+            ${{ runner.os }}-
 
       - name: Setup vcpkg (Unix)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg
+          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
           ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Setup vcpkg (Windows)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg
+          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
           ./vcpkg/bootstrap-vcpkg.bat
 
       - name: Configure CMake build
@@ -69,19 +75,69 @@ jobs:
       - name: Test with CTest
         run: ctest -C Release --test-dir build --output-on-failure
 
-      - name: Save vcpkg packaages
-        id: cache-vcpkg-save
-        if: always()
-        uses: actions/cache/save@v4
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+    runs-on: ${{ matrix.os }}
+    needs: test
+    name: Build
+    steps:
+      - name: Checkout with Submodules
+        uses: actions/checkout@v4
         with:
-          key: ${{ steps.cache-vcpkg-restore.outputs.cache-primary-key }}
+          fetch-depth: 0 # Needed for version tagging
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential git make autoconf automake libtool m4 \
+            pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
+            libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
+            libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libltdl-dev \
+            libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
+            libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-${{ github.run_id }}
           path: |
             ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-
+            ${{ runner.os }}-
 
-      - name: Final steps
-        if: false
-        run: ls -R build
+      - name: Setup vcpkg (Unix)
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Setup vcpkg (Windows)
+        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
+        run: |
+          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          ./vcpkg/bootstrap-vcpkg.bat
+
+      - name: Configure CMake build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build CMake project
+        run: cmake --build build --config Release -j
 
       - name: Package artifacts (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
