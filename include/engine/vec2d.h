@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "utils.h"
-
 #include <cmath>
+#include <format>
 #include <numbers>
 #include <stdexcept>
+
 namespace ccsakura
 {
 
@@ -37,6 +37,24 @@ struct vec2d
      */
     constexpr vec2d(const double x, const double y) noexcept : x(x), y(y)
     {
+    }
+
+    /**
+     * Constructs a vector2d from a copy.
+     *
+     * \param other the other to copy from
+     */
+    constexpr vec2d(const vec2d &other) noexcept
+    {
+        x = other.x;
+        y = other.y;
+    }
+
+    constexpr vec2d &operator=(const vec2d &other) noexcept
+    {
+        x = other.x;
+        y = other.y;
+        return *this;
     }
 
     /**
@@ -315,4 +333,35 @@ struct vec2d
     }
 };
 
+/**
+ * Finds the closest point on the segment AB to the provided point P.
+ *
+ * \param a the first point of the segment
+ * \param b the second point of the segment
+ * \param p the point to check against
+ * \returns the point on AB closest to P
+ */
+vec2d closest_point_on_segment(const vec2d a, const vec2d b, const vec2d p) noexcept;
+
+std::pair<vec2d, vec2d> closest_points_between_segments(const vec2d p1, const vec2d p2, const vec2d q1,
+                                                        const vec2d q2) noexcept;
+
 } // namespace ccsakura
+
+namespace std
+{
+
+template <> struct formatter<ccsakura::vec2d>
+{
+    constexpr auto parse(std::format_parse_context &ctx)
+    {
+        return ctx.end();
+    }
+
+    template <typename FormatContext> auto format(const ccsakura::vec2d &vec, FormatContext &ctx) const
+    {
+        return std::format_to(ctx.out(), "vec2d({},{})", vec.x, vec.y);
+    }
+};
+
+} // namespace std
