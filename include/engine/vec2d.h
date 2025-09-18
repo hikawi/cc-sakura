@@ -348,20 +348,15 @@ std::pair<vec2d, vec2d> closest_points_between_segments(const vec2d p1, const ve
 
 } // namespace ccsakura
 
-namespace std
-{
-
-template <> struct formatter<ccsakura::vec2d>
+template <> struct std::formatter<ccsakura::vec2d>
 {
     constexpr auto parse(std::format_parse_context &ctx)
     {
-        return ctx.end();
+        return ctx.begin();
     }
 
-    template <typename FormatContext> auto format(const ccsakura::vec2d &vec, FormatContext &ctx) const
+    auto format(const ccsakura::vec2d &vec, std::format_context &ctx) const
     {
         return std::format_to(ctx.out(), "vec2d({},{})", vec.x, vec.y);
     }
 };
-
-} // namespace std

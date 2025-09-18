@@ -1,20 +1,11 @@
 #include "engine/vec2d.h"
+#include "extensions/gtest_exts.h"
 #include "utils.h"
 
 #include <gtest/gtest.h>
 #include <stdexcept>
 
 using ccsakura::vec2d;
-
-namespace ccsakura
-{
-
-void PrintTo(const vec2d &v, std::ostream *os)
-{
-    *os << "(" << v.x << "," << v.y << ")";
-}
-
-} // namespace ccsakura
 
 TEST(Vec2d, ConstructorsInitializeCorrect)
 {
