@@ -35,6 +35,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         deps.m_renderer = std::make_unique<sdl::renderer>(*deps.m_window, nullptr);
         deps.m_app = std::make_unique<ccsakura::app>();
         deps.m_font_cache = std::make_unique<ccsakura::font_cache>();
+        deps.m_sprite_cache = std::make_unique<ccsakura::sprite_cache>();
 
         std::unique_ptr<ccsakura::iengine> engine = std::make_unique<ccsakura::engine>(std::move(deps));
 

@@ -103,6 +103,20 @@ class collider
      * \returns the collision information
      */
     virtual collision collides_with(const capsule_collider &capsule) const noexcept = 0;
+
+    /**
+     * Moves this collider a certain amount in a direction.
+     *
+     * \param dir the direction to move in
+     */
+    virtual void shift(const vec2d dir) noexcept = 0;
+
+    /**
+     * Renders the current collider onto the renderer.
+     *
+     * \param renderer the renderer to render onto
+     */
+    // virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
 };
 
 class aabb_collider : public collider
@@ -124,6 +138,7 @@ class aabb_collider : public collider
     collision collides_with(const obb_collider &obb) const noexcept override;
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     /**
      * Retrieves the closest point on the AABB that is the closest to the provided point P.
@@ -164,6 +179,7 @@ class obb_collider : public collider
     collision collides_with(const obb_collider &obb) const noexcept override;
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     friend class aabb_collider;
     friend class circle_collider;
@@ -194,6 +210,7 @@ class circle_collider : public collider
     collision collides_with(const obb_collider &obb) const noexcept override;
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     friend class aabb_collider;
     friend class obb_collider;
@@ -222,6 +239,7 @@ class capsule_collider : public collider
     collision collides_with(const obb_collider &obb) const noexcept override;
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     /**
      * Calculates the closest point on this capsule's segment to the provided point.

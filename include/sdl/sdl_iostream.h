@@ -17,6 +17,19 @@ namespace sdl
 {
 
 /**
+ * Represents the status of an IOStream.
+ */
+enum class iostatus
+{
+    eof = SDL_IO_STATUS_EOF,             ///< represents the end-of-file signal of an iostream
+    error = SDL_IO_STATUS_ERROR,         ///< the iostream has an error
+    ready = SDL_IO_STATUS_READY,         ///< the iostream is ready to read or write to
+    not_ready = SDL_IO_STATUS_NOT_READY, ///< the iostream has an error or eof, can't read or write
+    readonly = SDL_IO_STATUS_READONLY,   ///< the stream is read-only
+    writeonly = SDL_IO_STATUS_WRITEONLY, ///< the stream is write-only
+};
+
+/**
  * Virtual interface for an SDL IOStream.
  */
 class iiostream
@@ -30,6 +43,38 @@ class iiostream
      * \returns the wrapped pointer
      */
     virtual SDL_IOStream *get() const noexcept = 0;
+
+    /**
+     * Queries for the status of an IOStream.
+     *
+     * \returns the iostream status
+     */
+    virtual iostatus status() const noexcept = 0;
+
+    /**
+     * Reads an unsigned 32-bit lower-endian number.
+     *
+     * \param out the output value to write to
+     * \warning this can throw an exception
+     */
+    virtual void read_u32_le(uint32_t &out) = 0;
+
+    /**
+     * Reads an unsigned 64-bit lower-endian number.
+     *
+     * \param out the output value to put into
+     * \warning this can throw an exception
+     */
+    virtual void read_u64_le(uint64_t &out) = 0;
+
+    /**
+     * Reads a number of bytes into the buffer, the buffer must be writable.
+     *
+     * \param buf the buffer to write to
+     * \param len the length of bytes to read
+     * \returns the number of bytes read
+     */
+    virtual size_t read(void *buf, size_t len) = 0;
 };
 
 /**
@@ -49,8 +94,12 @@ class iostream : public iiostream
      * Creates a new empty IOStream to dynamic memory.
      */
     iostream();
+    ~iostream() override;
 
-    ~iostream();
+    iostatus status() const noexcept override;
+    void read_u32_le(uint32_t &out) override;
+    void read_u64_le(uint64_t &out) override;
+    size_t read(void *buf, size_t len) override;
 
     SDL_IOStream *get() const noexcept override;
 
