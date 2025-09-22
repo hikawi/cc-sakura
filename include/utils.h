@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace ccsakura
 {
 
@@ -30,3 +32,22 @@ bool float_equal(const float a, const float b) noexcept;
 bool double_equal(const double a, const double b) noexcept;
 
 } // namespace ccsakura
+
+namespace std
+{
+
+template <> struct hash<std::string>
+{
+    size_t operator()(const std::string &s) const noexcept
+    {
+        size_t hash = 1469598103934665603ULL;
+        for (const char c : s)
+        {
+            hash ^= static_cast<unsigned char>(c);
+            hash *= 1099511628211ULL;
+        }
+        return hash;
+    }
+};
+
+} // namespace std

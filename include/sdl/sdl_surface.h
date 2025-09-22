@@ -24,6 +24,16 @@ enum class flip
 };
 
 /**
+ * Represents the scale mode for a surface or a texture, the algorithm to use for scaling
+ */
+enum class scale_mode
+{
+    nearest = SDL_SCALEMODE_NEAREST, ///< nearest pixel sampling
+    linear = SDL_SCALEMODE_LINEAR,   ///< linear filtering
+    invalid = SDL_SCALEMODE_INVALID,
+};
+
+/**
  * Virtual interface for a wrapper of an SDL surface.
  */
 class isurface

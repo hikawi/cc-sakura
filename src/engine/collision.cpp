@@ -238,6 +238,12 @@ collision aabb_collider::collides_with(const capsule_collider &capsule) const no
     return info;
 }
 
+void aabb_collider::shift(const vec2d dir) noexcept
+{
+    m_x += dir.x;
+    m_y += dir.y;
+}
+
 vec2d aabb_collider::closest_point_to(const vec2d p) const noexcept
 {
     ccsakura::vec2d q;
@@ -382,6 +388,12 @@ collision obb_collider::collides_with(const capsule_collider &capsule) const noe
     return info;
 }
 
+void obb_collider::shift(const vec2d dir) noexcept
+{
+    m_x += dir.x;
+    m_y += dir.y;
+}
+
 obb_collider::~obb_collider()
 {
     sdl::log_trace("ccsakura::obb_collider destroyed");
@@ -491,6 +503,11 @@ collision circle_collider::collides_with(const capsule_collider &capsule) const 
     return info;
 }
 
+void circle_collider::shift(const vec2d dir) noexcept
+{
+    m_center += dir;
+}
+
 circle_collider::~circle_collider()
 {
     sdl::log_trace("ccsakura::circle_collider destroyed");
@@ -547,6 +564,12 @@ collision capsule_collider::collides_with(const capsule_collider &capsule) const
     info.normal = (other_best - self_best).normalized();
     info.depth = m_radius + capsule.m_radius - dist;
     return info;
+}
+
+void capsule_collider::shift(const vec2d dir) noexcept
+{
+    m_p1 += dir;
+    m_p2 += dir;
 }
 
 vec2d capsule_collider::closest_point_to(const vec2d p) const noexcept

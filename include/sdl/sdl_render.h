@@ -99,6 +99,20 @@ class itexture
      * \param mode the mode to blend the texture
      */
     virtual void set_blend_mode(const blend_mode mode) const noexcept = 0;
+
+    /**
+     * Retrieves the current scale mode of the texture.
+     *
+     * \returns the current scale mode
+     */
+    virtual scale_mode get_scale_mode() const noexcept = 0;
+
+    /**
+     * Changes the texture's scale mode.
+     *
+     * \param mode the mode to change to
+     */
+    virtual void set_scale_mode(const scale_mode mode) const noexcept = 0;
 };
 
 /**
@@ -113,6 +127,8 @@ class texture : public itexture
     SDL_Texture *get() const noexcept override;
     blend_mode get_blend_mode() const noexcept override;
     void set_blend_mode(const blend_mode mode) const noexcept override;
+    scale_mode get_scale_mode() const noexcept override;
+    void set_scale_mode(const scale_mode mode) const noexcept override;
 
   private:
     std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> m_texture;
@@ -140,7 +156,7 @@ class irenderer
      * \returns a new texture
      */
     virtual std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access,
-                                                     const int w, const int h) const noexcept = 0;
+                                                     const int w, const int h) const = 0;
 
     /**
      * Creates a new texture for this renderer, using a surface.
@@ -148,7 +164,7 @@ class irenderer
      * \param surface the surface to create from
      * \returns a new texture
      */
-    virtual std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const noexcept = 0;
+    virtual std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const = 0;
 
     /**
      * Renders a texture based on the provided options.
@@ -206,8 +222,8 @@ class renderer : public irenderer
 
     SDL_Renderer *get() const noexcept override;
     std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
-                                             const int h) const noexcept override;
-    std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const noexcept override;
+                                             const int h) const override;
+    std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;
     void render_texture(const texture_render_options &options) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;

@@ -32,14 +32,49 @@ iostream::iostream() : m_iostream(SDL_IOFromDynamicMem(), SDL_CloseIO)
     sdl::log_trace("sdl::iostream created with dynamic memory");
 }
 
-iostream::~iostream()
-{
-    sdl::log_trace("sdl::iostream destroyed");
-}
-
 SDL_IOStream *iostream::get() const noexcept
 {
     return m_iostream.get();
+}
+
+iostatus iostream::status() const noexcept
+{
+    return static_cast<iostatus>(SDL_GetIOStatus(m_iostream.get()));
+}
+
+void iostream::read_u32_le(uint32_t &out)
+{
+    if (!SDL_ReadU32LE(m_iostream.get(), &out))
+    {
+        sdl::log_error("Unable to read U32 LE from IOStream: {}", SDL_GetError());
+        throw std::runtime_error("Unable to read U32 LE from IOStream");
+    }
+}
+
+void iostream::read_u64_le(uint64_t &out)
+{
+    if (!SDL_ReadU64LE(m_iostream.get(), &out))
+    {
+        sdl::log_error("Unable to read U64 LE from IOStream: {}", SDL_GetError());
+        throw std::runtime_error("Unable to read U64 LE from IOStream");
+    }
+}
+
+size_t iostream::read(void *buf, size_t len)
+{
+    size_t bytes_read = SDL_ReadIO(m_iostream.get(), buf, len);
+    if (bytes_read == 0 && status() != iostatus::eof)
+    {
+        sdl::log_error("Can't read from IOStream but not at EOF: {}", SDL_GetError());
+        throw std::runtime_error("Can't read from IOStream but not at EOF");
+    }
+
+    return bytes_read;
+}
+
+iostream::~iostream()
+{
+    sdl::log_trace("sdl::iostream destroyed");
 }
 
 } // namespace sdl

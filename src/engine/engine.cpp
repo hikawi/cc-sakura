@@ -1,5 +1,6 @@
 #include "engine/engine.h"
 
+#include "engine/render.h"
 #include "engine/text.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
@@ -13,7 +14,7 @@ namespace ccsakura
 
 bool engine_deps::is_valid() const noexcept
 {
-    return m_renderer && m_window && m_app && m_font_cache;
+    return m_renderer && m_window && m_app && m_font_cache && m_sprite_cache;
 }
 
 engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
@@ -81,6 +82,9 @@ void engine::render() const noexcept
     ccsakura::text fps_text({ccsakura::typeface::rainy_hearts, 16}, str, *m_deps.m_font_cache);
     std::unique_ptr<sdl::itexture> fps_texture = fps_text.render(renderer);
     renderer.render_texture(sdl::texture_render_options(*fps_texture).dst({0, 0}));
+
+    ccsakura::isprite &sakura = ccsakura::sprite::named("sakura");
+    sakura.render(renderer, {100, 100}, render_origin::top_left);
 
     renderer.present();
 }

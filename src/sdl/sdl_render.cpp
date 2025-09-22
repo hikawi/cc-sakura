@@ -47,7 +47,25 @@ blend_mode texture::get_blend_mode() const noexcept
 
 void texture::set_blend_mode(const blend_mode mode) const noexcept
 {
-    SDL_SetTextureBlendMode(m_texture.get(), static_cast<SDL_BlendMode>(mode));
+    if (!SDL_SetTextureBlendMode(m_texture.get(), static_cast<SDL_BlendMode>(mode)))
+    {
+        sdl::log_error("Failed to set texture blend mode: {}", SDL_GetError());
+    }
+}
+
+scale_mode texture::get_scale_mode() const noexcept
+{
+    SDL_ScaleMode mode;
+    SDL_GetTextureScaleMode(m_texture.get(), &mode);
+    return static_cast<scale_mode>(mode);
+}
+
+void texture::set_scale_mode(const scale_mode mode) const noexcept
+{
+    if (!SDL_SetTextureScaleMode(m_texture.get(), static_cast<SDL_ScaleMode>(mode)))
+    {
+        sdl::log_error("Failed to set texture scale mode: {}", SDL_GetError());
+    }
 }
 
 renderer::renderer(const iwindow &window, const char *name)
@@ -70,18 +88,31 @@ SDL_Renderer *renderer::get() const noexcept
 }
 
 std::unique_ptr<itexture> renderer::create_texture(const pixel_format format, const texture_access access, const int w,
-                                                   const int h) const noexcept
+                                                   const int h) const
 {
     sdl::log_trace("sdl::renderer {} creating a texture {}x{}", m_name, w, h);
     SDL_Texture *txt = SDL_CreateTexture(m_renderer.get(), static_cast<SDL_PixelFormat>(format),
                                          static_cast<SDL_TextureAccess>(access), w, h);
+
+    if (!txt)
+    {
+        sdl::log_error("Unable to create a texture: {}", SDL_GetError());
+        throw std::runtime_error("Unable to create a texture from format and access");
+    }
+
     auto texture_ptr = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)>(txt, SDL_DestroyTexture);
     return std::make_unique<texture>(std::move(texture_ptr));
 }
 
-std::unique_ptr<itexture> renderer::create_texture(const sdl::isurface &surface) const noexcept
+std::unique_ptr<itexture> renderer::create_texture(const sdl::isurface &surface) const
 {
     SDL_Texture *txt = SDL_CreateTextureFromSurface(m_renderer.get(), surface.get());
+    if (!txt)
+    {
+        sdl::log_error("Unable to create texture from surface: {}", SDL_GetError());
+        throw std::runtime_error("Unable to create texture from surface");
+    }
+
     auto txt_ptr = std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)>(txt, SDL_DestroyTexture);
     return std::make_unique<texture>(std::move(txt_ptr));
 }
