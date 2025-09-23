@@ -52,6 +52,22 @@ class iiostream
     virtual iostatus status() const noexcept = 0;
 
     /**
+     * Writes an unsigned 32-bit lower-endian number.
+     *
+     * \param val the value to write
+     * \warning this throws if the stream is not writable
+     */
+    virtual void write_u32_le(const uint32_t val) = 0;
+
+    /**
+     * Writes an unsigned 64-bit lower-endian number.
+     *
+     * \param val the value to write
+     * \warning this throws if the stream is not writable
+     */
+    virtual void write_u64_le(const uint64_t val) = 0;
+
+    /**
      * Reads an unsigned 32-bit lower-endian number.
      *
      * \param out the output value to write to
@@ -72,9 +88,10 @@ class iiostream
      *
      * \param buf the buffer to write to
      * \param len the length of bytes to read
+     * \param max the maxmimum amount of bytes allowed to read
      * \returns the number of bytes read
      */
-    virtual size_t read(void *buf, size_t len) = 0;
+    virtual size_t read(void *buf, size_t len, size_t max) = 0;
 };
 
 /**
@@ -97,9 +114,11 @@ class iostream : public iiostream
     ~iostream() override;
 
     iostatus status() const noexcept override;
+    void write_u32_le(const uint32_t value) override;
+    void write_u64_le(const uint64_t value) override;
     void read_u32_le(uint32_t &out) override;
     void read_u64_le(uint64_t &out) override;
-    size_t read(void *buf, size_t len) override;
+    size_t read(void *buf, size_t len, size_t max) override;
 
     SDL_IOStream *get() const noexcept override;
 
