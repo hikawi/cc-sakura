@@ -5,60 +5,92 @@ import sys
 import os
 import json
 import struct
+import logging
+import colorlog
 
 
 TOOL_VERSION = 1
 
 
+formatter = colorlog.ColoredFormatter(
+    "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
+    log_colors={
+        "DEBUG": "cyan",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "red",
+    },
+    secondary_log_colors={"message": {"ERROR": "red", "CRITICAL": "red"}},
+)
+
+# Get the root logger
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Create a console handler
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+
+# Add the handler to the logger
+logger.addHandler(handler)
+
+
 def main():
     if len(sys.argv) < 3:
-        print("This program requires 2 arguments. Use sprite_to_bin.py spritesheet.png spritedata.json")
+        logger.fatal("This script requires 2 arguments.")
         return
 
     if len(sys.argv) > 3:
-        print(f"There are more arguments than required. Ignoring {sys.argv[3:]}")
+        logger.warning(
+            f"There are more arguments than required, ignoring: {sys.argv[3:]}"
+        )
 
     sprsheet = sys.argv[1]
     sprdata = sys.argv[2]
-    print(f"You have selected the sprite sheet to be \"{sprsheet}\"")
-    print(f"You have selected the sprite data to be \"{sprdata}\"")
+    logger.info(f"Sprite sheet is selected to be {sprsheet}")
+    logger.info(f"Sprite data is selected to be {sprdata}")
 
     try:
-        with open(sprdata, 'r') as f:
+        with open(sprdata, "r") as f:
+            logger.debug("Reading sprite data JSON")
             data = json.load(f)
+            logger.info(f"Read sprite data JSON as {str(data)[:16]}...")
 
         # Open a new file for writing at the same path of the provided sheet
         sprname, _ = os.path.splitext(sprsheet)
-        print(sprname)
         outpath = f"{sprname}.sprite"
+        logger.debug(f"Using out file at path {outpath}")
 
-        with open(outpath, 'wb') as f:
-            print(f"Using v{TOOL_VERSION} of sprite_to_bin")
+        with open(outpath, "wb") as f:
+            logger.info(f"Using sprite to binary tool v{TOOL_VERSION}")
             f.write(struct.pack("<I", TOOL_VERSION))
 
             f.write(struct.pack("<Q", os.path.getsize(sprsheet)))
             print(f"Written {os.path.getsize(sprsheet)} bytes as image length")
 
-            with open(sprsheet, 'rb') as img:
-                f.write(img.read()) # Needs work if sprite sheet is giant.
+            with open(sprsheet, "rb") as img:
+                f.write(img.read())  # Needs work if sprite sheet is giant.
             print("Written all of image")
 
             print("Appending image dimensions")
-            f.write(struct.pack("<I", data['meta']['size']['w']))
-            f.write(struct.pack("<I", data['meta']['size']['h']))
+            f.write(struct.pack("<I", data["meta"]["size"]["w"]))
+            f.write(struct.pack("<I", data["meta"]["size"]["h"]))
 
             print("Appending frame tags data")
-            frame_tags = data['meta']['frameTags']
+            frame_tags = data["meta"]["frameTags"]
             f.write(struct.pack("<I", len(frame_tags)))
             for tag in frame_tags:
                 # Length of the name (u32), the name (char*), and from (u32) frame what to frame what (u32)
-                f.write(struct.pack("<I", len(tag['name'])))
-                f.write(struct.pack(f"<{len(tag['name'])}s", bytes(tag['name'], 'utf-8')))
-                f.write(struct.pack("<I", tag['from']))
-                f.write(struct.pack("<I", tag['to']))
+                f.write(struct.pack("<I", len(tag["name"])))
+                f.write(
+                    struct.pack(f"<{len(tag['name'])}s", bytes(tag["name"], "utf-8"))
+                )
+                f.write(struct.pack("<I", tag["from"]))
+                f.write(struct.pack("<I", tag["to"]))
 
             print("Appending frames data")
-            frames = data['frames']
+            frames = data["frames"]
             f.write(struct.pack("<I", len(frames)))
             for frame in frames:
                 # Source size, relative source size, absolute source rect

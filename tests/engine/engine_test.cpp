@@ -2,6 +2,7 @@
 #include "mocks/mock_app.h"
 #include "mocks/mock_font_cache.h"
 #include "mocks/mock_renderer.h"
+#include "mocks/mock_sprite_cache.h"
 #include "mocks/mock_window.h"
 
 #include <gmock/gmock.h>
@@ -15,6 +16,7 @@ static ccsakura::engine_deps setup_deps()
     deps.m_renderer = std::make_unique<mock_renderer>();
     deps.m_app = std::make_unique<mock_app>();
     deps.m_font_cache = std::make_unique<mock_font_cache>();
+    deps.m_sprite_cache = std::make_unique<mock_sprite_cache>();
 
     return deps;
 }

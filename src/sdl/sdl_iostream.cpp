@@ -18,7 +18,7 @@ iostream::iostream(std::vector<std::byte> span)
         throw std::runtime_error("Unable to create SDL IOStream from context");
     }
 
-    sdl::log_trace("sdl::iostream created with constant span of {} bytes", span.size());
+    sdl::log_trace("sdl::iostream created with constant span of {} bytes", m_span.size());
 }
 
 iostream::iostream() : m_iostream(SDL_IOFromDynamicMem(), SDL_CloseIO)
@@ -62,14 +62,7 @@ void iostream::read_u64_le(uint64_t &out)
 
 size_t iostream::read(void *buf, size_t len)
 {
-    size_t bytes_read = SDL_ReadIO(m_iostream.get(), buf, len);
-    if (bytes_read == 0 && status() != iostatus::eof)
-    {
-        sdl::log_error("Can't read from IOStream but not at EOF: {}", SDL_GetError());
-        throw std::runtime_error("Can't read from IOStream but not at EOF");
-    }
-
-    return bytes_read;
+    return SDL_ReadIO(m_iostream.get(), buf, len);
 }
 
 iostream::~iostream()
