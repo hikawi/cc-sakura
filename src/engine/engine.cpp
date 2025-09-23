@@ -4,6 +4,7 @@
 #include "engine/text.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
+#include "sdl/sdl_storage.h"
 
 #include <algorithm>
 #include <format>
@@ -26,6 +27,12 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     }
 
     sdl::log_trace("ccsakura::engine constructed");
+
+    // Let engine inject dependencies
+    sdl::log_debug("Injecting Sprite dependencies");
+    sprite::use_cache(*m_deps.m_sprite_cache);
+    sprite::use_renderer(*m_deps.m_renderer);
+    sprite::use_storage_opener(sdl::open_title_storage);
 }
 
 frame_data engine::get_frame_data() const
@@ -79,11 +86,11 @@ void engine::render() const noexcept
     renderer.clear();
 
     std::string str = std::format("{} FPS", m_frame_data.fps);
-    ccsakura::text fps_text({ccsakura::typeface::rainy_hearts, 16}, str, *m_deps.m_font_cache);
+    text fps_text({typeface::rainy_hearts, 16}, str, *m_deps.m_font_cache);
     std::unique_ptr<sdl::itexture> fps_texture = fps_text.render(renderer);
     renderer.render_texture(sdl::texture_render_options(*fps_texture).dst({0, 0}));
 
-    ccsakura::isprite &sakura = ccsakura::sprite::named("sakura");
+    isprite &sakura = sprite::named("sakura");
     sakura.render(renderer, {100, 100}, render_origin::top_left);
 
     renderer.present();

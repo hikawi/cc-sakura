@@ -20,6 +20,27 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef __APPLE__
+namespace std
+{
+
+template <> struct hash<std::string>
+{
+    size_t operator()(const std::string &s) const noexcept
+    {
+        size_t hash = 1469598103934665603ULL;
+        for (const char c : s)
+        {
+            hash ^= static_cast<unsigned char>(c);
+            hash *= 1099511628211ULL;
+        }
+        return hash;
+    }
+};
+
+} // namespace std
+#endif
+
 namespace ccsakura
 {
 
