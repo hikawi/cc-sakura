@@ -2,6 +2,7 @@
 
 #include "sdl/sdl_log.h"
 
+#include <algorithm>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_iostream.h>
 #include <stdexcept>
@@ -42,6 +43,24 @@ iostatus iostream::status() const noexcept
     return static_cast<iostatus>(SDL_GetIOStatus(m_iostream.get()));
 }
 
+void iostream::write_u32_le(const uint32_t val)
+{
+    if (!SDL_WriteU32LE(m_iostream.get(), val))
+    {
+        sdl::log_error("Unable to write U32 LE to IOStream: {}", SDL_GetError());
+        throw std::runtime_error("Unable to write U32 LE to IOStream");
+    }
+}
+
+void iostream::write_u64_le(const uint64_t val)
+{
+    if (!SDL_WriteU64LE(m_iostream.get(), val))
+    {
+        sdl::log_error("Unable to write U64 LE to IOStream: {}", SDL_GetError());
+        throw std::runtime_error("Unable to write U64 LE to IOStream");
+    }
+}
+
 void iostream::read_u32_le(uint32_t &out)
 {
     if (!SDL_ReadU32LE(m_iostream.get(), &out))
@@ -60,9 +79,10 @@ void iostream::read_u64_le(uint64_t &out)
     }
 }
 
-size_t iostream::read(void *buf, size_t len)
+size_t iostream::read(void *buf, size_t len, size_t max)
 {
-    return SDL_ReadIO(m_iostream.get(), buf, len);
+    size_t to_read = std::min(len, max);
+    return SDL_ReadIO(m_iostream.get(), buf, to_read);
 }
 
 iostream::~iostream()

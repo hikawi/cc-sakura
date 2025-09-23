@@ -86,9 +86,8 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
     size_t total_read = 0;
     while (total_read < img_size)
     {
-        size_t to_read = std::min(static_cast<size_t>(4096), static_cast<size_t>(img_size) - total_read);
-        size_t buf_read = io.read(img_buf.data() + total_read, to_read);
-        sdl::log_trace("Sprite {} load: want to read {}, actually read {}", m_name, to_read, buf_read);
+        size_t buf_read = io.read(img_buf.data() + total_read, 4096, static_cast<size_t>(img_size) - total_read);
+        sdl::log_trace("Sprite {} load: want to read {}, actually read {}", m_name, 4096, buf_read);
 
         // Premature exit
         if (buf_read == 0)
@@ -134,7 +133,7 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
         uint32_t name_len = 0;
         io.read_u32_le(name_len);
         tag.name = std::string(name_len, '\0');
-        io.read(tag.name.data(), name_len);
+        io.read(tag.name.data(), name_len, name_len);
 
         // Read two other stuff
         io.read_u32_le(tag.from);
