@@ -6,7 +6,6 @@
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <stdexcept>
@@ -209,6 +208,11 @@ isprite &sprite::named(const std::string name)
         throw std::runtime_error("Sprite class does not have a specified renderer");
     }
 
+    if (s_cache->has(name))
+    {
+        return (*s_cache)[name];
+    }
+
     std::unique_ptr<sdl::istorage> storage = s_open_storage();
     storage->wait_until_ready();
     std::optional<std::vector<std::byte>> file = storage->read_file("assets/spr/" + name + ".sprite");
@@ -216,11 +220,6 @@ isprite &sprite::named(const std::string name)
     {
         sdl::log_critical("Sprite {} can not be read", name);
         throw std::runtime_error("Failed to read sprite file");
-    }
-
-    if (s_cache->has(name))
-    {
-        return (*s_cache)[name];
     }
 
     sdl::iostream io(file.value());
