@@ -4,6 +4,8 @@
  * Simple struct wrappers and renames for SDL pixels.
  */
 
+#pragma once
+
 #include <cassert>
 #include <cstdint>
 
