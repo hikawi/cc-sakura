@@ -6,6 +6,7 @@
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_surface.h"
 
+#include <algorithm>
 #include <memory>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_rect.h>
@@ -16,6 +17,22 @@
 
 namespace sdl
 {
+
+vertex::vertex(const ccsakura::vec2d pos, const fcolor color) : pos(pos), color(color)
+{
+}
+
+vertex::vertex(const ccsakura::vec2d pos, const fcolor color, const ccsakura::vec2d tex_coord)
+    : pos(pos), color(color), tex_coord(tex_coord)
+{
+}
+
+bool vertex::operator==(const vertex &other) const noexcept
+{
+    return pos == other.pos && tex_coord == other.tex_coord && color == other.color;
+}
+
+// ========================================
 
 texture::texture(std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> texture_ptr) : m_texture(std::move(texture_ptr))
 {
@@ -68,6 +85,39 @@ void texture::set_scale_mode(const scale_mode mode) const noexcept
     }
 }
 
+// =============================================
+
+render_geometry_options::render_geometry_options(const irenderer &renderer) : renderer(renderer)
+{
+}
+
+render_geometry_options &render_geometry_options::use_texture(sdl::itexture &txt) noexcept
+{
+    texture = &txt;
+    return *this;
+}
+
+render_geometry_options &render_geometry_options::add_vertex(const sdl::vertex &vertex) noexcept
+{
+    vertices.push_back(vertex);
+    return *this;
+}
+
+render_geometry_options &render_geometry_options::connect(const int a, const int b, const int c) noexcept
+{
+    indices.push_back(a);
+    indices.push_back(b);
+    indices.push_back(c);
+    return *this;
+}
+
+void render_geometry_options::render() const noexcept
+{
+    renderer.render_geometry(*this);
+}
+
+// =============================================
+
 renderer::renderer(const iwindow &window, const char *name)
     : m_renderer(SDL_CreateRenderer(window.get(), name), SDL_DestroyRenderer)
 {
@@ -85,6 +135,18 @@ renderer::renderer(const iwindow &window, const char *name)
 SDL_Renderer *renderer::get() const noexcept
 {
     return m_renderer.get();
+}
+
+blend_mode renderer::get_blend_mode() const noexcept
+{
+    SDL_BlendMode mode;
+    SDL_GetRenderDrawBlendMode(get(), &mode);
+    return static_cast<blend_mode>(mode);
+}
+
+void renderer::set_blend_mode(const blend_mode mode) const noexcept
+{
+    SDL_SetRenderDrawBlendMode(get(), static_cast<SDL_BlendMode>(mode));
 }
 
 std::unique_ptr<itexture> renderer::create_texture(const pixel_format format, const texture_access access, const int w,
@@ -143,6 +205,35 @@ void renderer::render_texture(const texture_render_options &options) const noexc
 
     SDL_RenderTextureRotated(m_renderer.get(), options.m_texture.get(), ptr_or_null(srcrect), ptr_or_null(dstrect),
                              options.m_rotation, ptr_or_null(center), static_cast<SDL_FlipMode>(options.m_flip_mode));
+}
+
+void renderer::render_geometry(const render_geometry_options &opts) const noexcept
+{
+    SDL_Texture *txt = nullptr;
+    if (opts.texture)
+    {
+        txt = opts.texture->get();
+    }
+
+    std::vector<SDL_Vertex> vertices;
+    vertices.reserve(opts.vertices.size());
+    std::transform(opts.vertices.begin(), opts.vertices.end(), std::back_inserter(vertices),
+                   [&](const sdl::vertex &vert) -> SDL_Vertex
+                   {
+                       SDL_Vertex sdl_vertex;
+                       sdl_vertex.position.x = static_cast<float>(vert.pos.x);
+                       sdl_vertex.position.y = static_cast<float>(vert.pos.y);
+                       sdl_vertex.color.r = vert.color.r;
+                       sdl_vertex.color.g = vert.color.g;
+                       sdl_vertex.color.b = vert.color.b;
+                       sdl_vertex.color.a = vert.color.a;
+                       sdl_vertex.tex_coord.x = static_cast<float>(vert.tex_coord.x);
+                       sdl_vertex.tex_coord.y = static_cast<float>(vert.tex_coord.y);
+                       return sdl_vertex;
+                   });
+
+    SDL_RenderGeometry(opts.renderer.get(), txt, vertices.data(), static_cast<int>(vertices.size()),
+                       opts.indices.data(), static_cast<int>(opts.indices.size()));
 }
 
 void renderer::set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept

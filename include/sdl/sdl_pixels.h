@@ -49,6 +49,8 @@ struct color
      * \param color the fcolor to convert
      */
     color(const fcolor &color) noexcept;
+
+    bool operator==(const color &other) const noexcept;
 };
 
 struct fcolor
@@ -74,6 +76,8 @@ struct fcolor
      * \param color the color to convert
      */
     fcolor(const color &color) noexcept;
+
+    bool operator==(const fcolor &other) const noexcept;
 };
 
 } // namespace sdl

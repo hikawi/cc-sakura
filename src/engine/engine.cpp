@@ -1,6 +1,5 @@
 #include "engine/engine.h"
 
-#include "engine/render.h"
 #include "engine/text.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
@@ -81,6 +80,7 @@ bool engine::iterate(const uint64_t tick) noexcept
 void engine::render() const noexcept
 {
     const sdl::irenderer &renderer = *m_deps.m_renderer;
+    renderer.set_blend_mode(sdl::blend_mode::blend);
 
     renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
@@ -90,8 +90,12 @@ void engine::render() const noexcept
     std::unique_ptr<sdl::itexture> fps_texture = fps_text.render(renderer);
     renderer.render_texture(sdl::texture_render_options(*fps_texture).dst({0, 0}));
 
-    isprite &sakura = sprite::named("sakura");
-    sakura.render(renderer, {100, 100}, render_origin::top_left);
+    sdl::render_geometry_options(renderer)
+        .add_vertex(sdl::vertex({100, 100}, {0, 0.5, 0, 0.5}))
+        .add_vertex(sdl::vertex({400, 400}, {0, 0.5, 0, 0.5}))
+        .add_vertex(sdl::vertex({500, 100}, {0, 0.5, 0, 0.5}))
+        .connect(0, 1, 2)
+        .render();
 
     renderer.present();
 }
