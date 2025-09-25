@@ -1,5 +1,7 @@
 #include "sdl/sdl_pixels.h"
 
+#include "utils.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -22,6 +24,11 @@ color::color(const fcolor &color) noexcept
     a = static_cast<uint8_t>(std::lround(std::clamp(color.a, 0.0f, 1.0f) * 255));
 }
 
+bool color::operator==(const color &other) const noexcept
+{
+    return r == other.r && g == other.g && b == other.b && a == other.a;
+}
+
 fcolor::fcolor(const float r, const float g, const float b, const float a) noexcept
 {
     this->r = std::clamp(r, 0.0f, 1.0f);
@@ -36,6 +43,12 @@ fcolor::fcolor(const color &color) noexcept
     g = static_cast<float>(color.g) / 255;
     b = static_cast<float>(color.b) / 255;
     a = static_cast<float>(color.a) / 255;
+}
+
+bool fcolor::operator==(const fcolor &other) const noexcept
+{
+    return ccsakura::float_equal(r, other.r) && ccsakura::float_equal(g, other.g) &&
+           ccsakura::float_equal(b, other.b) && ccsakura::float_equal(a, other.a);
 }
 
 } // namespace sdl

@@ -4,6 +4,8 @@
  * Wrappers for SDL image sister module.
  */
 
+#pragma once
+
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_surface.h"
 
