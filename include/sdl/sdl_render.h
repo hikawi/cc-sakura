@@ -9,6 +9,7 @@
 
 #include "engine/render.h"
 #include "engine/vec2d.h"
+#include "sdl/sdl_pixels.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_surface.h"
 #include "sdl/sdl_video.h"
@@ -19,6 +20,7 @@
 #include <SDL3/SDL_blendmode.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_render.h>
+#include <vector>
 
 namespace sdl
 {
@@ -57,6 +59,21 @@ enum class blend_mode
     mod = SDL_BLENDMODE_MOD,             ///< color modulate: dstRGB = srcRGB * dstRGB, dstA = dstA
     mul = SDL_BLENDMODE_MUL,         ///< color multiply: dstRGB = (srcRGB * dstRGB) + (dstRGB * (1-srcA)), dstA = dstA
     invalid = SDL_BLENDMODE_INVALID, ///< placeholder for invalid mode
+};
+
+/**
+ * Represents a vertex within 2D space.
+ */
+struct vertex
+{
+    ccsakura::vec2d pos;       ///< the position of the vertex
+    fcolor color;              ///< the color to paint for the vertex
+    ccsakura::vec2d tex_coord; ///< the coords on the texture to use, if available
+
+    vertex(const ccsakura::vec2d pos, const fcolor color);
+    vertex(const ccsakura::vec2d pos, const fcolor color, const ccsakura::vec2d tex_coord);
+
+    bool operator==(const vertex &other) const noexcept;
 };
 
 /**
@@ -134,6 +151,55 @@ class texture : public itexture
     std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> m_texture;
 };
 
+/**
+ * Plain old data object for a geometry rendering call.
+ */
+struct render_geometry_options
+{
+    const irenderer &renderer;    ///< the renderer to use
+    itexture *texture = nullptr;  ///< the texture to use, optional
+    std::vector<vertex> vertices; ///< the vertices of triangles
+    std::vector<int> indices;     ///< the indices mapping of triangles in groups of 3
+
+    /**
+     * Constructs a new geometry rendering options.
+     *
+     * \param renderer the renderer to use
+     */
+    render_geometry_options(const irenderer &renderer);
+
+    /**
+     * Sets the texture to use to render with.
+     *
+     * \param txt the texture to use
+     * \returns the render geometry builder
+     */
+    render_geometry_options &use_texture(sdl::itexture &txt) noexcept;
+
+    /**
+     * Adds a new vertex to the list of geometry to render
+     *
+     * \param vertex the vertex to add
+     * \returns the render geometry builder
+     */
+    render_geometry_options &add_vertex(const sdl::vertex &vertex) noexcept;
+
+    /**
+     * Connects three vertices into a triangle.
+     *
+     * \param a the index to the first vertex
+     * \param b the index to the second vertex
+     * \param c the index to the third vertex
+     * \returns the render geometry builder
+     */
+    render_geometry_options &connect(const int a, const int b, const int c) noexcept;
+
+    /**
+     * Pass all arguments set up to the renderer's genometry rendering options.
+     */
+    void render() const noexcept;
+};
+
 class irenderer
 {
   public:
@@ -145,6 +211,20 @@ class irenderer
      * \returns the sdl renderer
      */
     virtual SDL_Renderer *get() const noexcept = 0;
+
+    /**
+     * Retrieves the current blend mode for the texture.
+     *
+     * \returns the current blend mode
+     */
+    virtual blend_mode get_blend_mode() const noexcept = 0;
+
+    /**
+     * Sets the blend mode for a texture.
+     *
+     * \param mode the mode to blend the texture
+     */
+    virtual void set_blend_mode(const blend_mode mode) const noexcept = 0;
 
     /**
      * Creates a new texture for this renderer.
@@ -172,6 +252,13 @@ class irenderer
      * \param options the options for rendering
      */
     virtual void render_texture(const texture_render_options &options) const noexcept = 0;
+
+    /**
+     * Render triangles on the renderer.
+     *
+     * \param opts the options to use for rendering geometry
+     */
+    virtual void render_geometry(const render_geometry_options &opts) const noexcept = 0;
 
     /**
      * Sets the renderer's draw color to an RGBA set.
@@ -221,10 +308,13 @@ class renderer : public irenderer
     ~renderer();
 
     SDL_Renderer *get() const noexcept override;
+    blend_mode get_blend_mode() const noexcept override;
+    void set_blend_mode(const blend_mode mode) const noexcept override;
     std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
                                              const int h) const override;
     std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;
     void render_texture(const texture_render_options &options) const noexcept override;
+    void render_geometry(const render_geometry_options &opts) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;
     void clear() const noexcept override;
