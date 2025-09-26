@@ -1,4 +1,3 @@
-#include "engine/sprite.h"
 #include "mocks/mock_renderer.h"
 #include "mocks/mock_texture.h"
 #include "sdl/sdl_render.h"
