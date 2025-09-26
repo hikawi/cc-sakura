@@ -9,6 +9,13 @@
 namespace ccsakura
 {
 
+void collider::set_color(const float r, const float g, const float b, const float a) noexcept
+{
+    m_color = {r, g, b, a};
+}
+
+// ========================================
+
 aabb_collider::aabb_collider(const double x, const double y, const double w, const double h) noexcept
     : m_x(x), m_y(y), m_w(w), m_h(h)
 {

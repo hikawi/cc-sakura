@@ -8,6 +8,7 @@
 #pragma once
 
 #include "engine/vec2d.h"
+#include "sdl/sdl_pixels.h"
 
 namespace ccsakura
 {
@@ -65,6 +66,16 @@ class collider
     virtual ~collider() = default;
 
     /**
+     * Marks the collider a color to render with.
+     *
+     * \param r the red value
+     * \param g the green value
+     * \param b the blue value
+     * \param a the alpha value
+     */
+    void set_color(const float r, const float g, const float b, const float a) noexcept;
+
+    /**
      * Checks for the collision against another arbitrary collider.
      *
      * \param other the other collider to check against
@@ -111,12 +122,8 @@ class collider
      */
     virtual void shift(const vec2d dir) noexcept = 0;
 
-    /**
-     * Renders the current collider onto the renderer.
-     *
-     * \param renderer the renderer to render onto
-     */
-    // virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
+  protected:
+    sdl::fcolor m_color = {0, 0, 0.5f, 0.3f}; ///< the color to render the collider with
 };
 
 class aabb_collider : public collider
