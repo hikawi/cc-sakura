@@ -6,8 +6,117 @@
 
 #pragma once
 
+#include <SDL3/SDL_rect.h>
 namespace sdl
 {
+
+/**
+ * Represents a single point on the 2D screen, using integers as components.
+ */
+struct point;
+
+/**
+ * Represents a single point on the 2D screen, using floats as components.
+ */
+struct fpoint;
+
+struct point
+{
+    int x; ///< the x coord of a point in SDL
+    int y; ///< the y coord of a point in SDL
+
+    /**
+     * Constructs a zero point.
+     */
+    point() noexcept;
+
+    /**
+     * Creates a point with defined components.
+     *
+     * \param x the x component
+     * \param y the y component
+     */
+    point(const int x, const int y) noexcept;
+
+    /**
+     * Converts a floating-point point to an integer point.
+     *
+     * \param other the other point to convert
+     */
+    point(const fpoint &other) noexcept;
+
+    /**
+     * Checks if two points are equal.
+     *
+     * \param other the other point to check against
+     * \returns true if two points are equal
+     */
+    bool operator==(const point &other) const noexcept;
+
+    /**
+     * Checks if two points are inequal.
+     *
+     * \param other the other point to check against
+     * \returns true if two points are inequal
+     */
+    bool operator!=(const point &other) const noexcept;
+
+    /**
+     * Retrieves the SDL version of the point.
+     *
+     * \returns the sdl point
+     */
+    SDL_Point to_sdl() const noexcept;
+};
+
+struct fpoint
+{
+    float x; ///< the x coord of a point in SDL
+    float y; ///< the y coord of a point in SDL
+
+    /**
+     * Constructs a zero point at origin.
+     */
+    fpoint() noexcept;
+
+    /**
+     * Constructs a floating-point point (lol) with defined components.
+     *
+     * \param x the x component
+     * \param y the y component
+     */
+    fpoint(const float x, const float y) noexcept;
+
+    /**
+     * Constructs a floating-point point from an integer point.
+     *
+     * \param other the other point
+     */
+    fpoint(const point &other) noexcept;
+
+    /**
+     * Checks if two points are equal.
+     *
+     * \param other the other point to check against
+     * \returns true if two points are equal
+     */
+    bool operator==(const fpoint &other) const noexcept;
+
+    /**
+     * Checks if two points are inequal.
+     *
+     * \param other the other point to check against
+     * \returns true if two points are inequal
+     */
+    bool operator!=(const fpoint &other) const noexcept;
+
+    /**
+     * Converts this floating point into a SDL-version.
+     *
+     * \returns the sdl fpoint
+     */
+    SDL_FPoint to_sdl() const noexcept;
+};
 
 /**
  * Represents a simple rectangle on the screen, using integers for values.
@@ -47,6 +156,22 @@ struct rect
      * \param frect the floating-based rectangle to convert
      */
     rect(const frect &frect) noexcept;
+
+    /**
+     * Checks if two rectangles are equal.
+     *
+     * \param other the other rectangle to check against
+     * \returns true if two rectangles are equal
+     */
+    bool operator==(const rect &other) const noexcept;
+
+    /**
+     * Checks if two rectangles are not equal.
+     *
+     * \param other the other rectangle to check against
+     * \returns true if two rectangles are not equal
+     */
+    bool operator!=(const rect &other) const noexcept;
 };
 
 struct frect
@@ -77,6 +202,22 @@ struct frect
      * \param rect the integer rectangle to convert
      */
     frect(const rect &rect) noexcept;
+
+    /**
+     * Checks if two rectangles are equal.
+     *
+     * \param other the other rectangle to check against
+     * \returns true if two rectangles are equal
+     */
+    bool operator==(const frect &other) const noexcept;
+
+    /**
+     * Checks if two rectangles are not equal.
+     *
+     * \param other the other rectangle to check against
+     * \returns true if two rectangles are not equal
+     */
+    bool operator!=(const frect &other) const noexcept;
 };
 
 } // namespace sdl
