@@ -6,9 +6,6 @@
 
 #pragma once
 
-namespace ccsakura
-{
-
 static constexpr double epsilon = 1e-9;
 
 /**
@@ -28,5 +25,3 @@ bool float_equal(const float a, const float b) noexcept;
  * \returns true if they are equal enough
  */
 bool double_equal(const double a, const double b) noexcept;
-
-} // namespace ccsakura

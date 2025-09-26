@@ -47,8 +47,7 @@ fcolor::fcolor(const color &color) noexcept
 
 bool fcolor::operator==(const fcolor &other) const noexcept
 {
-    return ccsakura::float_equal(r, other.r) && ccsakura::float_equal(g, other.g) &&
-           ccsakura::float_equal(b, other.b) && ccsakura::float_equal(a, other.a);
+    return float_equal(r, other.r) && float_equal(g, other.g) && float_equal(b, other.b) && float_equal(a, other.a);
 }
 
 } // namespace sdl
