@@ -8,7 +8,6 @@
 #pragma once
 
 #include "engine/render.h"
-#include "engine/vec2d.h"
 #include "sdl/sdl_pixels.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_surface.h"
@@ -66,14 +65,49 @@ enum class blend_mode
  */
 struct vertex
 {
-    ccsakura::vec2d pos;       ///< the position of the vertex
-    fcolor color;              ///< the color to paint for the vertex
-    ccsakura::vec2d tex_coord; ///< the coords on the texture to use, if available
+    fpoint pos;       ///< the position of the vertex
+    fcolor color;     ///< the color to paint for the vertex
+    fpoint tex_coord; ///< the coords on the texture to use, if available
 
-    vertex(const ccsakura::vec2d pos, const fcolor color);
-    vertex(const ccsakura::vec2d pos, const fcolor color, const ccsakura::vec2d tex_coord);
+    /**
+     * Constructs a new vertex with a position and a color.
+     *
+     * \param pos the position of the vertex
+     * \param color the color to use
+     */
+    vertex(const fpoint pos, const fcolor color);
 
+    /**
+     * Constructs a new vertex with all parameters.
+     *
+     * \param pos the position of the vertex
+     * \param color the color to use
+     * \param tex_coord the position on the texture to draw
+     */
+    vertex(const fpoint pos, const fcolor color, const fpoint tex_coord);
+
+    /**
+     * Checks if two vertices are equal.
+     *
+     * \param other the other vetex to check
+     * \returns true if both vertices are equal
+     */
     bool operator==(const vertex &other) const noexcept;
+
+    /**
+     * Checks if two vertices are not equal.
+     *
+     * \param other the other vetex to check
+     * \returns true if both vertices are inequal.
+     */
+    bool operator!=(const vertex &other) const noexcept;
+
+    /**
+     * Converts the vertex into SDL's struct of vertex.
+     *
+     * \returns the SDL vertex
+     */
+    SDL_Vertex to_sdl() const noexcept;
 };
 
 /**
@@ -327,10 +361,10 @@ class renderer : public irenderer
 
 struct texture_render_options
 {
-    sdl::itexture &m_texture;                               ///< the texture to be rendered
-    std::optional<sdl::frect> m_srcrect = std::nullopt;     ///< where to render from the texture
-    std::optional<sdl::frect> m_dstrect = std::nullopt;     ///< where to render to on the renderer
-    std::optional<ccsakura::vec2d> m_origin = std::nullopt; ///< the origin to rotate the texture by
+    sdl::itexture &m_texture;                           ///< the texture to be rendered
+    std::optional<sdl::frect> m_srcrect = std::nullopt; ///< where to render from the texture
+    std::optional<sdl::frect> m_dstrect = std::nullopt; ///< where to render to on the renderer
+    std::optional<sdl::fpoint> m_origin = std::nullopt; ///< the origin to rotate the texture by
     ccsakura::render_origin m_render_origin =
         ccsakura::render_origin::top_left;   ///< the rendering origin to shift the destination by
     sdl::flip m_flip_mode = sdl::flip::none; ///< whether to flip the texture
@@ -360,7 +394,7 @@ struct texture_render_options
      * \param pos The position of the top-left corner of the destination.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &dst(const ccsakura::vec2d pos) noexcept;
+    texture_render_options &dst(const sdl::fpoint pos) noexcept;
 
     /**
      * Sets the destination rectangle for rendering.
@@ -376,7 +410,7 @@ struct texture_render_options
      * \param pos The position of the rotation origin.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &origin(const ccsakura::vec2d pos) noexcept;
+    texture_render_options &origin(const sdl::fpoint pos) noexcept;
 
     /**
      * Sets the rotation origin based on a predefined enumeration.

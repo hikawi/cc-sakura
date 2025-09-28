@@ -19,6 +19,20 @@ namespace sdl
 void clear_log_priority_prefix();
 
 /**
+ * Logs a message at the VERBOSE level.
+ *
+ * These messages should be included in very deep and granular object lifecycles to track.
+ *
+ * \param fmt the formatter
+ * \param args the args to format
+ */
+template <typename... Args> void log_verbose(std::string_view fmt, Args &&...args)
+{
+    std::string msg = std::vformat(fmt, std::make_format_args(args...));
+    SDL_LogVerbose(SDL_LOG_CATEGORY_APPLICATION, "\033[0mVERBO > %s\033[0m", msg.c_str());
+}
+
+/**
  * Logs a message at the TRACE level.
  *
  * These messages should be included in very deep and granular object lifecycles to track.

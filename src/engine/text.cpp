@@ -2,6 +2,7 @@
 
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_log.h"
+#include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
 #include "sdl/sdl_ttf.h"
@@ -105,7 +106,7 @@ void text::set_text(const std::string text) noexcept
     m_text = text;
 }
 
-void text::set_position(const ccsakura::vec2d pos) noexcept
+void text::set_position(const sdl::fpoint pos) noexcept
 {
     m_pos = pos;
 }

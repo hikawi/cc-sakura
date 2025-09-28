@@ -7,7 +7,6 @@
 #pragma once
 
 #include "engine/render.h"
-#include "engine/vec2d.h"
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
@@ -81,7 +80,8 @@ class isprite
      * \param pos the position to render at
      * \param origin the origin type to shift the position by
      */
-    virtual void render(const sdl::irenderer &renderer, const vec2d pos, const render_origin origin) const noexcept = 0;
+    virtual void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
+                        const render_origin origin) const noexcept = 0;
 };
 
 /**
@@ -158,7 +158,8 @@ class sprite : public isprite
     sprite(std::string name, sdl::iiostream &io, sdl::irenderer &renderer);
     ~sprite();
 
-    void render(const sdl::irenderer &renderer, const vec2d pos, const render_origin origin) const noexcept override;
+    void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
+                const render_origin origin) const noexcept override;
 
     /**
      * Retrieves a sprite with a name.

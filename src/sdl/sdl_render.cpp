@@ -1,7 +1,6 @@
 #include "sdl/sdl_render.h"
 
 #include "engine/render.h"
-#include "engine/vec2d.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_surface.h"
@@ -18,11 +17,11 @@
 namespace sdl
 {
 
-vertex::vertex(const ccsakura::vec2d pos, const fcolor color) : pos(pos), color(color)
+vertex::vertex(const fpoint pos, const fcolor color) : pos(pos), color(color)
 {
 }
 
-vertex::vertex(const ccsakura::vec2d pos, const fcolor color, const ccsakura::vec2d tex_coord)
+vertex::vertex(const fpoint pos, const fcolor color, const fpoint tex_coord)
     : pos(pos), color(color), tex_coord(tex_coord)
 {
 }
@@ -30,6 +29,20 @@ vertex::vertex(const ccsakura::vec2d pos, const fcolor color, const ccsakura::ve
 bool vertex::operator==(const vertex &other) const noexcept
 {
     return pos == other.pos && tex_coord == other.tex_coord && color == other.color;
+}
+
+bool vertex::operator!=(const vertex &other) const noexcept
+{
+    return pos != other.pos || tex_coord != other.tex_coord || color != other.color;
+}
+
+SDL_Vertex vertex::to_sdl() const noexcept
+{
+    SDL_Vertex vertex;
+    vertex.color = {color.r, color.g, color.b, color.a};
+    vertex.position = {pos.x, pos.y};
+    vertex.tex_coord = {tex_coord.x, tex_coord.y};
+    return vertex;
 }
 
 // ========================================
@@ -187,10 +200,10 @@ void renderer::render_texture(const texture_render_options &options) const noexc
         ccsakura::shift_origin(rect, options.m_render_origin);
         return {rect.x, rect.y, rect.w, rect.h};
     };
-    auto point_shift = [&](ccsakura::vec2d pos) -> SDL_FPoint
+    auto point_shift = [&](const sdl::point &p) -> SDL_FPoint
     {
         sdl::frect dstrect = options.m_dstrect.value();
-        sdl::frect center(static_cast<float>(pos.x), static_cast<float>(pos.y), dstrect.w, dstrect.h);
+        sdl::frect center(static_cast<float>(p.x), static_cast<float>(p.y), dstrect.w, dstrect.h);
         ccsakura::shift_origin(center, options.m_render_origin);
         return {center.x, center.y};
     };
@@ -218,19 +231,7 @@ void renderer::render_geometry(const render_geometry_options &opts) const noexce
     std::vector<SDL_Vertex> vertices;
     vertices.reserve(opts.vertices.size());
     std::transform(opts.vertices.begin(), opts.vertices.end(), std::back_inserter(vertices),
-                   [&](const sdl::vertex &vert) -> SDL_Vertex
-                   {
-                       SDL_Vertex sdl_vertex;
-                       sdl_vertex.position.x = static_cast<float>(vert.pos.x);
-                       sdl_vertex.position.y = static_cast<float>(vert.pos.y);
-                       sdl_vertex.color.r = vert.color.r;
-                       sdl_vertex.color.g = vert.color.g;
-                       sdl_vertex.color.b = vert.color.b;
-                       sdl_vertex.color.a = vert.color.a;
-                       sdl_vertex.tex_coord.x = static_cast<float>(vert.tex_coord.x);
-                       sdl_vertex.tex_coord.y = static_cast<float>(vert.tex_coord.y);
-                       return sdl_vertex;
-                   });
+                   [&](const sdl::vertex &v) { return v.to_sdl(); });
 
     SDL_RenderGeometry(opts.renderer.get(), txt, vertices.data(), static_cast<int>(vertices.size()),
                        opts.indices.data(), static_cast<int>(opts.indices.size()));
@@ -281,7 +282,7 @@ texture_render_options &texture_render_options::dstrect(const sdl::frect rect) n
     return *this;
 }
 
-texture_render_options &texture_render_options::dst(const ccsakura::vec2d pos) noexcept
+texture_render_options &texture_render_options::dst(const sdl::fpoint pos) noexcept
 {
     float w = 0, h = 0;
 
@@ -305,7 +306,7 @@ texture_render_options &texture_render_options::render_origin(const ccsakura::re
     return *this;
 }
 
-texture_render_options &texture_render_options::origin(const ccsakura::vec2d pos) noexcept
+texture_render_options &texture_render_options::origin(const sdl::fpoint pos) noexcept
 {
     m_origin = pos;
     return *this;

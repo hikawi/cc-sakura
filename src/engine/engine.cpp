@@ -1,12 +1,10 @@
 #include "engine/engine.h"
 
-#include "engine/text.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
 
 #include <algorithm>
-#include <format>
 #include <stdexcept>
 
 namespace ccsakura
@@ -84,11 +82,6 @@ void engine::render() const noexcept
 
     renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
-
-    std::string str = std::format("{} FPS", m_frame_data.fps);
-    text fps_text({typeface::rainy_hearts, 16}, str, *m_deps.m_font_cache);
-    std::unique_ptr<sdl::itexture> fps_texture = fps_text.render(renderer);
-    renderer.render_texture(sdl::texture_render_options(*fps_texture).dst({0, 0}));
 
     sdl::render_geometry_options(renderer)
         .add_vertex(sdl::vertex({100, 100}, {0, 0.5, 0, 0.5}))
