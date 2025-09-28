@@ -4,6 +4,7 @@
 #include "sdl/sdl_image.h"
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_log.h"
+#include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
 
 #include <cstddef>
@@ -174,7 +175,7 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
     sdl::log_info("Successfully loaded sprite {}", m_name);
 }
 
-void sprite::render(const sdl::irenderer &renderer, const vec2d pos, const render_origin origin) const noexcept
+void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin) const noexcept
 {
     sdl::texture_render_options opts(*m_texture.get());
     opts.dst(pos).render_origin(origin);

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "engine/vec2d.h"
+#include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_stdinc.h"
 #include "sdl/sdl_ttf.h"
@@ -152,7 +152,7 @@ class itext
      *
      * \param pos the position to render at
      */
-    virtual void set_position(const ccsakura::vec2d pos) noexcept = 0;
+    virtual void set_position(const sdl::fpoint pos) noexcept = 0;
 
     /**
      * Renders this text instance using the provided renderer to a texture.
@@ -183,14 +183,14 @@ class text : public itext
 
     void set_text(const std::string text) noexcept override;
     void set_color(const sdl::color color) noexcept override;
-    void set_position(const ccsakura::vec2d pos) noexcept override;
+    void set_position(const sdl::fpoint pos) noexcept override;
     std::unique_ptr<sdl::itexture> render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     font m_font;
     std::string m_text;
     sdl::color m_color;
-    vec2d m_pos;
+    sdl::fpoint m_pos;
     ifont_cache &m_cache;
 };
 
