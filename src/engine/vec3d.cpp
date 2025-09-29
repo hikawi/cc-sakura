@@ -9,6 +9,25 @@
 namespace ccsakura
 {
 
+vec3d vec3d::abs() const noexcept
+{
+    return vec3d(std::abs(x), std::abs(y), std::abs(z));
+}
+
+vec3d vec3d::orthogonal() const noexcept
+{
+    vec3d ret;
+    if (std::abs(x) > std::abs(y))
+    {
+        ret = {-z, 0, x};
+    }
+    else
+    {
+        ret = {0, z, -y};
+    }
+    return ret.z > 0 ? ret : -ret;
+}
+
 double vec3d::length() const noexcept
 {
     return std::sqrt(length_squared());
@@ -26,6 +45,10 @@ bool vec3d::operator!=(const vec3d &other) const noexcept
 
 vec3d vec3d::normalized() const noexcept
 {
+    if (double_equal(length_squared(), 0))
+    {
+        return *this;
+    }
     return (*this) / length();
 }
 
