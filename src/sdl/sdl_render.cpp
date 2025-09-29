@@ -192,7 +192,7 @@ std::unique_ptr<itexture> renderer::create_texture(const sdl::isurface &surface)
     return std::make_unique<texture>(std::move(txt_ptr));
 }
 
-void renderer::render_texture(const texture_render_options &options) const noexcept
+void renderer::render_texture(const render_texture_options &options) const noexcept
 {
     auto ptr_or_null = [&](const auto &opt) -> auto * { return opt.has_value() ? &*opt : nullptr; };
     auto rect_shift = [&](sdl::frect rect) -> SDL_FRect
@@ -266,23 +266,24 @@ renderer::~renderer()
     sdl::log_trace("sdl::renderer destroyed");
 }
 
-texture_render_options::texture_render_options(sdl::itexture &texture) : m_texture(texture)
+render_texture_options::render_texture_options(const sdl::irenderer &renderer, sdl::itexture &texture)
+    : m_renderer(renderer), m_texture(texture)
 {
 }
 
-texture_render_options &texture_render_options::srcrect(const sdl::frect rect) noexcept
+render_texture_options &render_texture_options::srcrect(const sdl::frect rect) noexcept
 {
     m_srcrect = rect;
     return *this;
 }
 
-texture_render_options &texture_render_options::dstrect(const sdl::frect rect) noexcept
+render_texture_options &render_texture_options::dstrect(const sdl::frect rect) noexcept
 {
     m_dstrect = rect;
     return *this;
 }
 
-texture_render_options &texture_render_options::dst(const sdl::fpoint pos) noexcept
+render_texture_options &render_texture_options::dst(const sdl::fpoint pos) noexcept
 {
     float w = 0, h = 0;
 
@@ -300,28 +301,33 @@ texture_render_options &texture_render_options::dst(const sdl::fpoint pos) noexc
     return *this;
 }
 
-texture_render_options &texture_render_options::render_origin(const ccsakura::render_origin origin) noexcept
+render_texture_options &render_texture_options::render_origin(const ccsakura::render_origin origin) noexcept
 {
     m_render_origin = origin;
     return *this;
 }
 
-texture_render_options &texture_render_options::origin(const sdl::fpoint pos) noexcept
+render_texture_options &render_texture_options::origin(const sdl::fpoint pos) noexcept
 {
     m_origin = pos;
     return *this;
 }
 
-texture_render_options &texture_render_options::rotate(const double angle) noexcept
+render_texture_options &render_texture_options::rotate(const double angle) noexcept
 {
     m_rotation = angle;
     return *this;
 }
 
-texture_render_options &texture_render_options::flip(const sdl::flip flipmode) noexcept
+render_texture_options &render_texture_options::flip(const sdl::flip flipmode) noexcept
 {
     m_flip_mode = flipmode;
     return *this;
+}
+
+void render_texture_options::render() const noexcept
+{
+    m_renderer.render_texture(*this);
 }
 
 } // namespace sdl
