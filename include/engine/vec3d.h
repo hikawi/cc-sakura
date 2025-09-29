@@ -19,8 +19,8 @@ namespace ccsakura
 struct vec3d
 {
     double x; ///< the x component, -x is left and +x is right
-    double y; ///< the y component, -y is down and +y is up
-    double z; ///< the z component, -z is back and +z is front
+    double y; ///< the y component, -y is back and +y is front
+    double z; ///< the z component, -z is down and +z is up
 
     /**
      * Creates an all zero 3D vector.
@@ -238,6 +238,20 @@ struct vec3d
     {
         return dot(*this);
     }
+
+    /**
+     * Calculates a version of the vector that has all of its components positive.
+     *
+     * \returns a new vector, with each component passed through abs()
+     */
+    vec3d abs() const noexcept;
+
+    /**
+     * Calculates another orthogonal vector that has a 0 dot product with this vector.
+     *
+     * \returns an orthogonal vector
+     */
+    vec3d orthogonal() const noexcept;
 
     /**
      * Calculates the magnitude (length or L2 norm) of the vector.
