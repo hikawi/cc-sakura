@@ -46,8 +46,8 @@ jobs:
         with:
           key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-${{ github.run_id }}
           path: |
-            ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
+            ${{ github.workspace }}/vcpkg_installed
           restore-keys: |
             ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-
             ${{ runner.os }}-
@@ -55,13 +55,13 @@ jobs:
       - name: Setup vcpkg (Unix)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          git clone https://github.com/microsoft/vcpkg ./vcpkg
           ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Setup vcpkg (Windows)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          git clone https://github.com/microsoft/vcpkg ./vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
 
       - name: Configure CMake build
@@ -113,8 +113,8 @@ jobs:
         with:
           key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-${{ github.run_id }}
           path: |
-            ${{ github.workspace }}/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
+            ${{ github.workspace }}/vcpkg_installed
           restore-keys: |
             ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-
             ${{ runner.os }}-
@@ -122,13 +122,13 @@ jobs:
       - name: Setup vcpkg (Unix)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Setup vcpkg (Windows)
         if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
         run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg || true
+          git clone https://github.com/microsoft/vcpkg
           ./vcpkg/bootstrap-vcpkg.bat
 
       - name: Configure CMake build

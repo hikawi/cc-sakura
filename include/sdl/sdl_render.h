@@ -120,7 +120,7 @@ class irenderer;
  *
  * This provides method chaining options for constructing a render.
  */
-struct texture_render_options;
+struct render_texture_options;
 
 /**
  * Abstract interface for \ref sdl::texture for mocking purposes.
@@ -285,7 +285,7 @@ class irenderer
      *
      * \param options the options for rendering
      */
-    virtual void render_texture(const texture_render_options &options) const noexcept = 0;
+    virtual void render_texture(const render_texture_options &options) const noexcept = 0;
 
     /**
      * Render triangles on the renderer.
@@ -347,7 +347,7 @@ class renderer : public irenderer
     std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
                                              const int h) const override;
     std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;
-    void render_texture(const texture_render_options &options) const noexcept override;
+    void render_texture(const render_texture_options &options) const noexcept override;
     void render_geometry(const render_geometry_options &opts) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;
@@ -359,8 +359,9 @@ class renderer : public irenderer
     std::string m_name;
 };
 
-struct texture_render_options
+struct render_texture_options
 {
+    const sdl::irenderer &m_renderer;
     sdl::itexture &m_texture;                           ///< the texture to be rendered
     std::optional<sdl::frect> m_srcrect = std::nullopt; ///< where to render from the texture
     std::optional<sdl::frect> m_dstrect = std::nullopt; ///< where to render to on the renderer
@@ -373,10 +374,11 @@ struct texture_render_options
     /**
      * Constructs a simple texture rendering options.
      *
+     * \param renderer the renderer to use
      * \param texture the texture to render
      * \param renderer the renderer to use
      */
-    texture_render_options(sdl::itexture &texture);
+    render_texture_options(const sdl::irenderer &renderer, sdl::itexture &texture);
 
     /**
      * Sets the source rectangle for rendering.
@@ -384,7 +386,7 @@ struct texture_render_options
      * \param rect The source rectangle within the texture.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &srcrect(const sdl::frect rect) noexcept;
+    render_texture_options &srcrect(const sdl::frect rect) noexcept;
 
     /**
      * Sets the destination position for rendering.
@@ -394,7 +396,7 @@ struct texture_render_options
      * \param pos The position of the top-left corner of the destination.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &dst(const sdl::fpoint pos) noexcept;
+    render_texture_options &dst(const sdl::fpoint pos) noexcept;
 
     /**
      * Sets the destination rectangle for rendering.
@@ -402,7 +404,7 @@ struct texture_render_options
      * \param rect The destination rectangle on the renderer.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &dstrect(const sdl::frect rect) noexcept;
+    render_texture_options &dstrect(const sdl::frect rect) noexcept;
 
     /**
      * Sets the rotation origin for the texture.
@@ -410,7 +412,7 @@ struct texture_render_options
      * \param pos The position of the rotation origin.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &origin(const sdl::fpoint pos) noexcept;
+    render_texture_options &origin(const sdl::fpoint pos) noexcept;
 
     /**
      * Sets the rotation origin based on a predefined enumeration.
@@ -418,7 +420,7 @@ struct texture_render_options
      * \param origin The predefined render origin.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &render_origin(const ccsakura::render_origin origin) noexcept;
+    render_texture_options &render_origin(const ccsakura::render_origin origin) noexcept;
 
     /**
      * Sets the flip mode for the texture.
@@ -426,7 +428,7 @@ struct texture_render_options
      * \param flipmode The flip mode to apply (e.g., horizontal or vertical).
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &flip(const sdl::flip flipmode) noexcept;
+    render_texture_options &flip(const sdl::flip flipmode) noexcept;
 
     /**
      * Sets the rotation angle for the texture.
@@ -434,7 +436,12 @@ struct texture_render_options
      * \param angle The rotation angle in degrees.
      * \returns A reference to the current object for method chaining.
      */
-    texture_render_options &rotate(const double angle) noexcept;
+    render_texture_options &rotate(const double angle) noexcept;
+
+    /**
+     * Renders the texture using the provided options and renderer.
+     */
+    void render() const noexcept;
 };
 
 } // namespace sdl

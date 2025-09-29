@@ -16,7 +16,7 @@ class mock_renderer : public sdl::irenderer
                 (const, noexcept, override));
     MOCK_METHOD(std::unique_ptr<sdl::itexture>, create_texture, (const sdl::isurface &surface),
                 (const, noexcept, override));
-    MOCK_METHOD(void, render_texture, (const sdl::texture_render_options &), (const, noexcept));
+    MOCK_METHOD(void, render_texture, (const sdl::render_texture_options &), (const, noexcept));
     MOCK_METHOD(void, render_geometry, (const sdl::render_geometry_options &options), (const, noexcept, override));
     MOCK_METHOD(void, set_color, (const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a),
                 (const, noexcept, override));

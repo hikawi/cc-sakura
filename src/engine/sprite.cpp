@@ -177,7 +177,7 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
 
 void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin) const noexcept
 {
-    sdl::texture_render_options opts(*m_texture.get());
+    sdl::render_texture_options opts(renderer, *m_texture.get());
     opts.dst(pos).render_origin(origin);
     renderer.render_texture(opts);
 }
