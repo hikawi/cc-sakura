@@ -1,5 +1,6 @@
 #include "engine/engine.h"
 
+#include "engine/matrix.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"

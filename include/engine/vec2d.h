@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <format>
 #include <numbers>
@@ -19,8 +20,8 @@ namespace ccsakura
  */
 struct vec2d
 {
-    double x; ///< the x component
-    double y; ///< the y component
+    double x; ///< the x component, left -x and right +x
+    double y; ///< the y component, down -y and up +y
 
     /**
      * Constructs a default zero vector.
@@ -37,24 +38,6 @@ struct vec2d
      */
     constexpr vec2d(const double x, const double y) noexcept : x(x), y(y)
     {
-    }
-
-    /**
-     * Constructs a vector2d from a copy.
-     *
-     * \param other the other to copy from
-     */
-    constexpr vec2d(const vec2d &other) noexcept
-    {
-        x = other.x;
-        y = other.y;
-    }
-
-    constexpr vec2d &operator=(const vec2d &other) noexcept
-    {
-        x = other.x;
-        y = other.y;
-        return *this;
     }
 
     /**
@@ -176,6 +159,35 @@ struct vec2d
     }
 
     /**
+     * Computes the component-wise minimum of two vectors.
+     *
+     * \param other the other vector to min() with
+     * \return the minimum vector
+     */
+    constexpr vec2d min(const vec2d &other) const noexcept
+    {
+        return vec2d(std::min(x, other.x), std::min(y, other.y));
+    }
+
+    /**
+     * Computes the component-wise maximum of two vectors.
+     *
+     * \param other the other vector to max() with
+     * \return the maximum vector
+     */
+    constexpr vec2d max(const vec2d &other) const noexcept
+    {
+        return vec2d(std::max(x, other.x), std::max(y, other.y));
+    }
+
+    /**
+     * Retrieves the component-wise absolute value vector.
+     *
+     * \return an absolute value vector
+     */
+    vec2d abs() const noexcept;
+
+    /**
      * Checks if two vectors are equal.
      *
      * \param rhs the vector to check against
@@ -248,18 +260,6 @@ struct vec2d
     }
 
     /**
-     * Computes the linear interpretation between two vectors.
-     *
-     * \param rhs the other point to get to
-     * \param t the progress time
-     * \returns a new interpolated vector
-     */
-    [[nodiscard]] constexpr vec2d lerp(const vec2d &rhs, const double t) const noexcept
-    {
-        return vec2d(std::lerp(x, rhs.x, t), std::lerp(y, rhs.y, t));
-    }
-
-    /**
      * Computes the rotated vector from this vector at a certain angle.
      *
      * \param theta the angle in radians
@@ -287,49 +287,9 @@ struct vec2d
      *
      * \returns a new rotated vector
      */
-    [[nodiscard]] constexpr vec2d perpendicular() const noexcept
+    [[nodiscard]] constexpr vec2d orthogonal() const noexcept
     {
         return rotated(std::numbers::pi / 2);
-    }
-
-    /**
-     * Creates a simple zero vector.
-     *
-     * \returns a zero vector.
-     */
-    static constexpr vec2d zero() noexcept
-    {
-        return vec2d(0, 0);
-    }
-
-    /**
-     * Computes a one vector in both directions
-     *
-     * \returns a one vector
-     */
-    static constexpr vec2d one() noexcept
-    {
-        return vec2d(1, 1);
-    }
-
-    /**
-     * Creates a unit vector in the X direction.
-     *
-     * \returns a unit x vector
-     */
-    static constexpr vec2d unit_x() noexcept
-    {
-        return vec2d(1, 0);
-    }
-
-    /**
-     * Creates a unit vector in the Y direction.
-     *
-     * \returns a unit y vector
-     */
-    static constexpr vec2d unit_y() noexcept
-    {
-        return vec2d(0, 1);
     }
 };
 
@@ -343,6 +303,15 @@ struct vec2d
  */
 vec2d closest_point_on_segment(const vec2d a, const vec2d b, const vec2d p) noexcept;
 
+/**
+ * Calculates the closest points that belong on two segments made by p1-p2 and q1-q2,
+ * so that the points' distance is also the shortest distance between P segment and Q segment.
+ *
+ * \param p1 first point of first segment
+ * \param p2 second point of first segment
+ * \param q1 first point of second segment
+ * \param q2 second point of second segment
+ */
 std::pair<vec2d, vec2d> closest_points_between_segments(const vec2d p1, const vec2d p2, const vec2d q1,
                                                         const vec2d q2) noexcept;
 

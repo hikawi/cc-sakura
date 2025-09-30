@@ -1,5 +1,5 @@
 #include "engine/colllision.h"
-#include "engine/vec3d.h"
+#include "engine/vec2d.h"
 #include "sdl/sdl_log.h"
 #include "utils.h"
 
@@ -20,14 +20,14 @@ void collider::set_color(const float r, const float g, const float b, const floa
 
 // ========================================
 
-aabb_collider::aabb_collider(const vec3d center, const vec3d dims) : m_center(center), m_dims(dims)
+aabb_collider::aabb_collider(const vec2d center, const vec2d extents) : m_center(center), m_extents(extents)
 {
-    if (dims != dims.abs())
+    if (extents.x <= 0 || extents.y <= 0)
     {
-        sdl::log_critical("Dimensions for an AABB Collider are not positive: {}", dims);
-        throw std::invalid_argument("Dimensions for an AABB Collider must be positive");
+        sdl::log_critical("Half-extents for an AABB Collider are not positive: {}", extents);
+        throw std::invalid_argument("Half-extents for an AABB Collider must be positive");
     }
-    sdl::log_verbose("ccsakura::aabb_collider constructed at {} dimensions {}", center, dims);
+    sdl::log_verbose("ccsakura::aabb_collider constructed at {} half-extents {}", center, extents);
 }
 
 collision aabb_collider::collides(const collider &other) const noexcept
@@ -40,35 +40,32 @@ collision aabb_collider::collides(const collider &other) const noexcept
 collision aabb_collider::collides_with(const aabb_collider &aabb) const noexcept
 {
     // 1. Find the distance between two centers.
-    vec3d d = (aabb.m_center - m_center).abs();
+    vec2d d = aabb.m_center - m_center;
+    vec2d abs_d(std::abs(d.x), std::abs(d.y));
 
     // 2. Find the tolerated distance before collision.
-    vec3d e = (m_dims + aabb.m_dims) / 2;
+    vec2d e = m_extents + aabb.m_extents;
 
     // 3. It only collides if all of the extents are in the range.
-    if (d.x >= e.x || d.y >= e.y || d.z >= e.z)
+    if (abs_d.x > e.x || abs_d.y > e.y)
     {
-        return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+        return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
     }
 
-    collision info = {.is_colliding = true, .depth = 0, .normal = {0, 0, 0}};
-    vec3d s = e - d;
+    collision info = {.is_colliding = true, .depth = 0, .normal = {0, 0}};
+    vec2d s = e - abs_d;
 
     // 4. The penetration depth is the minimum of s's components.
-    info.depth = std::min(std::min(s.x, s.y), s.z);
+    info.depth = std::min(s.x, s.y);
 
     // 5. The normal depends on which of the minimum it was, and which way to flip.
-    if (double_equal(s.x, info.depth))
+    if (s.x < s.y)
     {
-        info.normal = aabb.m_center.x > m_center.x ? vec3d(1, 0, 0) : vec3d(-1, 0, 0);
-    }
-    else if (double_equal(s.y, info.depth))
-    {
-        info.normal = aabb.m_center.y > m_center.y ? vec3d(0, 1, 0) : vec3d(0, -1, 0);
+        info.normal = d.x > 0 ? vec2d(1, 0) : vec2d(-1, 0);
     }
     else
     {
-        info.normal = aabb.m_center.z > m_center.z ? vec3d(0, 0, 1) : vec3d(0, 0, -1);
+        info.normal = d.y > 0 ? vec2d(0, 1) : vec2d(0, -1);
     }
 
     return info;
@@ -76,21 +73,20 @@ collision aabb_collider::collides_with(const aabb_collider &aabb) const noexcept
 
 collision aabb_collider::collides_with(const obb_collider &obb) const noexcept
 {
-    std::array<vec3d, 3> axes({vec3d(1, 0, 0), vec3d(0, 1, 0), vec3d(0, 0, 1)});
-    obb_collider self(m_center, axes, m_dims);
+    obb_collider self(m_center, m_extents, 0);
     return self.collides_with(obb);
 }
 
-collision aabb_collider::collides_with(const sphere_collider &circle) const noexcept
+collision aabb_collider::collides_with(const circle_collider &circle) const noexcept
 {
-    collision info = {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+    collision info = {.is_colliding = false, .depth = 0, .normal = {0, 0}};
 
     // First, we clamp to find the closest point on the AABB to the circle.
-    vec3d closest_p = closest_point_to(circle.m_center);
+    vec2d closest_p = closest_point_to(circle.m_center);
 
     // The collision happens when D < R
-    vec3d d = circle.m_center - closest_p;
-    if (d.length_squared() >= circle.m_radius * circle.m_radius)
+    vec2d d = circle.m_center - closest_p;
+    if (d.length_squared() > circle.m_radius * circle.m_radius)
     {
         return info;
     }
@@ -109,13 +105,11 @@ collision aabb_collider::collides_with(const sphere_collider &circle) const noex
     // Length is 0 case. Which means the circle center is inside the AABB.
     // We need to find the closest surface of the AABB to throw the circle in that direction.
     // First, we write out all of the unit vectors in all direction.
-    std::array<std::tuple<double, vec3d>, 6> arr;
-    arr[0] = {circle.m_center.x - (m_center.x - m_dims.x / 2), vec3d(-1, 0, 0)}; // -x
-    arr[1] = {(m_center.x + m_dims.x / 2) - circle.m_center.x, vec3d(1, 0, 0)};  // +x
-    arr[2] = {circle.m_center.y - (m_center.y - m_dims.y / 2), vec3d(0, -1, 0)}; // -y
-    arr[3] = {(m_center.y + m_dims.y / 2) - circle.m_center.y, vec3d(0, 1, 0)};  // +y
-    arr[4] = {circle.m_center.z - (m_center.z - m_dims.z / 2), vec3d(0, 0, -1)}; // -z
-    arr[5] = {(m_center.z + m_dims.z / 2) - circle.m_center.z, vec3d(0, 0, 1)};  // +z
+    std::array<std::tuple<double, vec2d>, 4> arr;
+    arr[0] = {circle.m_center.x - (m_center.x - m_extents.x), vec2d(-1, 0)}; // -x
+    arr[1] = {(m_center.x + m_extents.x) - circle.m_center.x, vec2d(1, 0)};  // +x
+    arr[2] = {circle.m_center.y - (m_center.y - m_extents.y), vec2d(0, -1)}; // -y
+    arr[3] = {(m_center.y + m_extents.y) - circle.m_center.y, vec2d(0, 1)};  // +y
 
     // Then, we look for the minimum.
     auto min_val = std::min_element(arr.begin(), arr.end(),
@@ -128,19 +122,19 @@ collision aabb_collider::collides_with(const sphere_collider &circle) const noex
 collision aabb_collider::collides_with(const capsule_collider &capsule) const noexcept
 {
     // Step 1. Find the closest point on the capsule to the AABB center.
-    vec3d p = capsule.closest_point_to(m_center);
+    vec2d p = capsule.closest_point_to(m_center);
 
     // Step 2. Find the closest point on the AABB that is the closest to
     // that representative point.
-    vec3d q = closest_point_to(p);
+    vec2d q = closest_point_to(p);
 
     // Step 3. Collision happens when the distance between p and q <= c2.r
     // P is on the capsule, Q is on the AABB. To direct away from the AABB, we
     // take p - q (end - start).
-    vec3d d = p - q;
-    if (d.length_squared() >= capsule.m_radius * capsule.m_radius)
+    vec2d d = p - q;
+    if (d.length_squared() > capsule.m_radius * capsule.m_radius)
     {
-        return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+        return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
     }
 
     // Step 4. Calculate normal and penetration depth. Two cases.
@@ -149,7 +143,7 @@ collision aabb_collider::collides_with(const capsule_collider &capsule) const no
     if (double_equal(d.length_squared(), 0))
     {
         // この場合なら丸型とAABBの衝突と同じ
-        sphere_collider other(p, capsule.m_radius);
+        circle_collider other(p, capsule.m_radius);
         return this->collides_with(other);
     }
 
@@ -157,17 +151,16 @@ collision aabb_collider::collides_with(const capsule_collider &capsule) const no
     return {.is_colliding = true, .depth = capsule.m_radius - d.length(), .normal = d.normalized()};
 }
 
-void aabb_collider::shift(const vec3d dir) noexcept
+void aabb_collider::shift(const vec2d dir) noexcept
 {
     m_center += dir;
 }
 
-vec3d aabb_collider::closest_point_to(const vec3d p) const noexcept
+vec2d aabb_collider::closest_point_to(const vec2d p) const noexcept
 {
-    ccsakura::vec3d q;
-    q.x = std::clamp(p.x, m_center.x - m_dims.x / 2, m_center.x + m_dims.x / 2);
-    q.y = std::clamp(p.y, m_center.y - m_dims.y / 2, m_center.y + m_dims.y / 2);
-    q.z = std::clamp(p.z, m_center.z - m_dims.z / 2, m_center.z + m_dims.z / 2);
+    ccsakura::vec2d q;
+    q.x = std::clamp(p.x, m_center.x - m_extents.x, m_center.x + m_extents.x);
+    q.y = std::clamp(p.y, m_center.y - m_extents.y, m_center.y + m_extents.y);
     return q;
 }
 
@@ -178,24 +171,17 @@ aabb_collider::~aabb_collider()
 
 // ==============================================
 
-obb_collider::obb_collider(const vec3d center, const std::array<vec3d, 3> axes, const vec3d dims)
-    : m_center(center), m_dims(dims)
+obb_collider::obb_collider(const vec2d center, const vec2d extents, const double angle)
+    : m_center(center), m_extents(extents), m_angle(angle)
 {
-    if (!double_equal(axes[0].dot(axes[1]), 0) || !double_equal(axes[1].dot(axes[2]), 0) ||
-        !double_equal(axes[0].dot(axes[2]), 0))
+    if (extents.x <= 0 || extents.y <= 0)
     {
-        sdl::log_critical("Axes of an OBB Collider must be orthogonal");
-        throw std::invalid_argument("Axes of an OBB Collider must be orthogonal");
-    }
-    if (dims != dims.abs())
-    {
-        sdl::log_critical("Dimensions for an OBB Collider are not positive: {}", dims);
-        throw std::invalid_argument("Dimensions for an OBB Collider must be positive");
+        sdl::log_critical("Half-extents for an OBB Collider are not positive: {}", extents);
+        throw std::invalid_argument("Half-extents for an OBB Collider must be positive");
     }
 
-    std::copy(axes.begin(), axes.end(), m_axes.begin());
-    sdl::log_verbose("ccsakura::obb_collider constructed at {} with axes {},{},{} size {}", m_center, axes[0], axes[1],
-                     axes[2], m_dims);
+    sdl::log_verbose("ccsakura::obb_collider constructed at {} with extents {} angled {}", m_center, m_extents,
+                     m_angle);
 }
 
 collision obb_collider::collides(const collider &other) const noexcept
@@ -207,8 +193,7 @@ collision obb_collider::collides(const collider &other) const noexcept
 
 collision obb_collider::collides_with(const aabb_collider &aabb) const noexcept
 {
-    std::array<vec3d, 3> axes({vec3d(1, 0, 0), vec3d(0, 1, 0), vec3d(0, 0, 1)});
-    obb_collider other(aabb.m_center, axes, aabb.m_dims);
+    obb_collider other(aabb.m_center, aabb.m_extents, 0);
     return this->collides_with(other);
 }
 
@@ -216,33 +201,22 @@ collision obb_collider::collides_with(const obb_collider &obb) const noexcept
 {
     // Step 1. Get some data for the local axes in each OBB. We're using
     // the Separating Axis Theorem. Calculate the local axes for each OBB.
-    // 3 local axes of A, 3 local axes of B, 3x3 = 9 axes of outside edges, total 15
-    std::array<vec3d, 15> axes;
-    std::copy(m_axes.begin(), m_axes.end(), axes.begin());
-    std::copy(obb.m_axes.begin(), obb.m_axes.end(), axes.begin() + 3);
-    for (size_t i = 6; i < 15; i++)
-    {
-        // So this takes combinations of the thing and compute each:
-        // axes[6] = axes[0].cross(axes[3]);
-        // axes[7] = axes[0].cross(axes[4]);
-        // ... and so, on
-        axes[i] = axes[(i - 6) / 3].cross(axes[i % 3 + 3]);
-        if (axes[i].length_squared() > 0)
-        {
-            axes[i] = axes[i].normalized();
-        }
-    }
+    std::array<vec2d, 4> axes;
+    axes[0] = vec2d(std::cos(m_angle), std::sin(m_angle));
+    axes[1] = vec2d(-std::sin(m_angle), std::cos(m_angle));
+    axes[2] = vec2d(std::cos(obb.m_angle), std::sin(obb.m_angle));
+    axes[3] = vec2d(-std::sin(obb.m_angle), std::cos(obb.m_angle));
 
     // Step 2. Find the vector that crosses the two centers.
-    vec3d d = obb.m_center - m_center;
+    vec2d d = obb.m_center - m_center;
 
     // Step 3. For each local axes, project all of them onto each other.
     double min_overlap = std::numeric_limits<double>::infinity();
-    vec3d min_axis = {0, 0, 0};
+    vec2d min_axis = {0, 0};
 
-    for (size_t i = 0; i < 15; i++)
+    for (size_t i = 0; i < axes.size(); i++)
     {
-        vec3d l = axes[i];
+        vec2d l = axes[i];
         if (double_equal(l.length_squared(), 0))
         {
             continue; // skip on 0-length axes
@@ -253,8 +227,8 @@ collision obb_collider::collides_with(const obb_collider &obb) const noexcept
         double cb = obb.m_center.dot(l);
 
         // Project the OBB's radius or extents on the local axis
-        double ra = vec3d(m_axes[0].dot(l), m_axes[1].dot(l), m_axes[2].dot(l)).abs().dot(m_dims / 2);
-        double rb = vec3d(obb.m_axes[0].dot(l), obb.m_axes[1].dot(l), obb.m_axes[2].dot(l)).abs().dot(obb.m_dims / 2);
+        double ra = vec2d(axes[0].dot(l), axes[1].dot(l)).abs().dot(m_extents);
+        double rb = vec2d(axes[2].dot(l), axes[3].dot(l)).abs().dot(obb.m_extents);
 
         double dist = std::abs(cb - ca);
         double overlap = ra + rb - dist;
@@ -262,7 +236,7 @@ collision obb_collider::collides_with(const obb_collider &obb) const noexcept
         // 分離軸みっけ
         if (overlap < 0)
         {
-            return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+            return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
         }
 
         if (overlap < min_overlap)
@@ -276,26 +250,22 @@ collision obb_collider::collides_with(const obb_collider &obb) const noexcept
     return {.is_colliding = true, .depth = min_overlap, .normal = min_axis.normalized()};
 }
 
-collision obb_collider::collides_with(const sphere_collider &circle) const noexcept
+collision obb_collider::collides_with(const circle_collider &circle) const noexcept
 {
     // Step 1. Transform the circle into local coordinate space
-    vec3d d = circle.m_center - m_center;
-    vec3d local_center(d.dot(m_axes[0]), d.dot(m_axes[1]), d.dot(m_axes[2]));
+    vec2d d = circle.m_center - m_center;
+    vec2d local_center = d.rotated(-m_angle);
 
     // Step 2. Treat the OBB as an AABB and check collisions.
     // The OBB is IN THE ORIGIN in its own coordinate space.
-    aabb_collider self({0, 0, 0}, m_dims);
-    sphere_collider new_circ(local_center, circle.m_radius);
+    aabb_collider self({0, 0}, m_extents);
+    circle_collider new_circ(local_center, circle.m_radius);
 
     // Step 3. Translate back.
     collision info = self.collides_with(new_circ);
     if (info.is_colliding)
     {
-        vec3d rotated_normal = m_axes[0] * info.normal.x + m_axes[1] * info.normal.y + m_axes[2] * info.normal.z;
-        if (rotated_normal.length_squared() > 0)
-        {
-            info.normal = rotated_normal.normalized();
-        }
+        info.normal = info.normal.rotated(m_angle);
     }
 
     return info;
@@ -304,31 +274,26 @@ collision obb_collider::collides_with(const sphere_collider &circle) const noexc
 collision obb_collider::collides_with(const capsule_collider &capsule) const noexcept
 {
     // Step 1. Rotate the capsule into OBB's local coordinate space.
-    vec3d d1 = capsule.m_p1 - m_center;
-    vec3d local_p1(d1.dot(m_axes[0]), d1.dot(m_axes[1]), d1.dot(m_axes[2]));
-
-    vec3d d2 = capsule.m_p2 - m_center;
-    vec3d local_p2(d2.dot(m_axes[0]), d2.dot(m_axes[1]), d2.dot(m_axes[2]));
+    double angle_sin = std::sin(-m_angle);
+    double angle_cos = std::cos(-m_angle);
+    vec2d local_p1 = (capsule.m_p1 - m_center).rotated_sincos(angle_sin, angle_cos);
+    vec2d local_p2 = (capsule.m_p2 - m_center).rotated_sincos(angle_sin, angle_cos);
 
     // Step 2. Treat the OBB as an AABB and the new rotated capsule.
-    aabb_collider self({0, 0, 0}, m_dims);
+    aabb_collider self({0, 0}, m_extents);
     capsule_collider cap_tl(local_p1, local_p2, capsule.m_radius);
 
     // Step 3. Check collision, and transform back if needed.
     collision info = self.collides_with(cap_tl);
     if (info.is_colliding)
     {
-        vec3d rotated = m_axes[0] * info.normal.x + m_axes[1] * info.normal.y + m_axes[2] * info.normal.z;
-        if (rotated.length_squared() > 0)
-        {
-            info.normal = rotated.normalized();
-        }
+        info.normal = info.normal.rotated(m_angle);
     }
 
     return info;
 }
 
-void obb_collider::shift(const vec3d dir) noexcept
+void obb_collider::shift(const vec2d dir) noexcept
 {
     m_center += dir;
 }
@@ -340,7 +305,7 @@ obb_collider::~obb_collider()
 
 // ==============================================
 
-sphere_collider::sphere_collider(const vec3d center, const double radius) : m_center(center), m_radius(radius)
+circle_collider::circle_collider(const vec2d center, const double radius) : m_center(center), m_radius(radius)
 {
     if (radius <= 0)
     {
@@ -350,43 +315,43 @@ sphere_collider::sphere_collider(const vec3d center, const double radius) : m_ce
     sdl::log_verbose("ccsakura::circle_collider constructed with {} with r = {}", center, radius);
 }
 
-collision sphere_collider::collides(const collider &other) const noexcept
+collision circle_collider::collides(const collider &other) const noexcept
 {
     collision info = other.collides_with(*this);
     info.normal = -info.normal;
     return info;
 }
 
-collision sphere_collider::collides_with(const aabb_collider &aabb) const noexcept
+collision circle_collider::collides_with(const aabb_collider &aabb) const noexcept
 {
     collision info = aabb.collides_with(*this);
     info.normal = -info.normal;
     return info;
 }
 
-collision sphere_collider::collides_with(const obb_collider &obb) const noexcept
+collision circle_collider::collides_with(const obb_collider &obb) const noexcept
 {
     collision info = obb.collides_with(*this);
     info.normal = -info.normal;
     return info;
 }
 
-collision sphere_collider::collides_with(const sphere_collider &circle) const noexcept
+collision circle_collider::collides_with(const circle_collider &circle) const noexcept
 {
     // Two circles collide when the distance between their centers are
     // lower than the sum of their radii.
     // But we calculate it as a vector that points outwards from c1, we take c2 - c1.
-    vec3d d = circle.m_center - m_center;
-    if (d.length_squared() >= std::pow(m_radius + circle.m_radius, 2))
+    vec2d d = circle.m_center - m_center;
+    if (d.length_squared() > std::pow(m_radius + circle.m_radius, 2))
     {
-        return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+        return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
     }
 
     // If the distance is 0, somehow, then we just push randomly up, then they overlap at center.
     // We just push in an arbitrary direction (up)
     if (double_equal(d.length_squared(), 0))
     {
-        return {.is_colliding = true, .depth = m_radius + circle.m_radius, .normal = {0, 0, -1}};
+        return {.is_colliding = true, .depth = m_radius + circle.m_radius, .normal = {0, 1}};
     }
 
     // Now it's colliding.
@@ -398,26 +363,26 @@ collision sphere_collider::collides_with(const sphere_collider &circle) const no
     return {.is_colliding = true, .depth = circle.m_radius + m_radius - dist, .normal = d / dist};
 }
 
-collision sphere_collider::collides_with(const capsule_collider &capsule) const noexcept
+collision circle_collider::collides_with(const capsule_collider &capsule) const noexcept
 {
     // Special case: degenerate capsule, treat like a sphere
     if (capsule.m_p1 == capsule.m_p2)
     {
-        vec3d center = (capsule.m_p1 + capsule.m_p2) / 2;
-        sphere_collider circle(center, capsule.m_radius);
+        vec2d center = (capsule.m_p1 + capsule.m_p2) / 2;
+        circle_collider circle(center, capsule.m_radius);
         return collides_with(circle);
     }
 
     // Step 1. Find the closest point on the capsule closest to the circle's
     // center.
-    vec3d p = capsule.closest_point_to(m_center);
+    vec2d p = capsule.closest_point_to(m_center);
 
     // Step 2. Calculate the distance between the capsule's segment and the center.
-    vec3d d = p - m_center;
+    vec2d d = p - m_center;
     double dist = d.length();
-    if (dist >= m_radius + capsule.m_radius)
+    if (dist > m_radius + capsule.m_radius)
     {
-        return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+        return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
     }
 
     // Step 3. Calculate collision normal.
@@ -425,35 +390,35 @@ collision sphere_collider::collides_with(const capsule_collider &capsule) const 
     {
         // If length is close enough to 0, the center of the circle is on
         // the capsule's segment.
-        vec3d normal = capsule.m_p2 - capsule.m_p1;
+        vec2d normal = capsule.m_p2 - capsule.m_p1;
         return {.is_colliding = true, .depth = m_radius + capsule.m_radius, .normal = normal.orthogonal().normalized()};
     }
 
     return {.is_colliding = true, .depth = m_radius + capsule.m_radius - dist, .normal = d / dist};
 }
 
-void sphere_collider::shift(const vec3d dir) noexcept
+void circle_collider::shift(const vec2d dir) noexcept
 {
     m_center += dir;
 }
 
-sphere_collider::~sphere_collider()
+circle_collider::~circle_collider()
 {
     sdl::log_verbose("ccsakura::circle_collider destroyed");
 }
 
 // ==============================================
 
-capsule_collider::capsule_collider(const vec3d p1, const vec3d p2, const double radius)
+capsule_collider::capsule_collider(const vec2d p1, const vec2d p2, const double radius)
     : m_p1(p1), m_p2(p2), m_radius(radius)
 {
     if (radius < 0)
     {
-        sdl::log_verbose("Capsule collider can't be created with negative radius: {}", radius);
+        sdl::log_critical("Capsule collider can't be created with negative radius: {}", radius);
         throw std::invalid_argument("Capsule collider can't be created with negative radius");
     }
 
-    sdl::log_trace("ccsakura::capsule_collider with segment {}-{} with r = {}", p1, p2, radius);
+    sdl::log_verbose("ccsakura::capsule_collider with segment {}-{} with r = {}", p1, p2, radius);
 }
 
 collision capsule_collider::collides(const collider &other) const noexcept
@@ -477,7 +442,7 @@ collision capsule_collider::collides_with(const obb_collider &obb) const noexcep
     return info;
 }
 
-collision capsule_collider::collides_with(const sphere_collider &circle) const noexcept
+collision capsule_collider::collides_with(const circle_collider &circle) const noexcept
 {
     collision info = circle.collides_with(*this);
     info.normal = -info.normal;
@@ -486,34 +451,40 @@ collision capsule_collider::collides_with(const sphere_collider &circle) const n
 
 collision capsule_collider::collides_with(const capsule_collider &capsule) const noexcept
 {
+    if (capsule.m_p1 == capsule.m_p2)
+    {
+        circle_collider other(capsule.m_p1, capsule.m_radius);
+        return collides_with(other);
+    }
+
     // 1. Find a set of points that are the closest between two segments.
     auto [self_best, other_best] = closest_points_between_segments(m_p1, m_p2, capsule.m_p1, capsule.m_p2);
-    vec3d d = other_best - self_best;
+    vec2d d = other_best - self_best;
     double dist = d.length();
 
     // 2. If distance is greater, no collision happens.
-    if (dist >= m_radius + capsule.m_radius)
+    if (dist > m_radius + capsule.m_radius)
     {
-        return {.is_colliding = false, .depth = 0, .normal = {0, 0, 0}};
+        return {.is_colliding = false, .depth = 0, .normal = {0, 0}};
     }
 
     // 3. Collision.
     if (double_equal(dist, 0))
     {
-        vec3d norm = (capsule.m_p2 - capsule.m_p1).cross(m_p2 - m_p1).normalized();
+        vec2d norm = (capsule.m_p2 - capsule.m_p1).orthogonal().normalized();
         return {.is_colliding = true, .depth = m_radius + capsule.m_radius - dist, .normal = norm};
     }
 
     return {.is_colliding = true, .depth = m_radius + capsule.m_radius - dist, .normal = d / dist};
 }
 
-void capsule_collider::shift(const vec3d dir) noexcept
+void capsule_collider::shift(const vec2d dir) noexcept
 {
     m_p1 += dir;
     m_p2 += dir;
 }
 
-vec3d capsule_collider::closest_point_to(const vec3d p) const noexcept
+vec2d capsule_collider::closest_point_to(const vec2d p) const noexcept
 {
     return closest_point_on_segment(m_p1, m_p2, p);
 }
