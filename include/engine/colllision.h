@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "engine/vec3d.h"
+#include "engine/vec2d.h"
 #include "sdl/sdl_pixels.h"
 
 #include <array>
@@ -22,7 +22,7 @@ struct collision
 {
     bool is_colliding = false; ///< if the collision is happening
     double depth = 0;          ///< how far are the colliders in each other
-    vec3d normal;              ///< the normal vector pointing towards the shortest direction to resolve the collision
+    vec2d normal;              ///< the normal vector pointing towards the shortest direction to resolve the collision
 };
 
 /**
@@ -48,11 +48,11 @@ class aabb_collider;
 class obb_collider;
 
 /**
- * A sphere collider.
+ * A circle collider.
  *
  * This is one of the primitive types of colliders, and should be used for round objects.
  */
-class sphere_collider;
+class circle_collider;
 
 /**
  * A capsule collider.
@@ -107,7 +107,7 @@ class collider
      * \param circle the other circle collider
      * \returns the collision information
      */
-    virtual collision collides_with(const sphere_collider &circle) const noexcept = 0;
+    virtual collision collides_with(const circle_collider &circle) const noexcept = 0;
 
     /**
      * Checks for collisions against a Capsule collider.
@@ -122,7 +122,7 @@ class collider
      *
      * \param dir the direction to move in
      */
-    virtual void shift(const vec3d dir) noexcept = 0;
+    virtual void shift(const vec2d dir) noexcept = 0;
 
   protected:
     sdl::fcolor m_color = {0, 0, 0.5f, 0.3f}; ///< the color to render the collider with
@@ -135,17 +135,17 @@ class aabb_collider : public collider
      * Constructs an AABB collider.
      *
      * \param center the center point of the AABB collider
-     * \param dims the dimensions of the axes of the collider
+     * \param extents the half-widths of the axes of the collider
      */
-    aabb_collider(const vec3d center, const vec3d dims);
+    aabb_collider(const vec2d center, const vec2d extents);
     ~aabb_collider();
 
     collision collides(const collider &other) const noexcept override;
     collision collides_with(const aabb_collider &aabb) const noexcept override;
     collision collides_with(const obb_collider &obb) const noexcept override;
-    collision collides_with(const sphere_collider &circle) const noexcept override;
+    collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
-    void shift(const vec3d dir) noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     /**
      * Retrieves the closest point on the AABB that is the closest to the provided point P.
@@ -153,15 +153,15 @@ class aabb_collider : public collider
      * \param p the pointer to check against
      * \returns the point on the aabb closest to p
      */
-    vec3d closest_point_to(const vec3d p) const noexcept;
+    vec2d closest_point_to(const vec2d p) const noexcept;
 
     friend class obb_collider;
-    friend class sphere_collider;
+    friend class circle_collider;
     friend class capsule_collider;
 
   private:
-    vec3d m_center;
-    vec3d m_dims;
+    vec2d m_center;
+    vec2d m_extents;
 };
 
 class obb_collider : public collider
@@ -170,55 +170,55 @@ class obb_collider : public collider
     /**
      * Constructs an OBB collider.
      *
-     * \param center the center point of the AABB collider
-     * \param axes the axes of the obb collider
-     * \param dims the dimensions of the axes of the collider
+     * \param center the center point of the OBB collider
+     * \param extents the half extents of the OBB
+     * \param angle the angle of the collider along with the x axis
      */
-    obb_collider(const vec3d center, const std::array<vec3d, 3> axes, const vec3d dims);
+    obb_collider(const vec2d center, const vec2d extents, double angle);
     ~obb_collider();
 
     collision collides(const collider &other) const noexcept override;
     collision collides_with(const aabb_collider &aabb) const noexcept override;
     collision collides_with(const obb_collider &obb) const noexcept override;
-    collision collides_with(const sphere_collider &circle) const noexcept override;
+    collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
-    void shift(const vec3d dir) noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     friend class aabb_collider;
-    friend class sphere_collider;
+    friend class circle_collider;
     friend class capsule_collider;
 
   private:
-    vec3d m_center;
-    std::array<vec3d, 3> m_axes;
-    vec3d m_dims;
+    vec2d m_center;
+    vec2d m_extents;
+    double m_angle;
 };
 
-class sphere_collider : public collider
+class circle_collider : public collider
 {
   public:
     /**
-     * Constructs a Sphere collider.
+     * Constructs a circle collider.
      *
      * \param center the center point of the collider
      * \param radius the radius of the circle
      */
-    sphere_collider(const vec3d center, const double radius);
-    ~sphere_collider();
+    circle_collider(const vec2d center, const double radius);
+    ~circle_collider();
 
     collision collides(const collider &other) const noexcept override;
     collision collides_with(const aabb_collider &aabb) const noexcept override;
     collision collides_with(const obb_collider &obb) const noexcept override;
-    collision collides_with(const sphere_collider &circle) const noexcept override;
+    collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
-    void shift(const vec3d dir) noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     friend class aabb_collider;
     friend class obb_collider;
     friend class capsule_collider;
 
   private:
-    vec3d m_center;
+    vec2d m_center;
     double m_radius;
 };
 
@@ -232,15 +232,15 @@ class capsule_collider : public collider
      * \param p2 another endpoint of the collider shaft
      * \param radius the radius of the collider
      */
-    capsule_collider(const vec3d p1, const vec3d p2, const double radius);
+    capsule_collider(const vec2d p1, const vec2d p2, const double radius);
     ~capsule_collider();
 
     collision collides(const collider &other) const noexcept override;
     collision collides_with(const aabb_collider &aabb) const noexcept override;
     collision collides_with(const obb_collider &obb) const noexcept override;
-    collision collides_with(const sphere_collider &circle) const noexcept override;
+    collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
-    void shift(const vec3d dir) noexcept override;
+    void shift(const vec2d dir) noexcept override;
 
     /**
      * Calculates the closest point on this capsule's segment to the provided point.
@@ -248,15 +248,15 @@ class capsule_collider : public collider
      * \param p the point to calculate towards
      * \returns the closest point on the segment to the point p
      */
-    vec3d closest_point_to(const vec3d p) const noexcept;
+    vec2d closest_point_to(const vec2d p) const noexcept;
 
     friend class aabb_collider;
     friend class obb_collider;
-    friend class sphere_collider;
+    friend class circle_collider;
 
   private:
-    vec3d m_p1;
-    vec3d m_p2;
+    vec2d m_p1;
+    vec2d m_p2;
     double m_radius;
 };
 

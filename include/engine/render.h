@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "engine/matrix.h"
+#include "engine/vec3d.h"
 #include "sdl/sdl_rect.h"
 
 namespace ccsakura
@@ -28,6 +30,34 @@ enum class render_origin
     bottom_left,
     bottom_center,
     bottom_right,
+};
+
+enum class projection
+{
+    orthographic,
+    perspective,
+};
+
+struct quaternion
+{
+    double w;
+    double x;
+    double y;
+    double z;
+};
+
+struct camera
+{
+    vec3d position;
+    quaternion rotation;
+    projection projection_type;
+
+    double fov;
+    double aspect_ratio;
+    double near_plane;
+    double far_plane;
+
+    matrix<4, 4> view_projection_matrix() const noexcept;
 };
 
 /**

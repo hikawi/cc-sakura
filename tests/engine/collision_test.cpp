@@ -1,185 +1,255 @@
 #include "engine/colllision.h"
-#include "engine/vec3d.h"
+#include "engine/vec2d.h"
 #include "extensions/gtest_exts.h"
 
 #include <gtest/gtest.h>
 #include <stdexcept>
 
-constexpr std::array<ccsakura::vec3d, 3> identity_axes = {{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}};
-
-TEST(AABBCollider, FailsWithNegativeDims)
+TEST(AABBCollider, FailsWithNegativeExtents)
 {
-    EXPECT_THROW(ccsakura::aabb_collider a({0, 0, 0}, {-1, -1, 2}), std::invalid_argument);
+    ASSERT_THROW(ccsakura::aabb_collider({0, 0}, {-1, -1}), std::invalid_argument);
 }
 
-TEST(OBBCollider, FailsWithNonOrthogonalAxes)
+TEST(OBBCollider, FailsWithNegativeExtents)
 {
-    std::array<ccsakura::vec3d, 3> axes({{1, 0, 0}, {0, 1, 1}, {0, 0, 1}});
-    EXPECT_THROW(ccsakura::obb_collider a({0, 0, 0}, axes, {2, 2, 2}), std::invalid_argument);
+    ASSERT_THROW(ccsakura::obb_collider({0, 0}, {-1, -1}, 0), std::invalid_argument);
 }
 
-TEST(OBBCollider, FailsWithNegativeDims)
+TEST(CircleCollider, FailsWithNegativeRadius)
 {
-    EXPECT_THROW(ccsakura::obb_collider a({0, 0, 0}, identity_axes, {-2, -3, 2.5}), std::invalid_argument);
-}
-
-TEST(SphereCollider, FailsWithNegativeRadius)
-{
-    EXPECT_THROW(ccsakura::sphere_collider({0, 0, 0}, -3), std::invalid_argument);
+    ASSERT_THROW(ccsakura::circle_collider({0, 0}, -1), std::invalid_argument);
 }
 
 TEST(CapsuleCollider, FailsWithNegativeRadius)
 {
-    EXPECT_THROW(ccsakura::capsule_collider({0, 0, 0}, {0, 0, 1}, -3), std::invalid_argument);
+    ASSERT_THROW(ccsakura::capsule_collider({0, 0}, {5, 0}, -2), std::invalid_argument);
 }
 
-TEST(AABBCollider, VsAABBColliderNoCollisions)
+TEST(AABBCollider, VsAABBNoCollision)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::aabb_collider b({0, 0, 3}, {1, 1, 1});
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::aabb_collider b({0, -4}, {1, 1});
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(AABBCollider, VsAABBColliderCollide)
+TEST(AABBCollider, VsAABBCollideOnYAxis)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::aabb_collider b({0, 0, 0.8}, {1, 1, 1});
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::aabb_collider b({0, -1.5}, {1, 1});
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.2);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(0, 0, 1));
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.5);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(0, -1));
 }
 
-TEST(AABBCollider, VsSphereColliderNoCollisions)
+TEST(AABBCollider, VsAABBCollideOnXAxis)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::sphere_collider b({0, 0, 3}, 1);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::aabb_collider b({-1.3, 0}, {1, 1});
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.7);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(-1, 0));
 }
 
-TEST(AABBCollider, VsSphereColliderCollide)
+TEST(AABBCollider, VsAABBTouching)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::sphere_collider b({0, 0, -1}, 0.6);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::aabb_collider b({2, 0}, {1, 1});
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.1);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(0, 0, -1));
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0);
 }
 
-TEST(AABBCollider, VsSphereColliderFullOverlap)
+TEST(AABBCollider, VsCircleNoCollision)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::sphere_collider b({0, 0, 0}, 0.3);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::circle_collider b({5, 5}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.8);
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(AABBCollider, VsCapsuleColliderNoCollisions)
+TEST(AABBCollider, VsCircleCollideNormally)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::capsule_collider b({2, 0, 0}, {5, 0, 0}, 1);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::circle_collider b({0, 1.5}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.5);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(0, 1));
 }
 
-TEST(AABBCollider, VsCapsuleColliderCollide)
+TEST(AABBCollider, VsCircleOverlap)
 {
-    ccsakura::aabb_collider a({0, 0, 0}, {1, 1, 1});
-    ccsakura::capsule_collider b({1, 0, 0}, {5, 0, 0}, 0.6);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::circle_collider b({0.7, 0}, 0.3);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.1);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(1, 0, 0));
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.6);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(1, 0));
 }
 
-TEST(OBBCollider, VsOBBColliderNoCollisions)
+TEST(AABBCollider, VsCapsuleNoCollision)
 {
-    ccsakura::obb_collider a{{0, 0, 0}, identity_axes, {2, 2, 2}};
-    ccsakura::obb_collider b{{2, 0, 0}, identity_axes, {1, 1, 1}};
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::capsule_collider b({-4, 0}, {-8, 1}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(OBBCollider, VsOBBColliderCollide)
+TEST(AABBCollider, VsCapsuleCollideOutside)
 {
-    ccsakura::obb_collider a{{0, 0, 0}, identity_axes, {2, 2, 2}};
-    ccsakura::obb_collider b{{-1.5, 0, 0}, identity_axes, {2, 2, 2}};
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::capsule_collider b({1.5, 0}, {1.5, 4}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.5);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(-1, 0, 0));
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.5);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(1, 0));
 }
 
-TEST(SphereCollider, VsSphereColliderNoCollisions)
+TEST(AABBCollider, VsCapsuleOverlap)
 {
-    ccsakura::sphere_collider a({0, 0, 0}, 1);
-    ccsakura::sphere_collider b({0, 3, 0}, 1);
+    ccsakura::aabb_collider a({0, 0}, {1, 1});
+    ccsakura::capsule_collider b({-1, 0}, {-4, 0}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 1);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(-1, 0));
 }
 
-TEST(SphereCollider, VsSphereColliderCollide)
+TEST(OBBCollider, VsOBBNoCollision)
 {
-    ccsakura::sphere_collider a({0, 0, 0}, 1);
-    ccsakura::sphere_collider b({0, -1.5, 0}, 1);
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 4);
+    ccsakura::obb_collider b({0, -4}, {1, 1}, std::numbers::pi / 4);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.5);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(0, -1, 0));
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(SphereCollider, VsSphereColliderFullOverlap)
+TEST(OBBCollider, VsOBBCollide)
 {
-    ccsakura::sphere_collider a({0, 0, 0}, 1);
-    ccsakura::sphere_collider b({0, 0, 0}, 2);
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 4);
+    ccsakura::obb_collider b({1.5, 0}, {1, 1}, std::numbers::pi / 4);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 3);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(0, 0, 1));
+    ASSERT_TRUE(ab.is_colliding);
+
+    b.shift(ab.normal * ab.depth);
+    ab = a.collides(b);
+    ASSERT_DOUBLE_EQ(ab.depth, 0);
 }
 
-TEST(CapsuleCollider, VsCapsuleColliderNoCollisions)
+TEST(OBBCollider, VsCircleNoCollision)
 {
-    ccsakura::capsule_collider a({0, 0, 0}, {0, 0, 5}, 1);
-    ccsakura::capsule_collider b({4, 4, 0}, {4, 4, 5}, 1);
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 6);
+    ccsakura::circle_collider b({3, 3}, 0.5);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_FALSE(ab.is_colliding);
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(CapsuleCollider, VsCapsuleColliderCollide)
+TEST(OBBCollider, VsCircleCollide)
 {
-    ccsakura::capsule_collider a({0, 0, 0}, {0, 0, 5}, 1);
-    ccsakura::capsule_collider b({0, 1.5, 0}, {0, 1.5, 5}, 1);
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 6);
+    ccsakura::circle_collider b({0, 1}, 0.4);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 0.5);
-    EXPECT_EQ(ab.normal, ccsakura::vec3d(0, 1, 0));
+    ASSERT_TRUE(ab.is_colliding);
+
+    b.shift(ab.normal * (ab.depth + 0.0001));
+    ab = a.collides(b);
+    ASSERT_FALSE(ab.is_colliding);
 }
 
-TEST(CapsuleCollider, VsCapsuleColliderFullOverlap)
+TEST(OBBCollider, VsCapsuleNoCollision)
 {
-    ccsakura::capsule_collider a({0, 0, 0}, {0, 0, 5}, 1);
-    ccsakura::capsule_collider b({0, 0, 5}, {0, 0, 10}, 1);
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 8);
+    ccsakura::capsule_collider b({4, 4}, {5, 5}, 1);
 
     ccsakura::collision ab = a.collides(b);
-    EXPECT_TRUE(ab.is_colliding);
-    EXPECT_DOUBLE_EQ(ab.depth, 2);
+    ASSERT_FALSE(ab.is_colliding);
+}
+
+TEST(OBBCollider, VsCapsuleCollide)
+{
+    ccsakura::obb_collider a({0, 0}, {1, 1}, std::numbers::pi / 8);
+    ccsakura::capsule_collider b({0.4, 0.4}, {2, 2}, 0.2);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_TRUE(ab.is_colliding);
+
+    b.shift(ab.normal * (ab.depth + 0.001));
+    ab = a.collides(b);
+    ASSERT_FALSE(ab.is_colliding);
+}
+
+TEST(CircleCollider, VsCircleNoCollision)
+{
+    ccsakura::circle_collider a({0, 0}, 1);
+    ccsakura::circle_collider b({-4, 4}, 1);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_FALSE(ab.is_colliding);
+}
+
+TEST(CircleCollider, VsCircleCollide)
+{
+    ccsakura::circle_collider a({0, 0}, 1);
+    ccsakura::circle_collider b({0, -1}, 0.2);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.2);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(0, -1));
+}
+
+TEST(CircleCollider, VsCapsuleNoCollision)
+{
+    ccsakura::circle_collider a({0, 0}, 1);
+    ccsakura::capsule_collider b({-2, 0}, {-5, 0}, 0.5);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_FALSE(ab.is_colliding);
+}
+
+TEST(CircleCollider, VsCapsuleCollide)
+{
+    ccsakura::circle_collider a({0, 0}, 1);
+    ccsakura::capsule_collider b({-1, 0}, {-5, 0}, 0.5);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.5);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(-1, 0));
+}
+
+TEST(CapsuleCollider, VsCapsuleNoCollision)
+{
+    ccsakura::capsule_collider a({0, 0}, {2, 0}, 1);
+    ccsakura::capsule_collider b({5, 0}, {8, 0}, 0.5);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_FALSE(ab.is_colliding);
+}
+
+TEST(CapsuleCollider, VsCapsuleCollide)
+{
+    ccsakura::capsule_collider a({0, 0}, {2, 0}, 1);
+    ccsakura::capsule_collider b({3, 0}, {8, 0}, 0.5);
+
+    ccsakura::collision ab = a.collides(b);
+    ASSERT_TRUE(ab.is_colliding);
+    ASSERT_DOUBLE_EQ(ab.depth, 0.5);
+    ASSERT_EQ(ab.normal, ccsakura::vec2d(1, 0));
 }

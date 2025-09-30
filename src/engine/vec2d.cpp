@@ -8,6 +8,11 @@
 namespace ccsakura
 {
 
+vec2d vec2d::abs() const noexcept
+{
+    return vec2d(std::abs(x), std::abs(y));
+}
+
 bool vec2d::operator==(const vec2d &rhs) const noexcept
 {
     return double_equal(x, rhs.x) && double_equal(y, rhs.y);
