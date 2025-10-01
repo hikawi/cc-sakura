@@ -11,3 +11,4 @@ run
 run-release
 *.log
 
+node_modules

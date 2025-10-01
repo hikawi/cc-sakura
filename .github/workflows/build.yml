@@ -1,13 +1,43 @@
-name: Build
+name: Build & Test
 
 on:
-  push:
+  pull_request:
 
 permissions:
   contents: write
 
 jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    name: Lint Commits
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false # Tell PNPM not to install before we setup Node
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node_version: latest
+          cache: pnpm
+
+      - name: Setup Linters
+        run: pnpm i
+
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: pnpx commitlint --last --verbose
+
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: pnpx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
   test:
+    needs: ["commitlint"]
     strategy:
       fail-fast: false
       matrix:
@@ -89,7 +119,7 @@ jobs:
             c_compiler: clang
             cpp_compiler: clang++
     runs-on: ${{ matrix.os }}
-    needs: test
+    needs: ["test"]
     name: Build
     steps:
       - name: Checkout with Submodules
