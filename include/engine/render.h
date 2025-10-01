@@ -6,8 +6,7 @@
 
 #pragma once
 
-#include "engine/matrix.h"
-#include "engine/vec3d.h"
+#include "engine/vec2d.h"
 #include "sdl/sdl_rect.h"
 
 namespace ccsakura
@@ -32,32 +31,15 @@ enum class render_origin
     bottom_right,
 };
 
-enum class projection
+/**
+ * Represents a camera in 2D space.
+ */
+struct camera2d
 {
-    orthographic,
-    perspective,
-};
-
-struct quaternion
-{
-    double w;
-    double x;
-    double y;
-    double z;
-};
-
-struct camera
-{
-    vec3d position;
-    quaternion rotation;
-    projection projection_type;
-
-    double fov;
-    double aspect_ratio;
-    double near_plane;
-    double far_plane;
-
-    matrix<4, 4> view_projection_matrix() const noexcept;
+    vec2d position;      ///< the camera's world coordinates
+    double rotation = 0; ///< the camera's tilt or rotation, based on the x axis
+    double zoom = 1;     ///< the camera's zoom level
+    vec2d viewport;      ///< the camera's viewport to render
 };
 
 /**

@@ -34,6 +34,11 @@ bool vec2d::operator!=(const vec2d &rhs) const noexcept
     return len > 0 ? *this / len : *this;
 }
 
+double vec2d::rotation() const noexcept
+{
+    return std::atan2(y, x);
+}
+
 [[nodiscard]] double vec2d::distance(const vec2d &rhs) const noexcept
 {
     return (rhs - *this).length();

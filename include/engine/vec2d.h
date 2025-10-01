@@ -241,6 +241,13 @@ struct vec2d
     [[nodiscard]] vec2d normalized() const noexcept;
 
     /**
+     * Calculates the rotation from the X axis to the vector.
+     *
+     * \return the rotation
+     */
+    double rotation() const noexcept;
+
+    /**
      * Computes the distance between two points in space.
      *
      * \param rhs the other point
