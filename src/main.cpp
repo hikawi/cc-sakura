@@ -47,13 +47,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         return SDL_APP_FAILURE;
     }
 
-    // Check for weird shit just to know, because why not.
-#ifdef __cpp_lib_constexpr_cmath
-    sdl::log_info("C++ feature: constexpr_math supported");
-#else
-    sdl::log_warn("C++ feature: constexpr_math not found");
-#endif
-
     return SDL_APP_CONTINUE;
 }
 

@@ -54,6 +54,7 @@ TEST(Vec2d, NegationIsCorrect)
 TEST(Vec2d, UnaryFunctionsAreCorrect)
 {
     ccsakura::vec2d a(4, -5);
+    ccsakura::vec2d b(1, 1);
 
     ASSERT_EQ(a.abs(), ccsakura::vec2d(4, 5));
     ASSERT_EQ(a.length_squared(), 41);
@@ -61,6 +62,7 @@ TEST(Vec2d, UnaryFunctionsAreCorrect)
     ASSERT_DOUBLE_EQ(a.normalized().length(), 1);
     ASSERT_NEAR(a.orthogonal().dot(a), 0, 1e-9);
     ASSERT_EQ(-a, a.rotated(std::numbers::pi));
+    ASSERT_DOUBLE_EQ(b.rotation(), std::numbers::pi / 4);
 }
 
 TEST(Vec2d, BinaryFunctionsAreCorrect)
