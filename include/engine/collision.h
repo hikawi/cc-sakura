@@ -10,8 +10,6 @@
 #include "engine/vec2d.h"
 #include "sdl/sdl_pixels.h"
 
-#include <array>
-
 namespace ccsakura
 {
 

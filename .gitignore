@@ -10,5 +10,10 @@ build
 run
 run-release
 *.log
+.env
+CMakeCache.txt
+CMakeFiles
+CLAUDE.md
+GEMINI.md
 
 node_modules
