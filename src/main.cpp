@@ -72,6 +72,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     switch (event->type)
     {
     case SDL_EVENT_QUIT:
+        sdl::log_info("Quit event caught, exiting.");
         return SDL_APP_SUCCESS;
     }
 
@@ -85,6 +86,18 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result)
         std::unique_ptr<ccsakura::engine> engine(static_cast<ccsakura::engine *>(appstate));
     }
 
-    sdl::log_debug("Application terminated with result {}", (int)result);
+    switch (result)
+    {
+    case SDL_APP_SUCCESS:
+        sdl::log_info("Application terminated successfully.");
+        break;
+    case SDL_APP_FAILURE:
+        sdl::log_error("Application terminated with failure.");
+        break;
+    case SDL_APP_CONTINUE:
+        sdl::log_critical("How did you get here?");
+        break;
+    }
+
     sdl::quit();
 }

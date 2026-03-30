@@ -1,0 +1,4 @@
+leak:libwayland-client
+leak:libGLX_mesa
+leak:libnvidia-glcore
+

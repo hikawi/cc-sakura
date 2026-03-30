@@ -6,18 +6,16 @@
 
 #pragma once
 
+#include "component.h"
+
 #include <memory>
 #include <type_traits>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
+
 namespace ccsakura
 {
-
-class component
-{
-    virtual ~component();
-};
 
 /**
  * Represents an abstract entity.
@@ -38,8 +36,11 @@ class entity
      * \return true if the entity has the provided component
      */
     template <typename T>
-        requires(std::is_base_of_v<T, component>)
-    bool has_component();
+        requires(std::is_base_of_v<component, T>)
+    bool has_component()
+    {
+        return m_components.contains(std::type_index(typeid(T)));
+    }
 
     /**
      * Creates and adds a certain component to the entity.
@@ -47,7 +48,7 @@ class entity
      * \param args the argument to pass to the component constructor
      */
     template <typename T, typename... Args>
-        requires(std::is_base_of_v<T, component>)
+        requires(std::is_base_of_v<component, T>)
     void add_component(Args &&...args)
     {
         std::unique_ptr<T> comp = std::make_unique<T>(std::forward<Args>(args)...);
@@ -55,14 +56,15 @@ class entity
     }
 
     template <typename T>
-        requires(std::is_base_of_v<T, component>)
+        requires(std::is_base_of_v<component, T>)
     T &get_component()
     {
-        return *m_components.at(std::type_index(typeid(T)));
+        return static_cast<T &>(*m_components.at(std::type_index(typeid(T))));
     }
 
   private:
     std::unordered_map<std::type_index, std::unique_ptr<component>> m_components;
+    uint32_t m_id;
 };
 
 } // namespace ccsakura

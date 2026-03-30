@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
-#include "engine/matrix.h"
+#include "engine/component.h"
+#include "engine/entity.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
@@ -84,12 +85,43 @@ void engine::render() const noexcept
     renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
 
-    sdl::render_geometry_options(renderer)
-        .add_vertex(sdl::vertex({100, 100}, {0, 0.5, 0, 0.5}))
-        .add_vertex(sdl::vertex({400, 400}, {0, 0.5, 0, 0.5}))
-        .add_vertex(sdl::vertex({500, 100}, {0, 0.5, 0, 0.5}))
-        .connect(0, 1, 2)
-        .render();
+    static entity test_entity(1);
+    if (!test_entity.has_component<components::transform>())
+    {
+        test_entity.add_component<components::transform>(vec2d(100, 100));
+    }
+
+    components::transform &comp = test_entity.get_component<components::transform>();
+
+    // Update position for testing
+    comp.position.x += 0.001;
+    if (comp.position.x > APPLICATION_ORIGINAL_WIDTH)
+    {
+        comp.position.x = 0;
+    }
+
+    // Render a 64x64 square
+    const float size = 64.0f;
+    const float half_size = size / 2.0f;
+    const sdl::fcolor color(1.0f, 0.0f, 0.0f, 1.0f); // Red square
+
+    sdl::render_geometry_options opts(renderer);
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) - half_size,
+                                            static_cast<float>(comp.position.y) - half_size),
+                                color))
+        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) + half_size,
+                                            static_cast<float>(comp.position.y) - half_size),
+                                color))
+        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) + half_size,
+                                            static_cast<float>(comp.position.y) + half_size),
+                                color))
+        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) - half_size,
+                                            static_cast<float>(comp.position.y) + half_size),
+                                color));
+
+    opts.connect(0, 1, 2);
+    opts.connect(0, 2, 3);
+    opts.render();
 
     renderer.present();
 }
