@@ -1,5 +1,6 @@
 #include "sdl/sdl_ttf.h"
 
+#include "sdl/sdl_error.h"
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_surface.h"
@@ -60,6 +61,12 @@ std::unique_ptr<sdl::isurface> font::render_text_blended(const std::string text,
 {
     SDL_Surface *surface =
         TTF_RenderText_Blended(m_font.get(), text.c_str(), text.length(), {color.r, color.g, color.b, color.a});
+    if (!surface)
+    {
+        sdl::log_error("Failed to render text blended: {}", sdl::get_error());
+        return nullptr;
+    }
+
     std::unique_ptr<SDL_Surface, void (*)(SDL_Surface *)> surface_ptr(surface, SDL_DestroySurface);
     return std::make_unique<sdl::surface>(std::move(surface_ptr));
 }

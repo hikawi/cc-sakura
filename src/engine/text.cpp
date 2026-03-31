@@ -2,7 +2,6 @@
 
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_log.h"
-#include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
 #include "sdl/sdl_ttf.h"
@@ -28,6 +27,21 @@ std::string get_font_path(const typeface typeface)
         return "assets/font/unifont.ttf";
     default:
         return "";
+    }
+}
+
+const char *get_font_name(const typeface typeface)
+{
+    switch (typeface)
+    {
+    case typeface::daydream:
+        return "daydream";
+    case typeface::rainy_hearts:
+        return "rainyhearts";
+    case typeface::unifont:
+        return "unifont";
+    default:
+        return "n/a";
     }
 }
 
@@ -76,7 +90,7 @@ sdl::ttf::ifont &font_cache::operator[](const font font)
     ttf_font->set_hint(sdl::ttf::font_hint::light_subpixel);
     m_font_map[font] = std::move(ttf_font);
 
-    sdl::log_debug("Cached a font style: {} - {}sp", static_cast<int>(font.face), font.sp);
+    sdl::log_debug("Cached a font style: {} - {}sp", get_font_name(font.face), font.sp);
     return *m_font_map.at(font);
 }
 
@@ -85,10 +99,11 @@ void font_cache::clear()
     m_font_map.clear();
 }
 
-text::text(const font font, const std::string text, ifont_cache &cache)
-    : m_font(font), m_text(text), m_color(0, 0, 0, 255), m_pos(0, 0), m_cache(cache)
+ifont_cache *text::s_cache = nullptr;
+
+text::text(const enum typeface typeface, const float sp) : typeface(typeface), sp(sp)
 {
-    sdl::log_trace("ccsakura::text constructed with text {}", text);
+    sdl::log_trace("ccsakura::text constructed with typeface {} size {}", get_font_name(typeface), sp);
 }
 
 text::~text()
@@ -96,28 +111,25 @@ text::~text()
     sdl::log_trace("ccsakura::text destroyed");
 }
 
-void text::set_color(const sdl::color color) noexcept
-{
-    m_color = color;
-}
-
-void text::set_text(const std::string text) noexcept
-{
-    m_text = text;
-}
-
-void text::set_position(const sdl::fpoint pos) noexcept
-{
-    m_pos = pos;
-}
-
 std::unique_ptr<sdl::itexture> text::render(const sdl::irenderer &renderer) const noexcept
 {
-    sdl::ttf::ifont &font = m_cache[m_font];
-    std::unique_ptr<sdl::isurface> surface = font.render_text_blended(m_text, m_color);
-    std::unique_ptr<sdl::itexture> texture = renderer.create_texture(*surface);
+    if (!s_cache)
+    {
+        sdl::log_critical("Failed to render font with no font cache");
+        return nullptr;
+    }
+
+    font value_font{typeface, sp};
+    sdl::ttf::ifont &font = (*s_cache)[value_font];
+    std::unique_ptr<sdl::isurface> surface = font.render_text_blended(value, color);
+    std::unique_ptr<sdl::itexture> texture = renderer.create_texture(*surface.get());
     texture->set_blend_mode(sdl::blend_mode::blend);
     return texture;
+}
+
+void text::use_cache(ifont_cache &cache)
+{
+    s_cache = &cache;
 }
 
 } // namespace ccsakura
