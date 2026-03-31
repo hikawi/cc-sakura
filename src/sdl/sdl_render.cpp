@@ -142,6 +142,7 @@ renderer::renderer(const iwindow &window, const char *name)
 
     sdl::log_trace("sdl::renderer constructed with window {} named {}", SDL_GetWindowTitle(window.get()),
                    SDL_GetRendererName(m_renderer.get()));
+    SDL_SetRenderVSync(m_renderer.get(), 1);
     m_name = SDL_GetRendererName(m_renderer.get());
 }
 

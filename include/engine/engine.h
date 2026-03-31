@@ -7,12 +7,15 @@
 #pragma once
 
 #include "app.h"
+#include "engine/scene.h"
 #include "engine/sprite.h"
 #include "engine/text.h"
+#include "sdl/sdl_events.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_video.h"
 
 #include <cstdint>
+#include <deque>
 #include <memory>
 
 namespace ccsakura
@@ -61,7 +64,7 @@ class iengine
     /**
      * Maximum duration allowed for a variable time step.
      */
-    static constexpr const double s_max_dt = 0.1;
+    static constexpr const double s_max_dt = 0.05;
 
     /**
      * Fixed time step for each physical call.
@@ -88,6 +91,20 @@ class iengine
      * \returns true if the engine should continue, false otherwise
      */
     virtual bool iterate(const uint64_t tick) noexcept = 0;
+
+    /**
+     * Process the SDL event from the engine's point.
+     *
+     * \param event the event to parse.
+     */
+    virtual void queue_event(const sdl::event &&event) noexcept = 0;
+
+    /**
+     * Checks if the engine should be running this tick.
+     *
+     * \returns true to continue
+     */
+    virtual bool is_running() const noexcept = 0;
 
     /**
      * Renders the current state of the program.
@@ -121,11 +138,18 @@ class engine : public iengine
 
     frame_data get_frame_data() const override;
     bool iterate(const uint64_t tick) noexcept override;
+    void queue_event(const sdl::event &&event) noexcept override;
+    bool is_running() const noexcept override;
     void render() const noexcept override;
 
   private:
     engine_deps m_deps;
     frame_data m_frame_data;
+    scene_manager m_scene_mgr;
+    std::deque<sdl::event> m_events_queue;
+    bool m_running = true;
+
+    void process_events();
 };
 
 } // namespace ccsakura

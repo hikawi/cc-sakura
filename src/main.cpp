@@ -1,3 +1,4 @@
+#include "sdl/sdl_events.h"
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "engine/engine.h"
@@ -55,10 +56,12 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     ccsakura::engine &engine = *static_cast<ccsakura::engine *>(appstate);
 
     // Iterate and render.
-    if (!engine.iterate(sdl::get_ticks()))
+    if (!engine.is_running())
     {
         return SDL_APP_SUCCESS;
     }
+
+    engine.iterate(sdl::get_ticks());
     engine.render();
 
     return SDL_APP_CONTINUE;
@@ -67,15 +70,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
     ccsakura::engine &engine = *static_cast<ccsakura::engine *>(appstate);
-    (void)engine;
+    sdl::event wrapped_event = sdl::event::wrap(*event);
 
-    switch (event->type)
-    {
-    case SDL_EVENT_QUIT:
-        sdl::log_info("Quit event caught, exiting.");
-        return SDL_APP_SUCCESS;
-    }
-
+    // This returns true/false for SUCCESS or CONTINUE
+    engine.queue_event(std::move(wrapped_event));
     return SDL_APP_CONTINUE;
 }
 

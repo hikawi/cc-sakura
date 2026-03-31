@@ -10,6 +10,8 @@
 #include "sdl/sdl_render.h"
 #include "signal.h"
 
+#include <deque>
+
 namespace ccsakura
 {
 
@@ -75,7 +77,7 @@ class iscene
     virtual void on_render(const sdl::irenderer &renderer) const noexcept;
 
     /**
-     * \brief Whether the scene blocks signals/events from reaching scenes below it.
+     * \brief Whether the scene blocks ticks/physical ticks from reaching scenes below it.
      *
      * Example: A pause menu should return true; a HUD should return false.
      *
@@ -91,6 +93,51 @@ class iscene
      * \return true if opaque, false otherwise.
      */
     virtual bool is_opaque() const noexcept;
+};
+
+/**
+ * Provides a concrete manager of scenes, and is the one responsible for calling up scene's hooks.
+ */
+class scene_manager
+{
+  public:
+    /**
+     * Enqueues a scene to the front of the scene queue.
+     *
+     * \param scene the ownership of a scene
+     * \returns a null pointer if it was successfully transferred, the same scene otherwise
+     */
+    std::unique_ptr<iscene> push_front(std::unique_ptr<iscene> scene) noexcept;
+
+    /**
+     * Enqueues a scene to the back of the scene queue.
+     *
+     * \param scene the ownership of a scene
+     * \returns a null pointer if it was successfully transferred, the same scene otherwise
+     */
+    std::unique_ptr<iscene> push_back(std::unique_ptr<iscene> scene) noexcept;
+
+    /**
+     * Ticks all scenes in order of top to bottom. If a scene is modal, scenes below will
+     * not get ticked.
+     */
+    void tick(const double dt) const noexcept;
+
+    /**
+     * Ticks all scenes in order of top to bottom for a physics-updating tick. If a scene is
+     * modal, scenes below will not get ticked.
+     */
+    void physical_tick() const noexcept;
+
+    /**
+     * Renders all scenes from bottom to top. A scene is ignored if `scene.is_enabled` is false.
+     *
+     * \param renderer the renderer to render with
+     */
+    void render(const sdl::irenderer &renderer) const noexcept;
+
+  private:
+    std::deque<std::unique_ptr<iscene>> m_scenes; // A deque of scenes, index 0 = front.
 };
 
 } // namespace ccsakura
