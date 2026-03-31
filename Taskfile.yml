@@ -19,4 +19,6 @@ tasks:
     env:
       LSAN_OPTIONS: "suppressions=lsansupp"
     cmds:
+      - rm -rf build/bin/assets
+      - cp -r assets build/bin/assets
       - ./build/bin/CCSakura

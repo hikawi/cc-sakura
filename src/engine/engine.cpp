@@ -1,7 +1,6 @@
 #include "engine/engine.h"
 
-#include "engine/component.h"
-#include "engine/entity.h"
+#include "scenes/scene_dbg_fps.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
@@ -11,6 +10,8 @@
 
 namespace ccsakura
 {
+
+static scenes::dbg_fps *dbg_fps;
 
 bool engine_deps::is_valid() const noexcept
 {
@@ -32,6 +33,13 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     sprite::use_cache(*m_deps.m_sprite_cache);
     sprite::use_renderer(*m_deps.m_renderer);
     sprite::use_storage_opener(sdl::open_title_storage);
+
+    // Let engine inject text dependencies also.
+    sdl::log_debug("Injecting Font dependencies");
+    text::use_cache(*m_deps.m_font_cache);
+
+    // TODO: Remove
+    dbg_fps = new scenes::dbg_fps();
 }
 
 frame_data engine::get_frame_data() const
@@ -62,6 +70,7 @@ bool engine::iterate(const uint64_t tick) noexcept
 
     // TODO:
     // Add variable tick handling here
+    dbg_fps->on_tick(dt);
 
     // Handle FPS
     m_frame_data.cur_frames++;
@@ -85,43 +94,7 @@ void engine::render() const noexcept
     renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
 
-    static entity test_entity(1);
-    if (!test_entity.has_component<components::transform>())
-    {
-        test_entity.add_component<components::transform>(vec2d(100, 100));
-    }
-
-    components::transform &comp = test_entity.get_component<components::transform>();
-
-    // Update position for testing
-    comp.position.x += 0.001;
-    if (comp.position.x > APPLICATION_ORIGINAL_WIDTH)
-    {
-        comp.position.x = 0;
-    }
-
-    // Render a 64x64 square
-    const float size = 64.0f;
-    const float half_size = size / 2.0f;
-    const sdl::fcolor color(1.0f, 0.0f, 0.0f, 1.0f); // Red square
-
-    sdl::render_geometry_options opts(renderer);
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) - half_size,
-                                            static_cast<float>(comp.position.y) - half_size),
-                                color))
-        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) + half_size,
-                                            static_cast<float>(comp.position.y) - half_size),
-                                color))
-        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) + half_size,
-                                            static_cast<float>(comp.position.y) + half_size),
-                                color))
-        .add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(comp.position.x) - half_size,
-                                            static_cast<float>(comp.position.y) + half_size),
-                                color));
-
-    opts.connect(0, 1, 2);
-    opts.connect(0, 2, 3);
-    opts.render();
+    dbg_fps->on_render(renderer);
 
     renderer.present();
 }
@@ -129,6 +102,7 @@ void engine::render() const noexcept
 engine::~engine() noexcept
 {
     sdl::log_trace("engine::engine destroyed");
+    delete dbg_fps;
 }
 
 } // namespace ccsakura

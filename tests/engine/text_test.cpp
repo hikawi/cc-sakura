@@ -22,9 +22,7 @@ TEST(Text, RendersCorrectly)
         .Times(1)
         .WillRepeatedly([]() { return std::make_unique<mock_texture>(); });
 
-    ccsakura::text text({ccsakura::typeface::unifont, 16}, "Hello World", cache);
-    text.set_text("Hello");
-    text.set_color(sdl::color(0, 0, 128, 255));
-    text.set_position({25, 25});
+    ccsakura::text::use_cache(cache);
+    ccsakura::text text(ccsakura::typeface::unifont, 16);
     text.render(renderer);
 }

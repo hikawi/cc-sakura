@@ -126,72 +126,44 @@ class font_cache : public ifont_cache
 };
 
 /**
- * Represents a piece of text on the screen.
- */
-class itext
-{
-  public:
-    virtual ~itext() = default;
-
-    /**
-     * Sets the underlying of the text in this object.
-     *
-     * \param text the text to set
-     */
-    virtual void set_text(const std::string text) noexcept = 0;
-
-    /**
-     * Sets the text color to render.
-     *
-     * \param color the color of the text
-     */
-    virtual void set_color(const sdl::color color) noexcept = 0;
-
-    /**
-     * Sets the position of the text to render.
-     *
-     * \param pos the position to render at
-     */
-    virtual void set_position(const sdl::fpoint pos) noexcept = 0;
-
-    /**
-     * Renders this text instance using the provided renderer to a texture.
-     *
-     * \param renderer the renderer to use
-     * \returns a texture
-     */
-    virtual std::unique_ptr<sdl::itexture> render(const sdl::irenderer &renderer) const noexcept = 0;
-};
-
-/**
  * Represents a piece of text on the screen using a font, rendered with a font engine.
  *
  * This text can be changed without re-rendering
  */
-class text : public itext
+struct text
 {
-  public:
+    typeface typeface;
+    float sp;
+    std::string value{""};
+    sdl::color color{0, 0, 0, 255};
+    sdl::fpoint position{0, 0};
+
     /**
-     * Constructs a new piece of text handled by the engine.
+     * Constructs a new Text object using a typeface and the size.
      *
-     * \param font the font to use
-     * \param text the starting text
-     * \param cache the cache to use for the text
+     * This will reuse a font loaded inside the cache if it matches the parameters.
+     * This throws if no cache has been provided.
+     *
+     * \param typeface the typeface to use
+     * \param sp the font's size
      */
-    text(const font font, const std::string text, ifont_cache &cache);
+    text(const enum typeface typeface, const float sp);
     ~text();
 
-    void set_text(const std::string text) noexcept override;
-    void set_color(const sdl::color color) noexcept override;
-    void set_position(const sdl::fpoint pos) noexcept override;
-    std::unique_ptr<sdl::itexture> render(const sdl::irenderer &renderer) const noexcept override;
+    /**
+     * Renders the text into a piece of texture for use with the current renderer.
+     *
+     * \returns a unique pointer to an sdl texture
+     */
+    std::unique_ptr<sdl::itexture> render(const sdl::irenderer &renderer) const noexcept;
+
+    /**
+     * Sets the cache for the text engine to use.
+     */
+    static void use_cache(ifont_cache &cache);
 
   private:
-    font m_font;
-    std::string m_text;
-    sdl::color m_color;
-    sdl::fpoint m_pos;
-    ifont_cache &m_cache;
+    static ifont_cache *s_cache;
 };
 
 } // namespace ccsakura
