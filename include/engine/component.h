@@ -9,8 +9,6 @@
 #include "render.h"
 #include "vec2d.h"
 
-#include <string>
-
 namespace ccsakura
 {
 

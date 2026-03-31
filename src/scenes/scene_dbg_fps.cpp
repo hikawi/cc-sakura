@@ -38,7 +38,7 @@ void dbg_fps::on_render(const sdl::irenderer &renderer) const noexcept
     auto texture = m_fps_text.render(renderer);
     sdl::render_texture_options(renderer, *texture)
         .render_origin(render_origin::top_right)
-        .dst(sdl::fpoint(1200, 20))
+        .dst(sdl::fpoint(1180, 20))
         .render();
 }
 

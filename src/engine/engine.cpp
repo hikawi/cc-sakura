@@ -1,17 +1,19 @@
 #include "engine/engine.h"
 
+#include "engine/scene.h"
+#include "scenes/scene_dbg_empty.h"
 #include "scenes/scene_dbg_fps.h"
+#include "sdl/sdl_events.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_storage.h"
 
 #include <algorithm>
 #include <stdexcept>
+#include <variant>
 
 namespace ccsakura
 {
-
-static scenes::dbg_fps *dbg_fps;
 
 bool engine_deps::is_valid() const noexcept
 {
@@ -39,7 +41,8 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     text::use_cache(*m_deps.m_font_cache);
 
     // TODO: Remove
-    dbg_fps = new scenes::dbg_fps();
+    m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(0, 0.75, 0, 1)));
+    m_scene_mgr.push_front(std::make_unique<scenes::dbg_fps>());
 }
 
 frame_data engine::get_frame_data() const
@@ -54,8 +57,7 @@ bool engine::iterate(const uint64_t tick) noexcept
     m_frame_data.last_tick = tick;
     m_frame_data.accumulator += dt;
 
-    // TODO:
-    // Add signals handling here
+    process_events();
 
     // Call fixed update if and only if frame_accum has passed
     // enough for 1 frame time (1 / FPS), for 60FPS this is about 16ms.
@@ -66,11 +68,10 @@ bool engine::iterate(const uint64_t tick) noexcept
 
         // TODO:
         // Add signals handling collisions and physical ticking here
+        m_scene_mgr.physical_tick();
     }
 
-    // TODO:
-    // Add variable tick handling here
-    dbg_fps->on_tick(dt);
+    m_scene_mgr.tick(dt);
 
     // Handle FPS
     m_frame_data.cur_frames++;
@@ -86,6 +87,40 @@ bool engine::iterate(const uint64_t tick) noexcept
     return true;
 }
 
+void engine::process_events()
+{
+    // Convert necessary events to signals, or handle high level events?
+    std::deque<sdl::event> frame_events;
+    frame_events.swap(m_events_queue);
+
+    while (!frame_events.empty())
+    {
+        auto event = frame_events.front();
+
+        if (auto *_ = std::get_if<sdl::events::quit>(&event.data))
+        {
+            m_running = false;
+            sdl::log_info("Quit event processed. Quitting...");
+        }
+        else if (auto *mouse_button = std::get_if<sdl::events::mouse_button>(&event.data))
+        {
+            sdl::log_info("Mouse button at {}, {}, DOWN={}", mouse_button->x, mouse_button->y, mouse_button->down);
+        }
+
+        frame_events.pop_front();
+    }
+}
+
+void engine::queue_event(const sdl::event &&event) noexcept
+{
+    m_events_queue.emplace_back(std::move(event));
+}
+
+bool engine::is_running() const noexcept
+{
+    return m_running;
+}
+
 void engine::render() const noexcept
 {
     const sdl::irenderer &renderer = *m_deps.m_renderer;
@@ -94,7 +129,7 @@ void engine::render() const noexcept
     renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
     renderer.clear();
 
-    dbg_fps->on_render(renderer);
+    m_scene_mgr.render(renderer);
 
     renderer.present();
 }
@@ -102,7 +137,6 @@ void engine::render() const noexcept
 engine::~engine() noexcept
 {
     sdl::log_trace("engine::engine destroyed");
-    delete dbg_fps;
 }
 
 } // namespace ccsakura

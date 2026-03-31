@@ -12,6 +12,7 @@ namespace ccsakura
 enum class scene_type
 {
     dbg_fps = 1000000000,
+    dbg_empty = 1000000001,
 };
 
 } // namespace ccsakura
