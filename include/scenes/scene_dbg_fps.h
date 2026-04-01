@@ -16,7 +16,7 @@ class dbg_fps : public ccsakura::iscene
     dbg_fps();
     ~dbg_fps() = default;
     scene_type type() const noexcept override;
-    void on_tick(const double dt) noexcept override;
+    bool on_tick(const double dt) noexcept override;
     void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
