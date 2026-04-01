@@ -61,6 +61,18 @@ enum class blend_mode
 };
 
 /**
+ * Logical presentation mode for a renderer.
+ */
+enum class logical_presentation
+{
+    disabled = SDL_LOGICAL_PRESENTATION_DISABLED,           ///< disabled logical presentation
+    stretch = SDL_LOGICAL_PRESENTATION_STRETCH,             ///< stretch to fill the window
+    letterbox = SDL_LOGICAL_PRESENTATION_LETTERBOX,         ///< letterbox to fill the window
+    overscan = SDL_LOGICAL_PRESENTATION_OVERSCAN,           ///< overscan to fill the window
+    integer_scale = SDL_LOGICAL_PRESENTATION_INTEGER_SCALE, ///< integer scale to fill the window
+};
+
+/**
  * Represents a vertex within 2D space.
  */
 struct vertex
@@ -261,6 +273,15 @@ class irenderer
     virtual void set_blend_mode(const blend_mode mode) const noexcept = 0;
 
     /**
+     * Sets the renderer's logical presentation.
+     *
+     * \param w the logical width
+     * \param h the logical height
+     * \param mode the presentation mode
+     */
+    virtual void set_logical_presentation(const int w, const int h, const logical_presentation mode) const noexcept = 0;
+
+    /**
      * Creates a new texture for this renderer.
      *
      * \param format the texture's pixel format
@@ -344,6 +365,7 @@ class renderer : public irenderer
     SDL_Renderer *get() const noexcept override;
     blend_mode get_blend_mode() const noexcept override;
     void set_blend_mode(const blend_mode mode) const noexcept override;
+    void set_logical_presentation(const int w, const int h, const logical_presentation mode) const noexcept override;
     std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
                                              const int h) const override;
     std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;

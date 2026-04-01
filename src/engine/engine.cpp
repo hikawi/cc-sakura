@@ -41,7 +41,7 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     text::use_cache(*m_deps.m_font_cache);
 
     // TODO: Remove
-    m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(0, 0.75, 0, 1)));
+    m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 1, 1, 1)));
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_fps>());
 }
 

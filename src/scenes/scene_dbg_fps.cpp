@@ -9,7 +9,7 @@
 namespace ccsakura::scenes
 {
 
-dbg_fps::dbg_fps() : m_fps_text(text(typeface::daydream, 24))
+dbg_fps::dbg_fps() : m_fps_text(text(typeface::rainy_hearts, 16))
 {
     m_fps_text.color = sdl::color(0, 0, 255, 255);
     m_fps_text.value = "0 FPS";
@@ -20,7 +20,7 @@ scene_type dbg_fps::type() const noexcept
     return scene_type::dbg_fps;
 }
 
-void dbg_fps::on_tick(const double dt) noexcept
+bool dbg_fps::on_tick(const double dt) noexcept
 {
     m_accumulator += dt;
     m_frame_count++;
@@ -31,14 +31,16 @@ void dbg_fps::on_tick(const double dt) noexcept
         m_frame_count = 0;
         m_accumulator -= 1.0;
     }
+    return true;
 }
 
 void dbg_fps::on_render(const sdl::irenderer &renderer) const noexcept
 {
     auto texture = m_fps_text.render(renderer);
+    texture->set_scale_mode(sdl::scale_mode::nearest);
     sdl::render_texture_options(renderer, *texture)
         .render_origin(render_origin::top_right)
-        .dst(sdl::fpoint(1180, 20))
+        .dst(sdl::fpoint(APPLICATION_LOGICAL_WIDTH - 4, 4))
         .render();
 }
 

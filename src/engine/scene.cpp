@@ -11,39 +11,23 @@ void iscene::on_detach()
 {
 }
 
-void iscene::on_enter()
+bool iscene::on_tick(const double /*dt*/) noexcept
 {
+    return true;
 }
 
-void iscene::on_exit()
+bool iscene::on_physical_tick() noexcept
 {
-}
-
-void iscene::on_tick(const double) noexcept
-{
-}
-
-void iscene::on_physical_tick() noexcept
-{
+    return true;
 }
 
 bool iscene::on_signal(isignal & /*signal*/) noexcept
 {
-    return false;
+    return true;
 }
 
 void iscene::on_render(const sdl::irenderer & /*renderer*/) const noexcept
 {
-}
-
-bool iscene::is_modal() const noexcept
-{
-    return false;
-}
-
-bool iscene::is_opaque() const noexcept
-{
-    return false;
 }
 
 // ======================================
@@ -74,14 +58,39 @@ std::unique_ptr<iscene> scene_manager::push_back(std::unique_ptr<iscene> scene) 
     return nullptr;
 }
 
+std::unique_ptr<iscene> scene_manager::pop_front() noexcept
+{
+    if (m_scenes.empty())
+    {
+        return nullptr;
+    }
+
+    std::unique_ptr<iscene> scene = std::move(m_scenes.front());
+    scene->on_detach();
+    m_scenes.pop_front();
+
+    return scene;
+}
+
+std::unique_ptr<iscene> scene_manager::pop_back() noexcept
+{
+    if (m_scenes.empty())
+    {
+        return nullptr;
+    }
+
+    std::unique_ptr<iscene> scene = std::move(m_scenes.back());
+    scene->on_detach();
+    m_scenes.pop_back();
+    return scene;
+}
+
 void scene_manager::tick(const double dt) const noexcept
 {
     for (auto it = m_scenes.cbegin(); it != m_scenes.cend(); it++)
     {
         iscene &scene = **it;
-        scene.on_tick(dt);
-
-        if (scene.is_modal())
+        if (!scene.on_tick(dt))
         {
             break;
         }
@@ -93,9 +102,7 @@ void scene_manager::physical_tick() const noexcept
     for (auto it = m_scenes.cbegin(); it != m_scenes.cend(); it++)
     {
         iscene &scene = **it;
-        scene.on_physical_tick();
-
-        if (scene.is_modal())
+        if (!scene.on_physical_tick())
         {
             break;
         }

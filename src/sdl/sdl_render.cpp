@@ -163,6 +163,16 @@ void renderer::set_blend_mode(const blend_mode mode) const noexcept
     SDL_SetRenderDrawBlendMode(get(), static_cast<SDL_BlendMode>(mode));
 }
 
+void renderer::set_logical_presentation(const int w, const int h, const logical_presentation mode) const noexcept
+{
+    sdl::log_trace("sdl::renderer {} setting logical presentation to {}x{} mode {}", m_name, w, h,
+                   static_cast<int>(mode));
+    if (!SDL_SetRenderLogicalPresentation(m_renderer.get(), w, h, static_cast<SDL_RendererLogicalPresentation>(mode)))
+    {
+        sdl::log_error("Failed to set logical presentation: {}", SDL_GetError());
+    }
+}
+
 std::unique_ptr<itexture> renderer::create_texture(const pixel_format format, const texture_access access, const int w,
                                                    const int h) const
 {

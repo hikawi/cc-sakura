@@ -44,30 +44,22 @@ class iscene
     virtual void on_detach();
 
     /**
-     * \brief Called when the scene becomes the top-most active scene.
-     */
-    virtual void on_enter();
-
-    /**
-     * \brief Called when the scene is no longer the top-most active scene.
-     */
-    virtual void on_exit();
-
-    /**
      * \brief Logic update phase. Called every frame with variable time step.
      * \param dt Delta time in seconds.
+     * \returns true if it allows ticks to go downwards
      */
-    virtual void on_tick(const double dt) noexcept;
+    virtual bool on_tick(const double dt) noexcept;
 
     /**
      * \brief Physical update phase. Called once every fixed time step (approx. 16.6ms).
+     * \returns true if it allows physical ticks to go downwards
      */
-    virtual void on_physical_tick() noexcept;
+    virtual bool on_physical_tick() noexcept;
 
     /**
      * \brief Signal/Event processing phase.
      * \param signal The signal to process.
-     * \return true if the signal was consumed and should stop propagating, false otherwise.
+     * \return true if it allows signals to propagate downwards
      */
     virtual bool on_signal(isignal &signal) noexcept;
 
@@ -75,24 +67,6 @@ class iscene
      * \brief Rendering phase.
      */
     virtual void on_render(const sdl::irenderer &renderer) const noexcept;
-
-    /**
-     * \brief Whether the scene blocks ticks/physical ticks from reaching scenes below it.
-     *
-     * Example: A pause menu should return true; a HUD should return false.
-     *
-     * \return true if modal, false otherwise.
-     */
-    virtual bool is_modal() const noexcept;
-
-    /**
-     * \brief Whether the scene blocks rendering of scenes below it.
-     *
-     * Example: A full-screen menu should return true; a HUD should return false.
-     *
-     * \return true if opaque, false otherwise.
-     */
-    virtual bool is_opaque() const noexcept;
 };
 
 /**
@@ -116,6 +90,20 @@ class scene_manager
      * \returns a null pointer if it was successfully transferred, the same scene otherwise
      */
     std::unique_ptr<iscene> push_back(std::unique_ptr<iscene> scene) noexcept;
+
+    /**
+     * Pops the front scene out of the queue. This calls on_detach().
+     *
+     * \returns a null pointer if the queue was empty, the scene otherwise.
+     */
+    std::unique_ptr<iscene> pop_front() noexcept;
+
+    /**
+     * Pops the back scene out of the queue. This calls on_detach().
+     *
+     * \returns a null pointer if the queue was empty, the scene otherwise.
+     */
+    std::unique_ptr<iscene> pop_back() noexcept;
 
     /**
      * Ticks all scenes in order of top to bottom. If a scene is modal, scenes below will
