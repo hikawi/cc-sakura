@@ -75,7 +75,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     ccsakura::engine &engine = *static_cast<ccsakura::engine *>(appstate);
     sdl::event wrapped_event = sdl::event::wrap(*event);
 
-    // This returns true/false for SUCCESS or CONTINUE
     engine.queue_event(std::move(wrapped_event));
     return SDL_APP_CONTINUE;
 }

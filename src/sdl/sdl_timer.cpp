@@ -11,6 +11,11 @@ uint64_t get_ticks() noexcept
     return SDL_GetTicks();
 }
 
+uint64_t get_ticks_ns() noexcept
+{
+    return SDL_GetTicksNS();
+}
+
 void delay(std::chrono::milliseconds duration) noexcept
 {
     SDL_Delay(static_cast<uint32_t>(duration.count()));

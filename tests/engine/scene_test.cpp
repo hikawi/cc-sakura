@@ -14,6 +14,7 @@ TEST(SceneManager, CallsOnAttachWhenAdded)
     EXPECT_CALL(*mock_scene1, on_detach).Times(0);
 
     scene_mgr.push_front(std::move(mock_scene1));
+    scene_mgr.process_requests();
 }
 
 TEST(SceneManager, CallsOnDetachWhenRemoved)
@@ -26,6 +27,7 @@ TEST(SceneManager, CallsOnDetachWhenRemoved)
 
     scene_mgr.push_front(std::move(mock_scene1));
     scene_mgr.pop_front();
+    scene_mgr.process_requests();
 }
 
 TEST(SceneManager, RendersFromBottomToTop)
@@ -52,6 +54,7 @@ TEST(SceneManager, RendersFromBottomToTop)
     scene_mgr.push_back(std::move(s1));
     scene_mgr.push_back(std::move(s2));
     scene_mgr.push_back(std::move(s3));
+    scene_mgr.process_requests();
 
     scene_mgr.render(mock_renderer);
 }
@@ -83,6 +86,7 @@ TEST(SceneManager, TicksFromTopToBottom)
     scene_mgr.push_back(std::move(s2));
     scene_mgr.push_back(std::move(s3));
     scene_mgr.push_back(std::move(s4));
+    scene_mgr.process_requests();
 
     scene_mgr.tick(20);
 }

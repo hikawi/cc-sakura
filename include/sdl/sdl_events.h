@@ -6,6 +6,10 @@
 
 #pragma once
 
+#include "sdl/sdl_keycode.h"
+#include "sdl/sdl_keymod.h"
+#include "sdl/sdl_scancode.h"
+
 #include <SDL3/SDL_events.h>
 #include <variant>
 
@@ -25,6 +29,16 @@ struct mouse_button
     float y; /**< Y coordinate, relative to window */
 };
 
+struct key
+{
+    scancode scancode; /**< SDL physical key code */
+    keycode key;
+    keymod mod;
+    uint16_t raw; /**< The platform dependent scancode for this event */
+    bool down;    /**< true if the key is pressed */
+    bool repeat;  /**< true if this is a key repeat */
+};
+
 struct quit
 {
 };
@@ -35,7 +49,7 @@ struct unknown
 
 }; // namespace events
 
-using event_data = std::variant<events::mouse_button, events::quit, events::unknown>;
+using event_data = std::variant<events::mouse_button, events::key, events::quit, events::unknown>;
 
 class event
 {

@@ -11,15 +11,102 @@
 #include "signal.h"
 
 #include <deque>
+#include <memory>
+#include <mutex>
+#include <queue>
 
 namespace ccsakura
 {
+
+class iscene_manager;
+class iscene;
+class scene_context;
+
+/**
+ * Represents a proxy of scene manager to allow scenes to manipulate the scenes stack
+ * queue their requests, instead of breaking the normal operation flow.
+ */
+class scene_context
+{
+  public:
+    virtual ~scene_context() = default;
+
+    /**
+     * \brief Queues a request to add a new scene.
+     * \param scene The scene to add.
+     * \returns true if it succeeded, false otherwise.
+     */
+    virtual bool push_back(std::unique_ptr<iscene> scene) = 0;
+
+    /**
+     * \brief Queues a request to push a scene to the front of the stack.
+     * \param scene The scene to add.
+     * \returns true if it succeeded, false otherwise.
+     */
+    virtual bool push_front(std::unique_ptr<iscene> scene) = 0;
+
+    /**
+     * \brief Queues a request to push a scene before the first scene found of that type.
+     *
+     * If there is no scene with that type, acts the same as `push_front`.
+     *
+     * \param scene the scene to add.
+     * \param type the type of scene to push before.
+     * \returns true if it succeeded, false otherwise.
+     */
+    virtual bool push_before(std::unique_ptr<iscene> scene, const scene_type type) = 0;
+
+    /**
+     * \brief Queues a request to push a scene right after the last scene found of that type.
+     *
+     * If there is no scene with that type, acts the same as `push_back`.
+     *
+     * \param scene the scene to add.
+     * \param type the type of scene to push before.
+     * \returns true if it succeeded, false otherwise.
+     */
+    virtual bool push_after(std::unique_ptr<iscene> scene, const scene_type type) = 0;
+
+    /**
+     * \brief Pops the first scene of the stack.
+     *
+     * If the stack is empty, returns nullptr.
+     *
+     * \returns the scene ownership, null if it is empty.
+     */
+    virtual std::unique_ptr<iscene> pop_front() = 0;
+
+    /**
+     * \brief Pops the last scene of the stack.
+     *
+     * If the stack is empty, returns nullptr.
+     *
+     * \returns the scene ownership, null if it is empty.
+     */
+    virtual std::unique_ptr<iscene> pop_last() = 0;
+
+    /**
+     * \brief Pops the first scene of the stack with type.
+     *
+     * If the stack is empty, returns nullptr.
+     *
+     * \returns the scene ownership, null if it is not found.
+     */
+    virtual std::unique_ptr<iscene> pop_of_type(const scene_type type) = 0;
+
+    /**
+     * Emits a signal.
+     *
+     * \param signal the signal to emit
+     * \returns true if the request was queued, false otherwise.
+     */
+    virtual bool emit_signal(std::unique_ptr<isignal> signal) = 0;
+};
 
 /**
  * \brief Interface for a game scene.
  *
  * Scenes represent distinct states or layers of the game (e.g., menus, levels, HUD).
- * Use the constructor for one-time initialization and destructor for cleanup.
  */
 class iscene
 {
@@ -28,8 +115,6 @@ class iscene
 
     /**
      * \brief Returns the type of the scene.
-     *
-     * \returns the scene type
      */
     virtual scene_type type() const noexcept = 0;
 
@@ -44,24 +129,17 @@ class iscene
     virtual void on_detach();
 
     /**
-     * \brief Logic update phase. Called every frame with variable time step.
+     * \brief Logic update phase.
      * \param dt Delta time in seconds.
-     * \returns true if it allows ticks to go downwards
+     * \returns true if it allows ticks to go to scenes on lower layers.
      */
     virtual bool on_tick(const double dt) noexcept;
 
     /**
-     * \brief Physical update phase. Called once every fixed time step (approx. 16.6ms).
-     * \returns true if it allows physical ticks to go downwards
+     * \brief Physical update phase.
+     * \returns true if it allows ticks to go to scenes on lower layers.
      */
     virtual bool on_physical_tick() noexcept;
-
-    /**
-     * \brief Signal/Event processing phase.
-     * \param signal The signal to process.
-     * \return true if it allows signals to propagate downwards
-     */
-    virtual bool on_signal(isignal &signal) noexcept;
 
     /**
      * \brief Rendering phase.
@@ -70,62 +148,88 @@ class iscene
 };
 
 /**
- * Provides a concrete manager of scenes, and is the one responsible for calling up scene's hooks.
+ * \brief Manages the lifecycle and rendering of game scenes.
+ *
+ * This interface defines how the engine interacts with the scene management system.
+ * It supports adding and removing scenes, processing updates, handling events, and rendering.
  */
-class scene_manager
+class iscene_manager : public scene_context
 {
   public:
+    virtual ~iscene_manager() = default;
+
     /**
-     * Enqueues a scene to the front of the scene queue.
+     * \brief Updates the logic of all active scenes.
      *
-     * \param scene the ownership of a scene
-     * \returns a null pointer if it was successfully transferred, the same scene otherwise
-     */
-    std::unique_ptr<iscene> push_front(std::unique_ptr<iscene> scene) noexcept;
-
-    /**
-     * Enqueues a scene to the back of the scene queue.
+     * Processes any pending scene change requests after the update loop.
      *
-     * \param scene the ownership of a scene
-     * \returns a null pointer if it was successfully transferred, the same scene otherwise
+     * \param dt Delta time in seconds.
      */
-    std::unique_ptr<iscene> push_back(std::unique_ptr<iscene> scene) noexcept;
+    virtual void tick(const double dt) = 0;
 
     /**
-     * Pops the front scene out of the queue. This calls on_detach().
-     *
-     * \returns a null pointer if the queue was empty, the scene otherwise.
+     * \brief Updates the physics of all active scenes.
      */
-    std::unique_ptr<iscene> pop_front() noexcept;
+    virtual void physical_tick() = 0;
 
     /**
-     * Pops the back scene out of the queue. This calls on_detach().
-     *
-     * \returns a null pointer if the queue was empty, the scene otherwise.
+     * \brief Renders all active scenes in order.
+     * \param renderer The renderer to use.
      */
-    std::unique_ptr<iscene> pop_back() noexcept;
+    virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
 
     /**
-     * Ticks all scenes in order of top to bottom. If a scene is modal, scenes below will
-     * not get ticked.
+     * Processes all pending requests.
      */
-    void tick(const double dt) const noexcept;
+    virtual void process_requests() = 0;
+};
 
-    /**
-     * Ticks all scenes in order of top to bottom for a physics-updating tick. If a scene is
-     * modal, scenes below will not get ticked.
-     */
-    void physical_tick() const noexcept;
+enum class scene_request_type
+{
+    push_back,
+    push_front,
+    push_before,
+    push_after,
+    pop_front,
+    pop_last,
+    pop_of_type,
+    emit_signal,
+};
 
-    /**
-     * Renders all scenes from bottom to top. A scene is ignored if `scene.is_enabled` is false.
-     *
-     * \param renderer the renderer to render with
-     */
-    void render(const sdl::irenderer &renderer) const noexcept;
+/**
+ * Internal struct for scene managers.
+ */
+struct scene_request
+{
+    scene_request_type type;
+    std::unique_ptr<iscene> scene = nullptr;
+    scene_type target_type = scene_type::dbg_none;
+    std::unique_ptr<isignal> signal = nullptr;
+};
+
+/**
+ * \brief Provides a concrete manager of scenes.
+ */
+class scene_manager : public iscene_manager
+{
+  public:
+    bool push_back(std::unique_ptr<iscene> scene) override;
+    bool push_front(std::unique_ptr<iscene> scene) override;
+    bool push_before(std::unique_ptr<iscene> scene, const scene_type type) override;
+    bool push_after(std::unique_ptr<iscene> scene, const scene_type type) override;
+    std::unique_ptr<iscene> pop_front() override;
+    std::unique_ptr<iscene> pop_last() override;
+    std::unique_ptr<iscene> pop_of_type(const scene_type type) override;
+    bool emit_signal(std::unique_ptr<isignal> signal) override;
+    void tick(const double dt) override;
+    void physical_tick() override;
+    void render(const sdl::irenderer &renderer) const noexcept override;
+    void process_requests() override;
 
   private:
-    std::deque<std::unique_ptr<iscene>> m_scenes; // A deque of scenes, index 0 = front.
+    std::mutex m_requests_mutex;
+    std::queue<scene_request> m_requests;
+    std::deque<std::unique_ptr<iscene>> m_stack;
 };
 
 } // namespace ccsakura
