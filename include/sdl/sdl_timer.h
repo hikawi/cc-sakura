@@ -20,6 +20,13 @@ namespace sdl
 uint64_t get_ticks() noexcept;
 
 /**
+ * Retrieves the current ticks of the system in nanoseconds.
+ *
+ * \returns the current ticks in ns
+ */
+uint64_t get_ticks_ns() noexcept;
+
+/**
  * Delays the system synchronously for a duration.
  *
  * \param duration the duration to wait

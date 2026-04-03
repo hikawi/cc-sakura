@@ -50,6 +50,12 @@ frame_data engine::get_frame_data() const
     return m_frame_data;
 }
 
+// Iterate should be this flow:
+// 1. Process SDL events. Wrap all SDL events into signals and queue them to handle AFTER last tick's emitted signals.
+// 2. Physical tick if the time step allows it.
+// 3. Process all signals, including game signals and SDL's signals.
+// 4. Tick animations.
+// 5. Render.
 bool engine::iterate(const uint64_t tick) noexcept
 {
     // Calculate delta time
@@ -93,22 +99,8 @@ void engine::process_events()
     std::deque<sdl::event> frame_events;
     frame_events.swap(m_events_queue);
 
-    while (!frame_events.empty())
-    {
-        auto event = frame_events.front();
-
-        if (auto *_ = std::get_if<sdl::events::quit>(&event.data))
-        {
-            m_running = false;
-            sdl::log_info("Quit event processed. Quitting...");
-        }
-        else if (auto *mouse_button = std::get_if<sdl::events::mouse_button>(&event.data))
-        {
-            sdl::log_info("Mouse button at {}, {}, DOWN={}", mouse_button->x, mouse_button->y, mouse_button->down);
-        }
-
-        frame_events.pop_front();
-    }
+    // TODO:
+    // Add processing events here.
 }
 
 void engine::queue_event(const sdl::event &&event) noexcept
