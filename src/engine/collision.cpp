@@ -19,6 +19,11 @@ void collider::set_color(const float r, const float g, const float b, const floa
     m_color = {r, g, b, a};
 }
 
+sdl::fcolor collider::get_color() const noexcept
+{
+    return m_color;
+}
+
 // ========================================
 
 aabb_collider::aabb_collider(const vec2d center, const vec2d extents) : m_center(center), m_extents(extents)
@@ -155,6 +160,34 @@ collision aabb_collider::collides_with(const capsule_collider &capsule) const no
 void aabb_collider::shift(const vec2d dir) noexcept
 {
     m_center += dir;
+}
+
+void aabb_collider::set_center(const vec2d center) noexcept
+{
+    m_center = center;
+}
+
+vec2d aabb_collider::get_center() const noexcept
+{
+    return m_center;
+}
+
+void aabb_collider::set_extents(const vec2d extents) noexcept
+{
+    m_extents = extents;
+}
+
+vec2d aabb_collider::get_extents() const noexcept
+{
+    return m_extents;
+}
+
+void aabb_collider::render(const sdl::irenderer &renderer) const noexcept
+{
+    renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
+    renderer.render_fill_rect(sdl::frect(static_cast<float>(m_center.x - m_extents.x),
+                                         static_cast<float>(m_center.y - m_extents.y),
+                                         static_cast<float>(m_extents.x * 2.0), static_cast<float>(m_extents.y * 2.0)));
 }
 
 vec2d aabb_collider::closest_point_to(const vec2d p) const noexcept
@@ -299,6 +332,68 @@ void obb_collider::shift(const vec2d dir) noexcept
     m_center += dir;
 }
 
+void obb_collider::set_center(const vec2d center) noexcept
+{
+    m_center = center;
+}
+
+vec2d obb_collider::get_center() const noexcept
+{
+    return m_center;
+}
+
+void obb_collider::set_extents(const vec2d extents) noexcept
+{
+    m_extents = extents;
+}
+
+vec2d obb_collider::get_extents() const noexcept
+{
+    return m_extents;
+}
+
+void obb_collider::set_angle(const double angle) noexcept
+{
+    m_angle = angle;
+}
+
+double obb_collider::get_angle() const noexcept
+{
+    return m_angle;
+}
+
+void obb_collider::rotate(const double angle) noexcept
+{
+    m_angle += angle;
+}
+
+void obb_collider::render(const sdl::irenderer &renderer) const noexcept
+{
+    renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
+
+    double cos_a = std::cos(m_angle);
+    double sin_a = std::sin(m_angle);
+    vec2d ux(cos_a, sin_a);
+    vec2d uy(-sin_a, cos_a);
+
+    std::array<vec2d, 4> corners = {
+        m_center - ux * m_extents.x - uy * m_extents.y, // bottom-left
+        m_center + ux * m_extents.x - uy * m_extents.y, // bottom-right
+        m_center + ux * m_extents.x + uy * m_extents.y, // top-right
+        m_center - ux * m_extents.x + uy * m_extents.y  // top-left
+    };
+
+    sdl::render_geometry_options opts(renderer);
+    for (const auto &c : corners)
+    {
+        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(c.x), static_cast<float>(c.y)), m_color));
+    }
+
+    opts.connect(0, 1, 2);
+    opts.connect(0, 2, 3);
+    opts.render();
+}
+
 obb_collider::~obb_collider()
 {
     sdl::log_verbose("ccsakura::obb_collider destroyed");
@@ -403,6 +498,49 @@ void circle_collider::shift(const vec2d dir) noexcept
     m_center += dir;
 }
 
+void circle_collider::set_center(const vec2d center) noexcept
+{
+    m_center = center;
+}
+
+vec2d circle_collider::get_center() const noexcept
+{
+    return m_center;
+}
+
+void circle_collider::set_radius(const double radius) noexcept
+{
+    m_radius = radius;
+}
+
+double circle_collider::get_radius() const noexcept
+{
+    return m_radius;
+}
+
+void circle_collider::render(const sdl::irenderer &renderer) const noexcept
+{
+    renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
+
+    sdl::render_geometry_options opts(renderer);
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_center.x), static_cast<float>(m_center.y)), m_color));
+
+    constexpr int segments = 64;
+    for (int i = 0; i <= segments; ++i)
+    {
+        double angle = 2.0 * std::numbers::pi * i / segments;
+        vec2d p = m_center + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
+        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+    }
+
+    for (int i = 1; i <= segments; ++i)
+    {
+        opts.connect(0, i, i + 1);
+    }
+
+    opts.render();
+}
+
 circle_collider::~circle_collider()
 {
     sdl::log_verbose("ccsakura::circle_collider destroyed");
@@ -483,6 +621,103 @@ void capsule_collider::shift(const vec2d dir) noexcept
 {
     m_p1 += dir;
     m_p2 += dir;
+}
+
+void capsule_collider::set_p1(const vec2d p1) noexcept
+{
+    m_p1 = p1;
+}
+
+vec2d capsule_collider::get_p1() const noexcept
+{
+    return m_p1;
+}
+
+void capsule_collider::set_p2(const vec2d p2) noexcept
+{
+    m_p2 = p2;
+}
+
+vec2d capsule_collider::get_p2() const noexcept
+{
+    return m_p2;
+}
+
+void capsule_collider::set_radius(const double radius) noexcept
+{
+    m_radius = radius;
+}
+
+double capsule_collider::get_radius() const noexcept
+{
+    return m_radius;
+}
+
+void capsule_collider::render(const sdl::irenderer &renderer) const noexcept
+{
+    renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
+
+    // If it's just a circle, render it as such.
+    if (m_p1 == m_p2)
+    {
+        circle_collider(m_p1, m_radius).render(renderer);
+        return;
+    }
+
+    vec2d d = m_p2 - m_p1;
+    vec2d norm = d.orthogonal().normalized() * m_radius;
+
+    // Rectangle corners
+    vec2d r1 = m_p1 + norm;
+    vec2d r2 = m_p2 + norm;
+    vec2d r3 = m_p2 - norm;
+    vec2d r4 = m_p1 - norm;
+
+    sdl::render_geometry_options opts(renderer);
+
+    // Add rectangle vertices
+    int rect_start = static_cast<int>(opts.vertices.size());
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r1.x), static_cast<float>(r1.y)), m_color));
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r2.x), static_cast<float>(r2.y)), m_color));
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r3.x), static_cast<float>(r3.y)), m_color));
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r4.x), static_cast<float>(r4.y)), m_color));
+
+    opts.connect(rect_start + 0, rect_start + 1, rect_start + 2);
+    opts.connect(rect_start + 0, rect_start + 2, rect_start + 3);
+
+    // Semi-circles at endpoints
+    constexpr int segments = 32;
+    double base_angle = std::atan2(norm.y, norm.x);
+
+    // Semi-circle at p1 (around p1, from r4 to r1, away from p2)
+    int p1_center_idx = static_cast<int>(opts.vertices.size());
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_p1.x), static_cast<float>(m_p1.y)), m_color));
+    for (int i = 0; i <= segments; ++i)
+    {
+        double angle = base_angle + std::numbers::pi * i / segments;
+        vec2d p = m_p1 + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
+        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+    }
+    for (int i = 1; i <= segments; ++i)
+    {
+        opts.connect(p1_center_idx, p1_center_idx + i, p1_center_idx + i + 1);
+    }
+
+    // Semi-circle at p2 (around p2, from r2 to r3, away from p1)
+    int p2_center_idx = static_cast<int>(opts.vertices.size());
+    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_p2.x), static_cast<float>(m_p2.y)), m_color));
+    for (int i = 0; i <= segments; ++i)
+    {
+        double angle = base_angle + std::numbers::pi + std::numbers::pi * i / segments;
+        vec2d p = m_p2 + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
+        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+    }
+    for (int i = 1; i <= segments; ++i)
+    {
+        opts.connect(p2_center_idx, p2_center_idx + i, p2_center_idx + i + 1);
+    }
+
+    opts.render();
 }
 
 vec2d capsule_collider::closest_point_to(const vec2d p) const noexcept

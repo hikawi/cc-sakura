@@ -309,6 +309,13 @@ class irenderer
     virtual void render_texture(const render_texture_options &options) const noexcept = 0;
 
     /**
+     * Renders a rectangle on the screen.
+     *
+     * \param rect the rectangle to render
+     */
+    virtual void render_fill_rect(const sdl::frect &rect) const noexcept = 0;
+
+    /**
      * Render triangles on the renderer.
      *
      * \param opts the options to use for rendering geometry
@@ -370,6 +377,7 @@ class renderer : public irenderer
                                              const int h) const override;
     std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;
     void render_texture(const render_texture_options &options) const noexcept override;
+    void render_fill_rect(const sdl::frect &rect) const noexcept override;
     void render_geometry(const render_geometry_options &opts) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;

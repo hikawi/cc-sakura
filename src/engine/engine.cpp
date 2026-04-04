@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
 #include "engine/scene.h"
+#include "scenes/scene_dbg_colliders.h"
 #include "scenes/scene_dbg_empty.h"
 #include "scenes/scene_dbg_fps.h"
 #include "sdl/sdl_events.h"
@@ -41,6 +42,7 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
 
     // TODO: Remove
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 1, 1, 1)));
+    m_scene_mgr.push_front(std::make_unique<scenes::dbg_colliders>());
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_fps>());
 }
 
