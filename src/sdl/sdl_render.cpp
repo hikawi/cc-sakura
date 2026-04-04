@@ -176,7 +176,7 @@ void renderer::set_logical_presentation(const int w, const int h, const logical_
 std::unique_ptr<itexture> renderer::create_texture(const pixel_format format, const texture_access access, const int w,
                                                    const int h) const
 {
-    sdl::log_trace("sdl::renderer {} creating a texture {}x{}", m_name, w, h);
+    sdl::log_verbose("sdl::renderer {} creating a texture {}x{}", m_name, w, h);
     SDL_Texture *txt = SDL_CreateTexture(m_renderer.get(), static_cast<SDL_PixelFormat>(format),
                                          static_cast<SDL_TextureAccess>(access), w, h);
 
@@ -229,6 +229,13 @@ void renderer::render_texture(const render_texture_options &options) const noexc
 
     SDL_RenderTextureRotated(m_renderer.get(), options.m_texture.get(), ptr_or_null(srcrect), ptr_or_null(dstrect),
                              options.m_rotation, ptr_or_null(center), static_cast<SDL_FlipMode>(options.m_flip_mode));
+}
+
+void renderer::render_fill_rect(const sdl::frect &rect) const noexcept
+{
+    sdl::log_verbose("sdl::renderer {} render_rect", m_name);
+    SDL_FRect r = {rect.x, rect.y, rect.w, rect.h};
+    SDL_RenderFillRect(m_renderer.get(), &r);
 }
 
 void renderer::render_geometry(const render_geometry_options &opts) const noexcept
