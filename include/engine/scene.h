@@ -10,10 +10,14 @@
 #include "sdl/sdl_render.h"
 #include "signal.h"
 
+#include <atomic>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <set>
+#include <typeindex>
+#include <unordered_map>
 
 namespace ccsakura
 {
@@ -101,6 +105,45 @@ class scene_context
      * \returns true if the request was queued, false otherwise.
      */
     virtual bool emit_signal(std::unique_ptr<isignal> signal) = 0;
+
+    /**
+     * Unsubscribes a previously registered listener by its ID.
+     *
+     * \param id the subscription ID
+     * \returns true if removed successfully, false if not found.
+     */
+    virtual bool unsubscribe(uint64_t id) = 0;
+
+    /**
+     * Subscribes to a signal type at priority.
+     *
+     * \returns the new subscriber id
+     */
+    template <typename T>
+        requires std::derived_from<T, isignal>
+    uint64_t subscribe(listener_priority priority, std::function<void(T &)> callback)
+    {
+        uint64_t id = next_listener_id();
+        signal_listener listener(priority, id, callback);
+        register_listener(std::move(listener));
+        return id;
+    }
+
+    /**
+     * Subscribes to a signal type at priority using a member function.
+     *
+     * \returns the new subscriber id
+     */
+    template <typename T, typename Class>
+        requires std::derived_from<T, isignal>
+    uint64_t subscribe(listener_priority priority, void (Class::*method)(T &), Class *instance)
+    {
+        return subscribe<T>(priority, [instance, method](T &ev) { (instance->*method)(ev); });
+    }
+
+  protected:
+    virtual uint64_t next_listener_id() noexcept = 0;
+    virtual void register_listener(signal_listener listener) = 0;
 };
 
 /**
@@ -121,25 +164,25 @@ class iscene
     /**
      * \brief Called when the scene is added to the scene manager.
      */
-    virtual void on_attach();
+    virtual void on_attach(scene_context &ctx);
 
     /**
      * \brief Called when the scene is removed from the scene manager.
      */
-    virtual void on_detach();
+    virtual void on_detach(scene_context &ctx);
 
     /**
      * \brief Logic update phase.
      * \param dt Delta time in seconds.
      * \returns true if it allows ticks to go to scenes on lower layers.
      */
-    virtual bool on_tick(const double dt) noexcept;
+    virtual bool on_tick(scene_context &ctx, const double dt) noexcept;
 
     /**
      * \brief Physical update phase.
      * \returns true if it allows ticks to go to scenes on lower layers.
      */
-    virtual bool on_physical_tick() noexcept;
+    virtual bool on_physical_tick(scene_context &ctx) noexcept;
 
     /**
      * \brief Rendering phase.
@@ -182,6 +225,20 @@ class iscene_manager : public scene_context
      * Processes all pending requests.
      */
     virtual void process_requests() = 0;
+
+    /**
+     * Drains all emitted signals into the target deque.
+     *
+     * \param target the deque to move signals into
+     */
+    virtual void drain_signals(std::deque<std::unique_ptr<isignal>> &target) = 0;
+
+    /**
+     * Propagates a signal down to all subscribers.
+     *
+     * \param signal the signal to propagate
+     */
+    virtual void propagate_signals(isignal &signal) = 0;
 };
 
 enum class scene_request_type
@@ -221,15 +278,27 @@ class scene_manager : public iscene_manager
     std::unique_ptr<iscene> pop_last() override;
     std::unique_ptr<iscene> pop_of_type(const scene_type type) override;
     bool emit_signal(std::unique_ptr<isignal> signal) override;
+    bool unsubscribe(uint64_t id) override;
+
     void tick(const double dt) override;
     void physical_tick() override;
     void render(const sdl::irenderer &renderer) const noexcept override;
     void process_requests() override;
+    void drain_signals(std::deque<std::unique_ptr<isignal>> &target) override;
+    void propagate_signals(isignal &signal) override;
+
+  protected:
+    uint64_t next_listener_id() noexcept override;
+    void register_listener(signal_listener listener) override;
 
   private:
     std::mutex m_requests_mutex;
     std::queue<scene_request> m_requests;
     std::deque<std::unique_ptr<iscene>> m_stack;
+    std::deque<std::unique_ptr<isignal>> m_outgoing_signals;
+    std::unordered_map<std::type_index, std::set<signal_listener>> m_listeners;
+
+    std::atomic<uint64_t> m_listener_id_counter{0};
 };
 
 } // namespace ccsakura

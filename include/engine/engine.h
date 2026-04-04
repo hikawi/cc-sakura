@@ -150,6 +150,7 @@ class engine : public iengine
     bool m_running = true;
 
     void process_events();
+    void process_signals();
 };
 
 } // namespace ccsakura

@@ -5,19 +5,19 @@
 namespace ccsakura
 {
 
-void iscene::on_attach()
+void iscene::on_attach(scene_context &)
 {
 }
-void iscene::on_detach()
+void iscene::on_detach(scene_context &)
 {
 }
 
-bool iscene::on_tick(const double) noexcept
+bool iscene::on_tick(scene_context &, const double) noexcept
 {
     return true;
 }
 
-bool iscene::on_physical_tick() noexcept
+bool iscene::on_physical_tick(scene_context &) noexcept
 {
     return true;
 }
@@ -90,7 +90,7 @@ void scene_manager::tick(const double dt)
 {
     for (auto &scene : m_stack)
     {
-        if (!scene->on_tick(dt))
+        if (!scene->on_tick(*this, dt))
         {
             break;
         }
@@ -101,7 +101,7 @@ void scene_manager::physical_tick()
 {
     for (auto &scene : m_stack)
     {
-        if (!scene->on_physical_tick())
+        if (!scene->on_physical_tick(*this))
         {
             break;
         }
@@ -138,14 +138,14 @@ void scene_manager::process_requests()
         case scene_request_type::push_back:
             if (req.scene)
             {
-                req.scene->on_attach();
+                req.scene->on_attach(*this);
                 m_stack.push_back(std::move(req.scene));
             }
             break;
         case scene_request_type::push_front:
             if (req.scene)
             {
-                req.scene->on_attach();
+                req.scene->on_attach(*this);
                 m_stack.push_front(std::move(req.scene));
             }
             break;
@@ -155,7 +155,7 @@ void scene_manager::process_requests()
             {
                 auto it = std::find_if(m_stack.begin(), m_stack.end(),
                                        [&](const auto &s) { return s->type() == req.target_type; });
-                req.scene->on_attach();
+                req.scene->on_attach(*this);
                 if (it != m_stack.end())
                 {
                     m_stack.insert(it, std::move(req.scene));
@@ -173,7 +173,7 @@ void scene_manager::process_requests()
             {
                 auto it = std::find_if(m_stack.rbegin(), m_stack.rend(),
                                        [&](const auto &s) { return s->type() == req.target_type; });
-                req.scene->on_attach();
+                req.scene->on_attach(*this);
                 if (it != m_stack.rend())
                 {
                     m_stack.insert(it.base(), std::move(req.scene));
@@ -190,7 +190,7 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(m_stack.front());
                 m_stack.pop_front();
-                scene->on_detach();
+                scene->on_detach(*this);
             }
             break;
         case scene_request_type::pop_last:
@@ -198,7 +198,7 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(m_stack.back());
                 m_stack.pop_back();
-                scene->on_detach();
+                scene->on_detach(*this);
             }
             break;
         case scene_request_type::pop_of_type:
@@ -209,13 +209,68 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(*it);
                 m_stack.erase(it);
-                scene->on_detach();
+                scene->on_detach(*this);
             }
             break;
         }
         case scene_request_type::emit_signal:
-            // Handle signal emission here, e.g., pass req.signal to a signal handler
+            if (req.signal)
+            {
+                m_outgoing_signals.emplace_back(std::move(req.signal));
+            }
             break;
+        }
+    }
+}
+
+void scene_manager::drain_signals(std::deque<std::unique_ptr<isignal>> &target)
+{
+    while (!m_outgoing_signals.empty())
+    {
+        target.emplace_back(std::move(m_outgoing_signals.front()));
+        m_outgoing_signals.pop_front();
+    }
+}
+
+bool scene_manager::unsubscribe(uint64_t id)
+{
+    bool removed = false;
+    for (auto &[type, listeners] : m_listeners)
+    {
+        for (auto it = listeners.begin(); it != listeners.end();)
+        {
+            if (it->get_id() == id)
+            {
+                it = listeners.erase(it);
+                removed = true;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+    return removed;
+}
+
+void scene_manager::register_listener(signal_listener listener)
+{
+    m_listeners[listener.get_type_index()].insert(std::move(listener));
+}
+
+uint64_t scene_manager::next_listener_id() noexcept
+{
+    return ++m_listener_id_counter;
+}
+
+void scene_manager::propagate_signals(isignal &signal)
+{
+    // Indiscriminately pass down signals. Scenes have to be wary whether the signals are already cancelled or not.
+    if (auto it = m_listeners.find(signal.type()); it != m_listeners.end())
+    {
+        for (auto &listener : it->second)
+        {
+            listener(signal);
         }
     }
 }

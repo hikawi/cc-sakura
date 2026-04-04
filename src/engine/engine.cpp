@@ -10,7 +10,6 @@
 
 #include <algorithm>
 #include <stdexcept>
-#include <variant>
 
 namespace ccsakura
 {
@@ -63,7 +62,14 @@ bool engine::iterate(const uint64_t tick) noexcept
     m_frame_data.last_tick = tick;
     m_frame_data.accumulator += dt;
 
+    // Pump all events from the scene manager and SDL's.
     process_events();
+
+    // Process all the requests for this frame.
+    m_scene_mgr.process_requests();
+
+    // Process all signals from SDL and scenes.
+    process_signals();
 
     // Call fixed update if and only if frame_accum has passed
     // enough for 1 frame time (1 / FPS), for 60FPS this is about 16ms.
@@ -93,14 +99,43 @@ bool engine::iterate(const uint64_t tick) noexcept
     return true;
 }
 
+// Convert all SDL events to signals and queue in the scene manager.
 void engine::process_events()
 {
-    // Convert necessary events to signals, or handle high level events?
     std::deque<sdl::event> frame_events;
     frame_events.swap(m_events_queue);
 
-    // TODO:
-    // Add processing events here.
+    while (!frame_events.empty())
+    {
+        const sdl::event event = std::move(frame_events.front());
+        frame_events.pop_front();
+
+        std::unique_ptr<isignal> signal = isignal::wrap(event);
+        m_scene_mgr.emit_signal(std::move(signal));
+    }
+}
+
+void engine::process_signals()
+{
+    std::deque<std::unique_ptr<isignal>> frame_signals;
+    m_scene_mgr.drain_signals(frame_signals);
+
+    // Signals should be passed back to the engine.
+    while (!frame_signals.empty())
+    {
+        std::unique_ptr<isignal> signal = std::move(frame_signals.front());
+        frame_signals.pop_front();
+
+        // Let scenes handle signals first. Some scenes might need cleaning up by themselves.
+        m_scene_mgr.propagate_signals(*signal);
+
+        // Now the engine handle the signal, as some may be destructive signals.
+        // Only quit is implemented for now.
+        if (signal->type() == std::type_index(typeid(signals::quit)))
+        {
+            m_running = false;
+        }
+    }
 }
 
 void engine::queue_event(const sdl::event &&event) noexcept
