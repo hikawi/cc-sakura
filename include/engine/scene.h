@@ -94,6 +94,7 @@ class scene_context
      *
      * If the stack is empty, returns nullptr.
      *
+     * \param type the type of scene to pop
      * \returns the scene ownership, null if it is not found.
      */
     virtual std::unique_ptr<iscene> pop_of_type(const scene_type type) = 0;
@@ -117,6 +118,9 @@ class scene_context
     /**
      * Subscribes to a signal type at priority.
      *
+     * \tparam T the signal type to subscribe to
+     * \param priority the listener priority
+     * \param callback the function to call when the signal is emitted
      * \returns the new subscriber id
      */
     template <typename T>
@@ -132,6 +136,11 @@ class scene_context
     /**
      * Subscribes to a signal type at priority using a member function.
      *
+     * \tparam T the signal type to subscribe to
+     * \tparam Class the class type containing the method
+     * \param priority the listener priority
+     * \param method the member function to call
+     * \param instance the class instance to call the method on
      * \returns the new subscriber id
      */
     template <typename T, typename Class>
@@ -158,21 +167,25 @@ class iscene
 
     /**
      * \brief Returns the type of the scene.
+     * \returns the scene type
      */
     virtual scene_type type() const noexcept = 0;
 
     /**
      * \brief Called when the scene is added to the scene manager.
+     * \param ctx the scene context for queuing further requests
      */
     virtual void on_attach(scene_context &ctx);
 
     /**
      * \brief Called when the scene is removed from the scene manager.
+     * \param ctx the scene context for queuing further requests
      */
     virtual void on_detach(scene_context &ctx);
 
     /**
      * \brief Logic update phase.
+     * \param ctx the scene context for queuing further requests
      * \param dt Delta time in seconds.
      * \returns true if it allows ticks to go to scenes on lower layers.
      */
@@ -180,12 +193,14 @@ class iscene
 
     /**
      * \brief Physical update phase.
+     * \param ctx the scene context for queuing further requests
      * \returns true if it allows ticks to go to scenes on lower layers.
      */
     virtual bool on_physical_tick(scene_context &ctx) noexcept;
 
     /**
      * \brief Rendering phase.
+     * \param renderer The renderer to use.
      */
     virtual void on_render(const sdl::irenderer &renderer) const noexcept;
 };

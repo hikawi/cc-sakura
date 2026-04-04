@@ -48,6 +48,7 @@ enum class font_hint
  *
  * \param lhs the font style on the left
  * \param rhs the font style on the right
+ * \returns the combined font style
  */
 font_style operator|(const font_style lhs, const font_style rhs) noexcept;
 

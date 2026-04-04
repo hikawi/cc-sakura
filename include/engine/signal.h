@@ -24,10 +24,10 @@ namespace ccsakura
  */
 enum class signal_type
 {
-    undefined,
-    mouse,
-    key,
-    quit,
+    undefined, ///< unknown signal type
+    mouse,     ///< mouse button or motion event
+    key,       ///< keyboard key event
+    quit,      ///< application quit request
 };
 
 /**
@@ -41,6 +41,9 @@ class isignal
 
     /**
      * Wraps a raw sdl::event into an instance of isignal.
+     *
+     * \param ev the SDL event to wrap
+     * \return a unique pointer to the wrapped signal, or nullptr if unsupported
      */
     static std::unique_ptr<isignal> wrap(const sdl::event &ev) noexcept;
 
@@ -111,12 +114,12 @@ struct key : isignal
  */
 enum class listener_priority : uint8_t
 {
-    lowest,
-    low,
-    normal,
-    high,
-    highest,
-    monitor
+    lowest,  ///< lowest priority, runs first
+    low,     ///< low priority
+    normal,  ///< standard priority
+    high,    ///< high priority
+    highest, ///< highest priority, runs last
+    monitor  ///< special priority for monitoring signals without modification
 };
 
 class signal_listener

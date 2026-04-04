@@ -144,21 +144,24 @@ struct text
      * This will reuse a font loaded inside the cache if it matches the parameters.
      * This throws if no cache has been provided.
      *
-     * \param typeface the typeface to use
+     * \param face the typeface to use
      * \param sp the font's size
      */
-    text(const enum typeface typeface, const float sp);
+    text(const typeface face, const float sp);
     ~text();
 
     /**
      * Renders the text into a piece of texture for use with the current renderer.
      *
+     * \param renderer the renderer to use
      * \returns a unique pointer to an sdl texture
      */
     std::unique_ptr<sdl::itexture> render(const sdl::irenderer &renderer) const noexcept;
 
     /**
      * Sets the cache for the text engine to use.
+     *
+     * \param cache the cache to use
      */
     static void use_cache(ifont_cache &cache);
 

@@ -20,15 +20,15 @@ namespace ccsakura
  */
 enum class render_origin
 {
-    top_left,
-    top_center,
-    top_right,
-    middle_left,
-    middle_center,
-    middle_right,
-    bottom_left,
-    bottom_center,
-    bottom_right,
+    top_left,      ///< the top left corner of the rectangle
+    top_center,    ///< the top center of the rectangle
+    top_right,     ///< the top right corner of the rectangle
+    middle_left,   ///< the middle left of the rectangle
+    middle_center, ///< the middle center of the rectangle
+    middle_right,  ///< the middle right of the rectangle
+    bottom_left,   ///< the bottom left corner of the rectangle
+    bottom_center, ///< the bottom center of the rectangle
+    bottom_right,  ///< the bottom right corner of the rectangle
 };
 
 /**
@@ -45,7 +45,7 @@ struct camera2d
 /**
  * Shifts the provided rectangle to the correct origin for SDL to render from the top left.
  *
- * \param rect the rectangle to shift
+ * \param frect the rectangle to shift
  * \param origin the new render origin
  */
 void shift_origin(sdl::frect &frect, const render_origin origin);

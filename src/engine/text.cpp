@@ -101,9 +101,9 @@ void font_cache::clear()
 
 ifont_cache *text::s_cache = nullptr;
 
-text::text(const enum typeface typeface, const float sp) : face(typeface), sp(sp)
+text::text(const typeface tf, const float sp) : face(tf), sp(sp)
 {
-    sdl::log_trace("ccsakura::text constructed with typeface {} size {}", get_font_name(typeface), sp);
+    sdl::log_trace("ccsakura::text constructed with typeface {} size {}", get_font_name(tf), sp);
 }
 
 text::~text()
