@@ -31,7 +31,7 @@ struct mouse_button
 
 struct key
 {
-    scancode scancode; /**< SDL physical key code */
+    scancode scan; /**< SDL physical key code */
     keycode key;
     keymod mod;
     uint16_t raw; /**< The platform dependent scancode for this event */
