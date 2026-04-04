@@ -9,7 +9,7 @@ namespace sdl
 events::key wrap_event(const SDL_KeyboardEvent &e)
 {
     return {
-        .scancode = static_cast<sdl::scancode>(e.scancode),
+        .scan = static_cast<sdl::scancode>(e.scancode),
         .key = static_cast<sdl::keycode>(e.key),
         .mod = static_cast<sdl::keymod>(e.mod),
         .raw = e.raw,

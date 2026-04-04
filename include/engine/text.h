@@ -132,7 +132,7 @@ class font_cache : public ifont_cache
  */
 struct text
 {
-    typeface typeface;
+    typeface face;
     float sp;
     std::string value{""};
     sdl::color color{0, 0, 0, 255};

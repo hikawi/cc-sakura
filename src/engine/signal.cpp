@@ -88,7 +88,7 @@ std::type_index mouse::type() const noexcept
 }
 
 key::key(const uint64_t timestamp, const sdl::events::key &data)
-    : isignal(timestamp), scancode(data.scancode), keycode(data.key), keymod(data.mod), raw(data.raw), down(data.down),
+    : isignal(timestamp), scancode(data.scan), keycode(data.key), keymod(data.mod), raw(data.raw), down(data.down),
       repeat(data.repeat)
 {
 }

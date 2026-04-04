@@ -101,7 +101,7 @@ void font_cache::clear()
 
 ifont_cache *text::s_cache = nullptr;
 
-text::text(const enum typeface typeface, const float sp) : typeface(typeface), sp(sp)
+text::text(const enum typeface typeface, const float sp) : face(typeface), sp(sp)
 {
     sdl::log_trace("ccsakura::text constructed with typeface {} size {}", get_font_name(typeface), sp);
 }
@@ -119,7 +119,7 @@ std::unique_ptr<sdl::itexture> text::render(const sdl::irenderer &renderer) cons
         return nullptr;
     }
 
-    font value_font{typeface, sp};
+    font value_font{face, sp};
     sdl::ttf::ifont &font = (*s_cache)[value_font];
     std::unique_ptr<sdl::isurface> surface = font.render_text_blended(value, color);
     std::unique_ptr<sdl::itexture> texture = renderer.create_texture(*surface.get());
