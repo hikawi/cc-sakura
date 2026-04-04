@@ -318,6 +318,7 @@ vec2d closest_point_on_segment(const vec2d a, const vec2d b, const vec2d p) noex
  * \param p2 second point of first segment
  * \param q1 first point of second segment
  * \param q2 second point of second segment
+ * \returns a pair of points, where the first is on the segment P and the second is on the segment Q
  */
 std::pair<vec2d, vec2d> closest_points_between_segments(const vec2d p1, const vec2d p2, const vec2d q1,
                                                         const vec2d q2) noexcept;

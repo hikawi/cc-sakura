@@ -96,6 +96,7 @@ class isprite_cache
      * Retrieves the sprite using a name.
      *
      * \param name the name of the sprite to get
+     * \returns a reference to the sprite
      */
     virtual isprite &operator[](std::string name) = 0;
 

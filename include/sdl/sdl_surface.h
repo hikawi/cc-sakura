@@ -30,7 +30,7 @@ enum class scale_mode
 {
     nearest = SDL_SCALEMODE_NEAREST, ///< nearest pixel sampling
     linear = SDL_SCALEMODE_LINEAR,   ///< linear filtering
-    invalid = SDL_SCALEMODE_INVALID,
+    invalid = SDL_SCALEMODE_INVALID, ///< invalid scale mode
 };
 
 /**
