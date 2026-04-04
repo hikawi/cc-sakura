@@ -7,7 +7,7 @@ namespace ccsakura::scenes
 {
 
 /**
- * Scene to display a simple FPS counter on the top right to test the scene-layering system.
+ * Scene to display a simple background color to test the scene-layering system.
  */
 class dbg_empty : public ccsakura::iscene
 {
@@ -15,10 +15,18 @@ class dbg_empty : public ccsakura::iscene
     dbg_empty(sdl::fcolor color);
     ~dbg_empty() = default;
     scene_type type() const noexcept override;
+    void on_attach(scene_context &ctx) noexcept override;
+    void on_detach(scene_context &ctx) noexcept override;
+    bool on_tick(scene_context &ctx, const double dt) noexcept override;
     void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     sdl::fcolor m_color;
+    sdl::fpoint m_point;
+
+    uint64_t m_mouse_event_callback;
+
+    void on_mouse_event(signals::mouse &event);
 };
 
 } // namespace ccsakura::scenes

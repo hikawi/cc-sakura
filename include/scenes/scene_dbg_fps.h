@@ -16,7 +16,9 @@ class dbg_fps : public ccsakura::iscene
     dbg_fps();
     ~dbg_fps() = default;
     scene_type type() const noexcept override;
-    bool on_tick(const double dt) noexcept override;
+    void on_attach(scene_context &ctx) noexcept override;
+    void on_detach(scene_context &ctx) noexcept override;
+    bool on_tick(scene_context &ctx, const double dt) noexcept override;
     void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
@@ -25,6 +27,10 @@ class dbg_fps : public ccsakura::iscene
     double m_accumulator = 0;
     uint32_t m_frame_count = 0;
     uint32_t m_fps = 0;
+
+    uint64_t m_mouse_event_callback;
+
+    void on_mouse_event(signals::mouse &event);
 };
 
 } // namespace ccsakura::scenes

@@ -4,7 +4,8 @@
  * Implementations for signals that are passed down to scenes.
  */
 
-#include <engine/signal.h>
+#include "engine/signal.h"
+
 #include <variant>
 
 namespace ccsakura
@@ -14,9 +15,19 @@ isignal::isignal(const uint64_t timestamp) : timestamp(timestamp)
 {
 }
 
-signal_type isignal::get_type() const noexcept
+std::type_index isignal::type() const noexcept
 {
-    return signal_type::undefined;
+    return typeid(isignal);
+}
+
+bool isignal::is_cancelled() const noexcept
+{
+    return m_cancelled;
+}
+
+void isignal::set_cancelled(const bool cancelled) noexcept
+{
+    m_cancelled = cancelled;
 }
 
 std::unique_ptr<isignal> isignal::wrap(const sdl::event &ev) noexcept
@@ -33,6 +44,10 @@ std::unique_ptr<isignal> isignal::wrap(const sdl::event &ev) noexcept
             {
                 return std::make_unique<signals::key>(ev.timestamp, arg);
             }
+            else if constexpr (std::is_same_v<T, sdl::events::quit>)
+            {
+                return std::make_unique<signals::quit>(ev.timestamp);
+            }
             else
             {
                 return std::make_unique<signals::undefined>(ev.timestamp);
@@ -48,14 +63,28 @@ undefined::undefined(const uint64_t timestamp) : isignal(timestamp)
 {
 }
 
+std::type_index undefined::type() const noexcept
+{
+    return typeid(undefined);
+}
+
+quit::quit(const uint64_t timestamp) : isignal(timestamp)
+{
+}
+
+std::type_index quit::type() const noexcept
+{
+    return typeid(quit);
+}
+
 mouse::mouse(const uint64_t timestamp, const sdl::events::mouse_button &data)
     : isignal(timestamp), button(data.button), down(data.down), clicks(data.clicks), x(data.x), y(data.y)
 {
 }
 
-signal_type mouse::get_type() const noexcept
+std::type_index mouse::type() const noexcept
 {
-    return signal_type::mouse;
+    return typeid(mouse);
 }
 
 key::key(const uint64_t timestamp, const sdl::events::key &data)
@@ -64,9 +93,9 @@ key::key(const uint64_t timestamp, const sdl::events::key &data)
 {
 }
 
-signal_type key::get_type() const noexcept
+std::type_index key::type() const noexcept
 {
-    return signal_type::key;
+    return typeid(key);
 }
 
 } // namespace signals
