@@ -2,9 +2,11 @@ name: Build & Test
 
 on:
   pull_request:
+  push:
+    branches: ["main"]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   commitlint:
@@ -12,17 +14,17 @@ jobs:
     name: Lint Commits
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Don't truncate commits
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           run_install: false # Tell PNPM not to install before we setup Node
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node_version: latest
           cache: pnpm
@@ -36,74 +38,10 @@ jobs:
 
       - name: Validate PR commits with commitlint
         if: github.event_name == 'pull_request'
-        run: pnpx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
-
-  test:
-    needs: ["commitlint"]
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: macos-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-    runs-on: ${{ matrix.os }}
-    name: Test with CTest
-    steps:
-      - name: Checkout with Submodules
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Needed for version tagging
-
-      - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install build-essential git make autoconf automake libtool m4 \
-            pkg-config cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev \
-            libaudio-dev libjack-dev libsndio-dev libx11-dev libxext-dev \
-            libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libltdl-dev \
-            libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
-            libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
-
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        with:
-          key: ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-${{ github.run_id }}
-          path: |
-            ${{ github.workspace }}/build/vcpkg_installed
-            ${{ github.workspace }}/vcpkg_installed
-          restore-keys: |
-            ${{ runner.os }}-${{ hashFiles('./vcpkg.json') }}-
-            ${{ runner.os }}-
-
-      - name: Setup vcpkg (Unix)
-        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os != 'windows-latest'
-        run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg
-          ./vcpkg/bootstrap-vcpkg.sh
-
-      - name: Setup vcpkg (Windows)
-        if: steps.cache-vcpkg-restore.outputs.cache-hit != 'true' && matrix.os == 'windows-latest'
-        run: |
-          git clone https://github.com/microsoft/vcpkg ./vcpkg
-          ./vcpkg/bootstrap-vcpkg.bat
-
-      - name: Configure CMake build
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DBUILD_TESTING=ON
-
-      - name: Build CMake project
-        run: cmake --build build --config Release -j
-
-      - name: Test with CTest
-        run: ctest -C Release --test-dir build --output-on-failure
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpx commitlint --from $BASE_SHA --to $HEAD_SHA --verbose
 
   build:
     strategy:
@@ -121,11 +59,11 @@ jobs:
             c_compiler: clang
             cpp_compiler: clang++
     runs-on: ${{ matrix.os }}
-    needs: ["test"]
+    needs: ["commitlint"]
     name: Build
     steps:
       - name: Checkout with Submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Needed for version tagging
 
@@ -164,10 +102,13 @@ jobs:
           ./vcpkg/bootstrap-vcpkg.bat
 
       - name: Configure CMake build
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} -DCMAKE_TOOLCHAIN_FILE="./vcpkg/scripts/buildsystems/vcpkg.cmake" -DBUILD_TESTING=ON
 
       - name: Build CMake project
         run: cmake --build build --config Release -j
+
+      - name: Test with CTest
+        run: ctest -C Release --test-dir build --output-on-failure
 
       - name: Package artifacts (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
@@ -191,7 +132,8 @@ jobs:
           cp -Path assets -Destination "CCSakura-Win\assets" -Recurse -Verbose
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
+        if: github.event_name != 'pull_request'
         with:
           name: CCSakura-${{ runner.os }}
           path: |
