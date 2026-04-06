@@ -25,8 +25,8 @@ static vec2d random_key_pos()
 }
 
 dbg_sprite::dbg_sprite()
-    : m_ball_collider({240, 135}, 1.0), m_key_collider({0, 0}, {11.0, 4.5}), m_keys{false, false, false, false},
-      m_score_text(typeface::rainy_hearts, 12), m_score(0)
+    : m_ball_collider({240, 135}, 1.0), m_key_collider({0, 0}, {11.0, 4.5}), m_score_text(typeface::rainy_hearts, 12),
+      m_score(0), m_keys{false, false, false, false}
 {
     m_entity = std::make_unique<entity>(1);
     m_entity->add_component<components::transform>(vec2d(240, 135));
@@ -161,6 +161,7 @@ void dbg_sprite::on_key_event(signals::key &e)
         break;
     default:
         // Ignore.
+        break;
     }
 }
 
