@@ -206,6 +206,7 @@ std::unique_ptr<itexture> renderer::create_texture(const sdl::isurface &surface)
 void renderer::render_texture(const render_texture_options &options) const noexcept
 {
     auto ptr_or_null = [&](const auto &opt) -> auto * { return opt.has_value() ? &*opt : nullptr; };
+    auto rect_transform = [&](sdl::frect rect) -> SDL_FRect { return {rect.x, rect.y, rect.w, rect.h}; };
     auto rect_shift = [&](sdl::frect rect) -> SDL_FRect
     {
         ccsakura::shift_origin(rect, options.m_render_origin);
@@ -219,8 +220,8 @@ void renderer::render_texture(const render_texture_options &options) const noexc
         return {center.x, center.y};
     };
 
-    std::optional<SDL_FRect> srcrect = options.m_srcrect.transform(rect_shift);
-    std::optional<SDL_FRect> dstrect = options.m_dstrect.transform(rect_shift);
+    const std::optional<SDL_FRect> srcrect = options.m_srcrect.transform(rect_transform);
+    const std::optional<SDL_FRect> dstrect = options.m_dstrect.transform(rect_shift);
     std::optional<SDL_FPoint> center;
     if (dstrect && options.m_origin)
     {
