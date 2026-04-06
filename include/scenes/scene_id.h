@@ -15,6 +15,7 @@ enum class scene_type
     dbg_fps = 1000000001,
     dbg_empty = 1000000002,
     dbg_colliders = 1000000003,
+    dbg_sprite = 1000000004,
 };
 
 } // namespace ccsakura

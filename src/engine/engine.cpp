@@ -4,6 +4,7 @@
 #include "scenes/scene_dbg_colliders.h"
 #include "scenes/scene_dbg_empty.h"
 #include "scenes/scene_dbg_fps.h"
+#include "scenes/scene_dbg_sprite.h"
 #include "sdl/sdl_events.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
@@ -42,7 +43,7 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
 
     // TODO: Remove
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 1, 1, 1)));
-    m_scene_mgr.push_front(std::make_unique<scenes::dbg_colliders>());
+    m_scene_mgr.push_front(std::make_unique<scenes::dbg_sprite>());
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_fps>());
 }
 
@@ -94,7 +95,7 @@ bool engine::iterate(const uint64_t tick) noexcept
     {
         m_frame_data.frame_time -= 1;
         m_frame_data.fps = m_frame_data.cur_frames;
-        sdl::log_debug("FPS clocked at {}: {} FPS", tick, m_frame_data.fps);
+        sdl::log_trace("FPS clocked at {}: {} FPS", tick, m_frame_data.fps);
         m_frame_data.cur_frames = 0;
     }
 

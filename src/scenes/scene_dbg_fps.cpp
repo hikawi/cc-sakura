@@ -1,9 +1,7 @@
 #include "scenes/scene_dbg_fps.h"
 
 #include "engine/render.h"
-#include "engine/signal.h"
 #include "engine/text.h"
-#include "sdl/sdl_log.h"
 #include "sdl/sdl_render.h"
 
 #include <format>
@@ -22,14 +20,12 @@ scene_type dbg_fps::type() const noexcept
     return scene_type::dbg_fps;
 }
 
-void dbg_fps::on_attach(scene_context &ctx) noexcept
+void dbg_fps::on_attach(scene_context &) noexcept
 {
-    m_mouse_event_callback = ctx.subscribe(listener_priority::lowest, &dbg_fps::on_mouse_event, this);
 }
 
-void dbg_fps::on_detach(scene_context &ctx) noexcept
+void dbg_fps::on_detach(scene_context &) noexcept
 {
-    ctx.unsubscribe(m_mouse_event_callback);
 }
 
 bool dbg_fps::on_tick(scene_context &, const double dt) noexcept
@@ -54,12 +50,6 @@ void dbg_fps::on_render(const sdl::irenderer &renderer) const noexcept
         .render_origin(render_origin::top_right)
         .dst(sdl::fpoint(APPLICATION_LOGICAL_WIDTH - 4, 4))
         .render();
-}
-
-void dbg_fps::on_mouse_event(signals::mouse &event)
-{
-    sdl::log_info("FPS Scene caught mouse event");
-    event.set_cancelled(true);
 }
 
 } // namespace ccsakura::scenes

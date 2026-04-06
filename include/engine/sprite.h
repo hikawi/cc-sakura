@@ -79,9 +79,33 @@ class isprite
      * \param renderer the renderer to use
      * \param pos the position to render at
      * \param origin the origin type to shift the position by
+     * \param frame_index the frame to render
      */
     virtual void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
-                        const render_origin origin) const noexcept = 0;
+                        const render_origin origin, uint32_t frame_index) const noexcept = 0;
+
+    /**
+     * Returns the total number of frames in the sprite.
+     *
+     * \returns the frame count
+     */
+    virtual uint32_t frame_count() const noexcept = 0;
+
+    /**
+     * Retrieves a frame by index.
+     *
+     * \param index the frame index
+     * \returns a reference to the sprite frame
+     */
+    virtual const sprite_frame &frame(uint32_t index) const noexcept = 0;
+
+    /**
+     * Retrieves a frame tag by name.
+     *
+     * \param name the tag name
+     * \returns a reference to the sprite frame tag
+     */
+    virtual const sprite_frame_tag &frame_tag(const std::string &name) const noexcept = 0;
 };
 
 /**
@@ -160,7 +184,10 @@ class sprite : public isprite
     ~sprite();
 
     void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
-                const render_origin origin) const noexcept override;
+                const render_origin origin, uint32_t frame_index) const noexcept override;
+    const sprite_frame &frame(uint32_t index) const noexcept override;
+    const sprite_frame_tag &frame_tag(const std::string &name) const noexcept override;
+    uint32_t frame_count() const noexcept override;
 
     /**
      * Retrieves a sprite with a name.

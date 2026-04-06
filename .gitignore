@@ -15,5 +15,5 @@ CMakeCache.txt
 CMakeFiles
 CLAUDE.md
 GEMINI.md
-
+.claude
 node_modules
