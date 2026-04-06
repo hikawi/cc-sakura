@@ -80,7 +80,14 @@ struct sprite : public component
      * \param s the sprite to use
      * \param o the render origin
      */
-    sprite(isprite *s = nullptr, render_origin o = render_origin::top_left);
+    sprite(isprite *s = nullptr, render_origin o = render_origin::middle_center);
+
+    /**
+     * Advances the animation by the given delta time.
+     *
+     * \param dt delta time in seconds
+     */
+    void tick(double dt) noexcept;
 };
 
 } // namespace components

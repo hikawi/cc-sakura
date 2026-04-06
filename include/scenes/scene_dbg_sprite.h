@@ -1,8 +1,10 @@
 #pragma once
 
+#include "engine/collision.h"
 #include "engine/entity.h"
 #include "engine/scene.h"
 #include "engine/signal.h"
+#include "engine/text.h"
 #include "sdl/sdl_render.h"
 
 #include <memory>
@@ -29,8 +31,14 @@ class dbg_sprite : public ccsakura::iscene
     void on_key_event(signals::key &e);
 
     std::unique_ptr<entity> m_entity;
+    std::unique_ptr<entity> m_key_entity;
+    circle_collider m_ball_collider;
+    aabb_collider m_key_collider;
     vec2d m_velocity;
     uint64_t m_key_callback;
+    text m_score_text;
+    uint64_t m_score;
+
     struct
     {
         bool up;
