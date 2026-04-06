@@ -267,6 +267,13 @@ void renderer::set_color(const float r, const float g, const float b, const floa
     SDL_SetRenderDrawColorFloat(m_renderer.get(), r, g, b, a);
 }
 
+sdl::fpoint renderer::coordinates_from_window(float x, float y) const noexcept
+{
+    float lx, ly;
+    SDL_RenderCoordinatesFromWindow(m_renderer.get(), x, y, &lx, &ly);
+    return {lx, ly};
+}
+
 void renderer::clear() const noexcept
 {
     sdl::log_trace("sdl::renderer {} clear", m_name);

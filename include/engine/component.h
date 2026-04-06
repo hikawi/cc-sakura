@@ -9,6 +9,9 @@
 #include "render.h"
 #include "vec2d.h"
 
+#include <cstdint>
+#include <string>
+
 namespace ccsakura
 {
 
@@ -67,6 +70,9 @@ struct sprite : public component
 {
     isprite *spr;
     render_origin origin;
+    uint32_t frame_index = 0;   ///< Current frame being displayed
+    double frame_elapsed = 0.0; ///< Seconds elapsed in the current frame
+    std::string tag = "";       ///< Active animation tag name; empty means play all frames
 
     /**
      * Constructs a new sprite component.
@@ -74,7 +80,7 @@ struct sprite : public component
      * \param s the sprite to use
      * \param o the render origin
      */
-    sprite(isprite *s = nullptr, render_origin o = render_origin::middle_center);
+    sprite(isprite *s = nullptr, render_origin o = render_origin::top_left);
 };
 
 } // namespace components

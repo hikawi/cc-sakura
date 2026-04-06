@@ -146,12 +146,12 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
     // Start reading frames
     uint32_t frames_count = 0;
     io.read_u32_le(frames_count);
-    m_frames.reserve(frames_count);
+    m_frames.resize(frames_count);
     sdl::log_debug("Sprite {} load: reserving for {} frames", m_name, frames_count);
 
     for (uint32_t i = 0; i < frames_count; i++)
     {
-        sprite_frame &frame = m_frames[i];
+        sprite_frame frame;
         io.read_u32_le(frame.source_w);
         io.read_u32_le(frame.source_h);
 
@@ -169,17 +169,39 @@ void sprite::setup_v1(sdl::iiostream &io, sdl::irenderer &renderer)
         frame.frame = {static_cast<int>(x), static_cast<int>(y), static_cast<int>(w), static_cast<int>(h)};
 
         io.read_u32_le(frame.duration);
+
+        m_frames[i] = std::move(frame);
     }
 
     m_texture = std::move(img_texture);
     sdl::log_info("Successfully loaded sprite {}", m_name);
 }
 
-void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin) const noexcept
+void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin,
+                    uint32_t frame_index) const noexcept
 {
+    const sprite_frame &f = m_frames[frame_index];
     sdl::render_texture_options opts(renderer, *m_texture.get());
-    opts.dst(pos).render_origin(origin);
+    opts.srcrect(sdl::frect{static_cast<float>(f.frame.x), static_cast<float>(f.frame.y), static_cast<float>(f.frame.w),
+                            static_cast<float>(f.frame.h)})
+        .dst(pos)
+        .render_origin(origin);
     renderer.render_texture(opts);
+}
+
+const sprite_frame &sprite::frame(uint32_t index) const noexcept
+{
+    return m_frames[index];
+}
+
+uint32_t sprite::frame_count() const noexcept
+{
+    return static_cast<uint32_t>(m_frames.size());
+}
+
+const sprite_frame_tag &sprite::frame_tag(const std::string &name) const noexcept
+{
+    return m_tags.at(name);
 }
 
 sprite::~sprite()

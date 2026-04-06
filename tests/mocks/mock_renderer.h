@@ -25,6 +25,7 @@ class mock_renderer : public sdl::irenderer
                 (const, noexcept, override));
     MOCK_METHOD(void, set_color, (const float r, const float g, const float b, const float a),
                 (const, noexcept, override));
+    MOCK_METHOD(sdl::fpoint, coordinates_from_window, (float x, float y), (const, noexcept, override));
     MOCK_METHOD(void, clear, (), (const, noexcept, override));
     MOCK_METHOD(void, present, (), (const, noexcept, override));
 };

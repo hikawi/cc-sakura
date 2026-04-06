@@ -7,11 +7,15 @@ dotenv:
   - .env
 
 tasks:
-  build:linux:
-    desc: Build the project with Linux
+  build:
+    desc: Build the project
     cmds:
       - cmake -S . -B "build" -G "$GENERATOR" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" -DCMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
       - cmake --build "build" --config Debug -j
+
+  test:
+    desc: Test the project
+    cmds:
       - ctest --test-dir "build" --output-on-failure
 
   run:linux:

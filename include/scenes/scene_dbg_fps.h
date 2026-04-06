@@ -27,10 +27,6 @@ class dbg_fps : public ccsakura::iscene
     double m_accumulator = 0;
     uint32_t m_frame_count = 0;
     uint32_t m_fps = 0;
-
-    uint64_t m_mouse_event_callback;
-
-    void on_mouse_event(signals::mouse &event);
 };
 
 } // namespace ccsakura::scenes

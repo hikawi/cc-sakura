@@ -343,6 +343,15 @@ class irenderer
     virtual void set_color(const float r, const float g, const float b, const float a) const noexcept = 0;
 
     /**
+     * Converts window coordinates to renderer logical coordinates.
+     *
+     * \param x the window x coordinate
+     * \param y the window y coordinate
+     * \returns the logical coordinate as an fpoint
+     */
+    virtual sdl::fpoint coordinates_from_window(float x, float y) const noexcept = 0;
+
+    /**
      * Clears the rendering context.
      */
     virtual void clear() const noexcept = 0;
@@ -381,6 +390,7 @@ class renderer : public irenderer
     void render_geometry(const render_geometry_options &opts) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
     void set_color(const float r, const float g, const float b, const float a) const noexcept override;
+    sdl::fpoint coordinates_from_window(float x, float y) const noexcept override;
     void clear() const noexcept override;
     void present() const noexcept override;
 
