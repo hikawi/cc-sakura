@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "sdl/sdl_rect.h"
+
 #include <algorithm>
 #include <cmath>
 #include <format>
@@ -297,6 +299,14 @@ struct vec2d
     [[nodiscard]] constexpr vec2d orthogonal() const noexcept
     {
         return rotated(std::numbers::pi / 2);
+    }
+
+    /**
+     * Converts the vector to a normal SDL fpoint.
+     */
+    constexpr sdl::fpoint to_fpoint() const noexcept
+    {
+        return {static_cast<float>(x), static_cast<float>(y)};
     }
 };
 
