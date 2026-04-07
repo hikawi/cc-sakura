@@ -72,4 +72,60 @@ class entity
     uint32_t m_id;
 };
 
+/**
+ * Fluent builder for constructing entities with components.
+ *
+ * Usage: entity_builder(id).with_component<T>(args...).edit_component<T>(fn).build()
+ */
+class entity_builder
+{
+  public:
+    /**
+     * Constructs a builder for an entity with the given ID.
+     *
+     * \param id the entity ID
+     */
+    entity_builder(uint32_t id);
+
+    /**
+     * Adds a component to the entity under construction.
+     *
+     * \tparam T the component type
+     * \param args arguments forwarded to the component constructor
+     * \returns this builder for chaining
+     */
+    template <typename T, typename... Args>
+        requires(std::is_base_of_v<component, T>)
+    entity_builder &with_component(Args &&...args)
+    {
+        m_entity.add_component<T>(std::forward<Args>(args)...);
+        return *this;
+    }
+
+    /**
+     * Applies a function to an already-added component, allowing mutation before build.
+     *
+     * \tparam T the component type — must have been added via with_component first
+     * \param fn callable receiving a \c T& reference
+     * \returns this builder for chaining
+     */
+    template <typename T, typename Fn>
+        requires(std::is_base_of_v<component, T>)
+    entity_builder &edit_component(Fn &&fn)
+    {
+        fn(m_entity.get_component<T>());
+        return *this;
+    }
+
+    /**
+     * Finalises and returns the constructed entity.
+     *
+     * \returns the built entity (ownership transferred to caller)
+     */
+    entity build();
+
+  private:
+    entity m_entity;
+};
+
 } // namespace ccsakura

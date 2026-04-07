@@ -5,6 +5,33 @@
 namespace ccsakura
 {
 
+scene_entity_builder::scene_entity_builder(uint32_t id, std::function<entity *(entity)> commit)
+    : m_builder(id), m_commit(std::move(commit))
+{
+}
+
+entity *scene_entity_builder::build()
+{
+    return m_commit(m_builder.build());
+}
+
+scene_entity_builder iscene::construct_entity(uint32_t id)
+{
+    return scene_entity_builder(id, [this](entity e) -> entity * {
+        uint32_t eid = e.id();
+        add_entity(std::move(e));
+        return get_entity(eid);
+    });
+}
+
+intent_binder iscene::bind_intents(scene_context &ctx)
+{
+    return intent_binder([this, &ctx](std::vector<std::pair<sdl::keycode, intent>> bindings) {
+        m_intent_bindings = std::move(bindings);
+        m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
+    });
+}
+
 void iscene::on_attach(scene_context &)
 {
 }
@@ -26,11 +53,6 @@ void iscene::on_render(const sdl::irenderer &) const noexcept
 {
 }
 
-void iscene::bind_intents(scene_context &ctx, std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept
-{
-    m_intent_bindings.assign(bindings);
-    m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
-}
 
 void iscene::unbind_intents(scene_context &ctx) noexcept
 {
@@ -58,9 +80,10 @@ void iscene::on_intent_key(signals::key &e) noexcept
     }
 }
 
-void iscene::add_entity(std::unique_ptr<entity> e)
+void iscene::add_entity(entity &&e)
 {
-    m_entities[e->id()] = std::move(e);
+    uint32_t id = e.id();
+    m_entities[id] = std::make_unique<entity>(std::move(e));
 }
 
 entity *iscene::get_entity(uint32_t id) noexcept
