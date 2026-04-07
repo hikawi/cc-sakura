@@ -15,10 +15,6 @@ transform::transform(vec2d pos, double rot, vec2d scl) : position(pos), rotation
 {
 }
 
-velocity::velocity(vec2d val) : value(val)
-{
-}
-
 sprite::sprite(isprite *s, render_origin o) : spr(s), origin(o)
 {
 }

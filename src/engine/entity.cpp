@@ -13,4 +13,9 @@ entity::entity(uint32_t id) : m_id(id)
 {
 }
 
+uint32_t entity::id() const noexcept
+{
+    return m_id;
+}
+
 } // namespace ccsakura

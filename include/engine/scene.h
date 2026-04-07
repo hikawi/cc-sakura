@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "entity.h"
 #include "intent.h"
 #include "scenes/scene_id.h"
 #include "sdl/sdl_render.h"
@@ -13,6 +14,7 @@
 
 #include <atomic>
 #include <deque>
+#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <mutex>
@@ -210,6 +212,74 @@ class iscene
 
   protected:
     /**
+     * Adds an entity to the registry, keyed by its ID.
+     * Replaces any existing entity with the same ID.
+     *
+     * \param e the entity to add
+     */
+    void add_entity(std::unique_ptr<entity> e);
+
+    /**
+     * Returns a pointer to the entity with the given ID, or nullptr if not found.
+     *
+     * \param id the entity ID
+     */
+    entity *get_entity(uint32_t id) noexcept;
+
+    /**
+     * Returns a pointer to the entity with the given ID, or nullptr if not found.
+     *
+     * \param id the entity ID
+     */
+    entity *get_entity(uint32_t id) const noexcept;
+
+    /**
+     * Removes the entity with the given ID from the registry.
+     *
+     * \param id the entity ID
+     * \returns true if an entity was removed, false if not found
+     */
+    bool remove_entity(uint32_t id) noexcept;
+
+    /**
+     * Returns a reference to a component on the entity with the given ID,
+     * or nullptr if the entity or component is not found.
+     *
+     * \tparam T the component type
+     * \param id the entity ID
+     */
+    template <typename T>
+        requires(std::is_base_of_v<component, T>)
+    T *get_entity_component(uint32_t id) noexcept
+    {
+        auto *e = get_entity(id);
+        if (!e || !e->has_component<T>())
+        {
+            return nullptr;
+        }
+        return &e->get_component<T>();
+    }
+
+    /**
+     * Returns a reference to a component on the entity with the given ID,
+     * or nullptr if the entity or component is not found.
+     *
+     * \tparam T the component type
+     * \param id the entity ID
+     */
+    template <typename T>
+        requires(std::is_base_of_v<component, T>)
+    const T *get_entity_component(uint32_t id) const noexcept
+    {
+        auto *e = get_entity(id);
+        if (!e || !e->has_component<T>())
+        {
+            return nullptr;
+        }
+        return &e->get_component<T>();
+    }
+
+    /**
      * \brief Registers intent bindings and subscribes to key signals.
      *
      * Call in on_attach. The scene is the context: bindings are active only while subscribed.
@@ -217,8 +287,7 @@ class iscene
      * \param ctx the scene context
      * \param bindings key-to-intent pairs
      */
-    void bind_intents(scene_context &ctx,
-                      std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept;
+    void bind_intents(scene_context &ctx, std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept;
 
     /**
      * \brief Unregisters intent bindings and unsubscribes from key signals.
@@ -234,7 +303,7 @@ class iscene
      * \param i the intent to query
      * \returns true if the intent is triggered
      */
-    bool is_intent_triggered(intent i) const noexcept;
+    bool is_intent_triggered(const intent i) const noexcept;
 
   private:
     void on_intent_key(signals::key &e) noexcept;
@@ -242,6 +311,9 @@ class iscene
     std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
     intent_state m_intent_state{};
     uint64_t m_intent_sub_id{0};
+
+  protected:
+    std::unordered_map<uint32_t, std::unique_ptr<entity>> m_entities; ///< Entity registry
 };
 
 /**

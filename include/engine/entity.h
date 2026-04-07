@@ -31,6 +31,11 @@ class entity
     entity(uint32_t id);
 
     /**
+     * Returns the entity's ID.
+     */
+    uint32_t id() const noexcept;
+
+    /**
      * Checks if this entity has a component.
      *
      * \return true if the entity has the provided component

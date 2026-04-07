@@ -26,8 +26,7 @@ void iscene::on_render(const sdl::irenderer &) const noexcept
 {
 }
 
-void iscene::bind_intents(scene_context &ctx,
-                           std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept
+void iscene::bind_intents(scene_context &ctx, std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept
 {
     m_intent_bindings.assign(bindings);
     m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
@@ -40,7 +39,7 @@ void iscene::unbind_intents(scene_context &ctx) noexcept
     m_intent_state = {};
 }
 
-bool iscene::is_intent_triggered(intent i) const noexcept
+bool iscene::is_intent_triggered(const intent i) const noexcept
 {
     return m_intent_state[static_cast<std::size_t>(i)];
 }
@@ -57,6 +56,28 @@ void iscene::on_intent_key(signals::key &e) noexcept
             return;
         }
     }
+}
+
+void iscene::add_entity(std::unique_ptr<entity> e)
+{
+    m_entities[e->id()] = std::move(e);
+}
+
+entity *iscene::get_entity(uint32_t id) noexcept
+{
+    const auto it = m_entities.find(id);
+    return it != m_entities.end() ? it->second.get() : nullptr;
+}
+
+entity *iscene::get_entity(uint32_t id) const noexcept
+{
+    const auto it = m_entities.find(id);
+    return it != m_entities.end() ? it->second.get() : nullptr;
+}
+
+bool iscene::remove_entity(uint32_t id) noexcept
+{
+    return m_entities.erase(id) > 0;
 }
 
 // ========================
