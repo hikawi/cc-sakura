@@ -30,20 +30,19 @@ static vec2d random_key_pos()
 
 dbg_sprite::dbg_sprite() : m_score_text(typeface::rainy_hearts, 12), m_score(0)
 {
-    auto ball = std::make_unique<entity>(ENTITY_BALL);
-    ball->add_component<components::transform>(vec2d(240, 135));
-    ball->add_component<components::sprite>(&sprite::named("dbg_ball"));
+    auto *ball = construct_entity(ENTITY_BALL)
+                     .with_component<components::transform>(vec2d(240, 135))
+                     .with_component<components::sprite>(&sprite::named("dbg_ball"))
+                     .build();
     const auto &bf = ball->get_component<components::sprite>().spr->frame(0);
     ball->add_component<components::hitbox>(circle_collider({240, 135}, std::min(bf.source_w, bf.source_h) / 2.0));
 
-    auto key = std::make_unique<entity>(ENTITY_KEY);
     const vec2d key_pos = random_key_pos();
-    key->add_component<components::transform>(key_pos);
-    key->add_component<components::sprite>(&sprite::named("dbg_key"));
-    key->add_component<components::hitbox>(aabb_collider({key_pos, {11, 4.5}}));
-
-    add_entity(std::move(ball));
-    add_entity(std::move(key));
+    construct_entity(ENTITY_KEY)
+        .with_component<components::transform>(key_pos)
+        .with_component<components::sprite>(&sprite::named("dbg_key"))
+        .with_component<components::hitbox>(aabb_collider({key_pos, {11, 4.5}}))
+        .build();
 
     m_score_text.value = "Score: 0";
 }
@@ -55,12 +54,12 @@ scene_type dbg_sprite::type() const noexcept
 
 void dbg_sprite::on_attach(scene_context &ctx) noexcept
 {
-    bind_intents(ctx, {
-                          {sdl::keycode::a, intent::move_left},
-                          {sdl::keycode::d, intent::move_right},
-                          {sdl::keycode::w, intent::move_up},
-                          {sdl::keycode::s, intent::move_down},
-                      });
+    bind_intents(ctx)
+        .map(sdl::keycode::a, intent::move_left)
+        .map(sdl::keycode::d, intent::move_right)
+        .map(sdl::keycode::w, intent::move_up)
+        .map(sdl::keycode::s, intent::move_down)
+        .bind();
 }
 
 void dbg_sprite::on_detach(scene_context &ctx) noexcept

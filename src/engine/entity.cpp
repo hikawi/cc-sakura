@@ -18,4 +18,13 @@ uint32_t entity::id() const noexcept
     return m_id;
 }
 
+entity_builder::entity_builder(uint32_t id) : m_entity(id)
+{
+}
+
+entity entity_builder::build()
+{
+    return std::move(m_entity);
+}
+
 } // namespace ccsakura

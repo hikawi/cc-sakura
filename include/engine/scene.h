@@ -15,7 +15,6 @@
 #include <atomic>
 #include <deque>
 #include <functional>
-#include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -162,6 +161,57 @@ class scene_context
 };
 
 /**
+ * Fluent builder that registers the entity directly into a scene on build().
+ * Obtain via iscene::construct_entity() rather than constructing directly.
+ */
+class scene_entity_builder
+{
+  public:
+    scene_entity_builder(uint32_t id, std::function<entity *(entity)> commit);
+
+    /**
+     * Adds a component to the entity under construction.
+     *
+     * \tparam T the component type
+     * \param args arguments forwarded to the component constructor
+     * \returns this builder for chaining
+     */
+    template <typename T, typename... Args>
+        requires(std::is_base_of_v<component, T>)
+    scene_entity_builder &with_component(Args &&...args)
+    {
+        m_builder.with_component<T>(std::forward<Args>(args)...);
+        return *this;
+    }
+
+    /**
+     * Applies a function to an already-added component, allowing mutation before build.
+     *
+     * \tparam T the component type — must have been added via with_component first
+     * \param fn callable receiving a \c T& reference
+     * \returns this builder for chaining
+     */
+    template <typename T, typename Fn>
+        requires(std::is_base_of_v<component, T>)
+    scene_entity_builder &edit_component(Fn &&fn)
+    {
+        m_builder.edit_component<T>(std::forward<Fn>(fn));
+        return *this;
+    }
+
+    /**
+     * Finalises the entity, registers it in the scene, and returns a raw pointer to it.
+     *
+     * \returns pointer to the entity now owned by the scene, or nullptr if not found
+     */
+    entity *build();
+
+  private:
+    entity_builder m_builder;
+    std::function<entity *(entity)> m_commit;
+};
+
+/**
  * \brief Interface for a game scene.
  *
  * Scenes represent distinct states or layers of the game (e.g., menus, levels, HUD).
@@ -217,7 +267,15 @@ class iscene
      *
      * \param e the entity to add
      */
-    void add_entity(std::unique_ptr<entity> e);
+    void add_entity(entity &&e);
+
+    /**
+     * Creates a fluent entity builder that registers the entity into this scene on build().
+     *
+     * \param id the entity ID
+     * \returns a scene_entity_builder chained to this scene
+     */
+    scene_entity_builder construct_entity(uint32_t id);
 
     /**
      * Returns a pointer to the entity with the given ID, or nullptr if not found.
@@ -280,14 +338,14 @@ class iscene
     }
 
     /**
-     * \brief Registers intent bindings and subscribes to key signals.
+     * \brief Returns a fluent builder for registering key-to-intent bindings.
      *
-     * Call in on_attach. The scene is the context: bindings are active only while subscribed.
+     * Call \c .map().bind() in on_attach. Bindings are active only while the subscription stands.
      *
      * \param ctx the scene context
-     * \param bindings key-to-intent pairs
+     * \returns an intent_binder for chaining
      */
-    void bind_intents(scene_context &ctx, std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept;
+    intent_binder bind_intents(scene_context &ctx);
 
     /**
      * \brief Unregisters intent bindings and unsubscribes from key signals.
