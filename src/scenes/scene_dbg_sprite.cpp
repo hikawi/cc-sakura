@@ -26,7 +26,7 @@ static vec2d random_key_pos()
 
 dbg_sprite::dbg_sprite()
     : m_ball_collider({240, 135}, 1.0), m_key_collider({0, 0}, {11.0, 4.5}), m_score_text(typeface::rainy_hearts, 12),
-      m_score(0), m_keys{false, false, false, false}
+      m_score(0)
 {
     m_entity = std::make_unique<entity>(1);
     m_entity->add_component<components::transform>(vec2d(240, 135));
@@ -54,18 +54,25 @@ scene_type dbg_sprite::type() const noexcept
 
 void dbg_sprite::on_attach(scene_context &ctx) noexcept
 {
-    m_key_callback = ctx.subscribe(listener_priority::normal, &dbg_sprite::on_key_event, this);
+    bind_intents(ctx, {
+        {sdl::keycode::a, intent::move_left},
+        {sdl::keycode::d, intent::move_right},
+        {sdl::keycode::w, intent::move_up},
+        {sdl::keycode::s, intent::move_down},
+    });
 }
 
 void dbg_sprite::on_detach(scene_context &ctx) noexcept
 {
-    ctx.unsubscribe(m_key_callback);
+    unbind_intents(ctx);
 }
 
 bool dbg_sprite::on_physical_tick(scene_context &) noexcept
 {
-    const double wish_x = static_cast<double>(m_keys.right) - static_cast<double>(m_keys.left);
-    const double wish_y = static_cast<double>(m_keys.down) - static_cast<double>(m_keys.up);
+    const double wish_x = static_cast<double>(is_intent_triggered(intent::move_right))
+                        - static_cast<double>(is_intent_triggered(intent::move_left));
+    const double wish_y = static_cast<double>(is_intent_triggered(intent::move_down))
+                        - static_cast<double>(is_intent_triggered(intent::move_up));
 
     if (wish_x != 0 || wish_y != 0)
     {
@@ -138,31 +145,6 @@ void dbg_sprite::on_render(const sdl::irenderer &renderer) const noexcept
 
     scomp.spr->render(renderer, sdl::fpoint{static_cast<float>(tcomp.position.x), static_cast<float>(tcomp.position.y)},
                       scomp.origin, scomp.frame_index);
-}
-
-void dbg_sprite::on_key_event(signals::key &e)
-{
-    if (e.is_cancelled())
-        return;
-
-    switch (e.keycode)
-    {
-    case sdl::keycode::w:
-        m_keys.up = e.down;
-        break;
-    case sdl::keycode::s:
-        m_keys.down = e.down;
-        break;
-    case sdl::keycode::a:
-        m_keys.left = e.down;
-        break;
-    case sdl::keycode::d:
-        m_keys.right = e.down;
-        break;
-    default:
-        // Ignore.
-        break;
-    }
 }
 
 } // namespace ccsakura::scenes

@@ -26,6 +26,39 @@ void iscene::on_render(const sdl::irenderer &) const noexcept
 {
 }
 
+void iscene::bind_intents(scene_context &ctx,
+                           std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept
+{
+    m_intent_bindings.assign(bindings);
+    m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
+}
+
+void iscene::unbind_intents(scene_context &ctx) noexcept
+{
+    ctx.unsubscribe(m_intent_sub_id);
+    m_intent_bindings.clear();
+    m_intent_state = {};
+}
+
+bool iscene::is_intent_triggered(intent i) const noexcept
+{
+    return m_intent_state[static_cast<std::size_t>(i)];
+}
+
+void iscene::on_intent_key(signals::key &e) noexcept
+{
+    if (e.is_cancelled())
+        return;
+    for (auto &[key, i] : m_intent_bindings)
+    {
+        if (e.keycode == key)
+        {
+            m_intent_state[static_cast<std::size_t>(i)] = e.down;
+            return;
+        }
+    }
+}
+
 // ========================
 // Scene Manager
 // ========================

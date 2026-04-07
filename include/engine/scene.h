@@ -6,18 +6,22 @@
 
 #pragma once
 
+#include "intent.h"
 #include "scenes/scene_id.h"
 #include "sdl/sdl_render.h"
 #include "signal.h"
 
 #include <atomic>
 #include <deque>
+#include <initializer_list>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <set>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace ccsakura
 {
@@ -203,6 +207,41 @@ class iscene
      * \param renderer The renderer to use.
      */
     virtual void on_render(const sdl::irenderer &renderer) const noexcept;
+
+  protected:
+    /**
+     * \brief Registers intent bindings and subscribes to key signals.
+     *
+     * Call in on_attach. The scene is the context: bindings are active only while subscribed.
+     *
+     * \param ctx the scene context
+     * \param bindings key-to-intent pairs
+     */
+    void bind_intents(scene_context &ctx,
+                      std::initializer_list<std::pair<sdl::keycode, intent>> bindings) noexcept;
+
+    /**
+     * \brief Unregisters intent bindings and unsubscribes from key signals.
+     *
+     * Call in on_detach.
+     *
+     * \param ctx the scene context
+     */
+    void unbind_intents(scene_context &ctx) noexcept;
+
+    /**
+     * \brief Returns whether the given intent is currently active.
+     * \param i the intent to query
+     * \returns true if the intent is triggered
+     */
+    bool is_intent_triggered(intent i) const noexcept;
+
+  private:
+    void on_intent_key(signals::key &e) noexcept;
+
+    std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
+    intent_state m_intent_state{};
+    uint64_t m_intent_sub_id{0};
 };
 
 /**
