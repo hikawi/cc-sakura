@@ -11,26 +11,11 @@ TEST(EntityTest, CanAddComponent)
     e.add_component<components::transform>(vec2d(10, 20), 0.5, vec2d(1, 1));
 
     EXPECT_TRUE(e.has_component<components::transform>());
-    EXPECT_FALSE(e.has_component<components::velocity>());
 
     const auto &t = e.get_component<components::transform>();
     EXPECT_DOUBLE_EQ(t.position.x, 10);
     EXPECT_DOUBLE_EQ(t.position.y, 20);
     EXPECT_DOUBLE_EQ(t.rotation, 0.5);
-}
-
-TEST(EntityTest, CanAddMultipleComponents)
-{
-    entity e(1);
-    e.add_component<components::transform>();
-    e.add_component<components::velocity>(vec2d(5, 5));
-
-    EXPECT_TRUE(e.has_component<components::transform>());
-    EXPECT_TRUE(e.has_component<components::velocity>());
-
-    const auto &v = e.get_component<components::velocity>();
-    EXPECT_DOUBLE_EQ(v.value.x, 5);
-    EXPECT_DOUBLE_EQ(v.value.y, 5);
 }
 
 TEST(EntityTest, CanAddSpriteComponent)

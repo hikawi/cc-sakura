@@ -49,21 +49,6 @@ struct transform : public component
 };
 
 /**
- * Represents the velocity of an entity.
- */
-struct velocity : public component
-{
-    vec2d value;
-
-    /**
-     * Constructs a new velocity component.
-     *
-     * \param val the velocity value
-     */
-    velocity(vec2d val = {0, 0});
-};
-
-/**
  * Represents a sprite component.
  */
 struct sprite : public component
