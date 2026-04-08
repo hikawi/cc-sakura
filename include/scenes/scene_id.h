@@ -16,6 +16,7 @@ enum class scene_type
     dbg_empty = 1000000002,
     dbg_colliders = 1000000003,
     dbg_sprite = 1000000004,
+    dbg_physics = 1000000005,
 };
 
 } // namespace ccsakura
