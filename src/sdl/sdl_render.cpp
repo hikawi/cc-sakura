@@ -322,6 +322,10 @@ render_texture_options &render_texture_options::dst(const sdl::fpoint pos) noexc
         w = rect.w;
         h = rect.h;
     }
+    else
+    {
+        sdl::log_error("dst called before srcrect is set: {}, {}", pos.x, pos.y);
+    }
 
     m_dstrect = {static_cast<float>(pos.x), static_cast<float>(pos.y), w, h};
     return *this;

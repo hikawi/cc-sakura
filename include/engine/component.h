@@ -38,16 +38,14 @@ struct transform : public component
 {
     vec2d position;  ///< World position in logical pixels
     double rotation; ///< Rotation in radians
-    vec2d scale;     ///< Scale multiplier on each axis
 
     /**
      * Constructs a new transform component.
      *
      * \param pos the position
      * \param rot the rotation
-     * \param scl the scale
      */
-    transform(vec2d pos = {0, 0}, double rot = 0, vec2d scl = {1, 1});
+    transform(vec2d pos = {0, 0}, double rot = 0);
 };
 
 /**
@@ -91,7 +89,9 @@ struct hitbox : public component
     }
 
     /**
-     * Returns a reference to the base collider for collision detection and rendering.
+     * Retrieves a reference to the base collider for collision detection and rendering.
+     *
+     * \returns a reference to the collider
      */
     collider &get()
     {
@@ -99,7 +99,9 @@ struct hitbox : public component
     }
 
     /**
-     * Returns a const reference to the base collider for collision detection and rendering.
+     * Retrieves a const reference to the base collider for collision detection and rendering.
+     *
+     * \returns a const reference to the collider
      */
     const collider &get() const
     {
@@ -107,7 +109,9 @@ struct hitbox : public component
     }
 
     /**
-     * Returns whether the shape is of the given collider type.
+     * Retrieves whether the shape is of the given collider type.
+     *
+     * \returns true if the collider is of that type
      */
     template <typename T> bool is() const
     {
@@ -115,8 +119,10 @@ struct hitbox : public component
     }
 
     /**
-     * Returns a reference to the shape as the given collider type.
+     * Retrieves a reference to the shape as the given collider type.
      * Throws std::bad_variant_access if the shape is a different type.
+     *
+     * \returns a collider of type T
      */
     template <typename T> T &as()
     {
@@ -126,6 +132,8 @@ struct hitbox : public component
     /**
      * Returns a const reference to the shape as the given collider type.
      * Throws std::bad_variant_access if the shape is a different type.
+     *
+     * \returns a const collider of type T
      */
     template <typename T> const T &as() const
     {

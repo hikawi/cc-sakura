@@ -303,6 +303,8 @@ struct vec2d
 
     /**
      * Converts the vector to a normal SDL fpoint.
+     *
+     * \returns an sdl::fpoint of the vec2d
      */
     constexpr sdl::fpoint to_fpoint() const noexcept
     {

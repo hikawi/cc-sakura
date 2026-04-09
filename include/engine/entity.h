@@ -32,6 +32,8 @@ class entity
 
     /**
      * Returns the entity's ID.
+     *
+     * \returns the id
      */
     uint32_t id() const noexcept;
 
@@ -42,7 +44,7 @@ class entity
      */
     template <typename T>
         requires(std::is_base_of_v<component, T>)
-    bool has_component()
+    bool has_component() const
     {
         return m_components.contains(std::type_index(typeid(T)));
     }
@@ -60,11 +62,38 @@ class entity
         m_components[std::type_index(typeid(T))] = std::move(comp);
     }
 
+    /**
+     * Retrieves the component of a type.
+     *
+     * \tparam T the component type
+     * \returns a pointer to the component if it exists
+     */
     template <typename T>
         requires(std::is_base_of_v<component, T>)
-    T &get_component()
+    T *get_component()
     {
-        return static_cast<T &>(*m_components.at(std::type_index(typeid(T))));
+        if (!has_component<T>())
+        {
+            return nullptr;
+        }
+        return static_cast<T *>(m_components.at(std::type_index(typeid(T))).get());
+    }
+
+    /**
+     * Retrieves the constant component of a type.
+     *
+     * \tparam T the component type
+     * \returns a const pointer to the component, otherwise throw
+     */
+    template <typename T>
+        requires(std::is_base_of_v<component, T>)
+    const T *get_component() const
+    {
+        if (!has_component<T>())
+        {
+            return nullptr;
+        }
+        return static_cast<const T *>(m_components.at(std::type_index(typeid(T))).get());
     }
 
   private:

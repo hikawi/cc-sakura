@@ -50,4 +50,22 @@ struct camera2d
  */
 void shift_origin(sdl::frect &frect, const render_origin origin);
 
+/**
+ * Converts a world-space position to screen-space using the given camera.
+ *
+ * \param world the world position to convert
+ * \param cam the active camera
+ * \returns the screen-space position
+ */
+sdl::fpoint world_to_screen(const vec2d &world, const camera2d &cam) noexcept;
+
+/**
+ * Converts a world-space position to screen-space using the given camera.
+ *
+ * \param world the world rectangle
+ * \param cam the active camera
+ * \returns the screen-space position
+ */
+sdl::frect world_to_screen(const sdl::frect &world, const camera2d &cam) noexcept;
+
 } // namespace ccsakura

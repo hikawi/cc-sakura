@@ -81,8 +81,16 @@ class isprite
      * \param origin the origin type to shift the position by
      * \param frame_index the frame to render
      */
-    virtual void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
-                        const render_origin origin, uint32_t frame_index) const noexcept = 0;
+    virtual void render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin,
+                        uint32_t frame_index) const noexcept = 0;
+
+    /**
+     * Constructs a render texture options from the current sprite.
+     *
+     * \param renderer the renderer to use
+     * \returns a render texture options
+     */
+    virtual sdl::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept = 0;
 
     /**
      * Returns the total number of frames in the sprite.
@@ -183,8 +191,9 @@ class sprite : public isprite
     sprite(std::string name, sdl::iiostream &io, sdl::irenderer &renderer);
     ~sprite();
 
-    void render(const sdl::irenderer &renderer, const sdl::fpoint pos,
-                const render_origin origin, uint32_t frame_index) const noexcept override;
+    void render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin,
+                uint32_t frame_index) const noexcept override;
+    sdl::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept override;
     const sprite_frame &frame(uint32_t index) const noexcept override;
     const sprite_frame_tag &frame_tag(const std::string &name) const noexcept override;
     uint32_t frame_count() const noexcept override;

@@ -121,6 +121,23 @@ class scene_context
     virtual bool unsubscribe(uint64_t id) = 0;
 
     /**
+     * Returns the active camera for this scene stack.
+     *
+     * Be careful of modifying this, because this might affect the render pass for ALL scenes,
+     * not just one.
+     *
+     * \returns the current camera instance
+     */
+    virtual camera2d &camera() noexcept = 0;
+
+    /**
+     * Sets the background color used to clear the screen each frame.
+     *
+     * \param color the desired background color
+     */
+    virtual void set_background_color(sdl::fcolor color) noexcept = 0;
+
+    /**
      * Subscribes to a signal type at priority.
      *
      * \tparam T the signal type to subscribe to
@@ -255,10 +272,11 @@ class iscene
     virtual bool on_physical_tick(scene_context &ctx) noexcept;
 
     /**
-     * \brief Rendering phase.
-     * \param renderer The renderer to use.
+     * Returns a const reference to this scene's entity registry.
+     *
+     * \returns a const reference to the entities map
      */
-    virtual void on_render(const sdl::irenderer &renderer) const noexcept;
+    const std::unordered_map<uint32_t, std::unique_ptr<entity>> &entities() const noexcept;
 
   protected:
     /**
@@ -281,6 +299,7 @@ class iscene
      * Returns a pointer to the entity with the given ID, or nullptr if not found.
      *
      * \param id the entity ID
+     * \returns an entity pointer
      */
     entity *get_entity(uint32_t id) noexcept;
 
@@ -288,8 +307,9 @@ class iscene
      * Returns a pointer to the entity with the given ID, or nullptr if not found.
      *
      * \param id the entity ID
+     * \returns an entity pointer
      */
-    entity *get_entity(uint32_t id) const noexcept;
+    const entity *get_entity(uint32_t id) const noexcept;
 
     /**
      * Removes the entity with the given ID from the registry.
@@ -305,6 +325,7 @@ class iscene
      *
      * \tparam T the component type
      * \param id the entity ID
+     * \returns a pointer to the component
      */
     template <typename T>
         requires(std::is_base_of_v<component, T>)
@@ -315,7 +336,7 @@ class iscene
         {
             return nullptr;
         }
-        return &e->get_component<T>();
+        return e->get_component<T>();
     }
 
     /**
@@ -324,6 +345,7 @@ class iscene
      *
      * \tparam T the component type
      * \param id the entity ID
+     * \returns the const pointer to the component if found
      */
     template <typename T>
         requires(std::is_base_of_v<component, T>)
@@ -334,7 +356,7 @@ class iscene
         {
             return nullptr;
         }
-        return &e->get_component<T>();
+        return e->get_component<T>();
     }
 
     /**
@@ -405,6 +427,9 @@ class iscene_manager : public scene_context
      */
     virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
 
+    virtual camera2d &camera() noexcept = 0;
+    virtual void set_background_color(sdl::fcolor color) noexcept = 0;
+
     /**
      * Processes all pending requests.
      */
@@ -470,6 +495,8 @@ class scene_manager : public iscene_manager
     void process_requests() override;
     void drain_signals(std::deque<std::unique_ptr<isignal>> &target) override;
     void propagate_signals(isignal &signal) override;
+    camera2d &camera() noexcept override;
+    void set_background_color(sdl::fcolor color) noexcept override;
 
   protected:
     uint64_t next_listener_id() noexcept override;
@@ -483,6 +510,9 @@ class scene_manager : public iscene_manager
     std::unordered_map<std::type_index, std::set<signal_listener>> m_listeners;
 
     std::atomic<uint64_t> m_listener_id_counter{0};
+
+    camera2d m_camera{{240.0, 135.0}, 0.0, 1.0, {480.0, 270.0}};
+    sdl::fcolor m_background_color{1.0f, 1.0f, 1.0f, 1.0f};
 };
 
 } // namespace ccsakura

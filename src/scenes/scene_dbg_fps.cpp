@@ -1,8 +1,6 @@
 #include "scenes/scene_dbg_fps.h"
 
-#include "engine/render.h"
 #include "engine/text.h"
-#include "sdl/sdl_render.h"
 
 #include <format>
 
@@ -40,16 +38,6 @@ bool dbg_fps::on_tick(scene_context &, const double dt) noexcept
         m_accumulator -= 1.0;
     }
     return true;
-}
-
-void dbg_fps::on_render(const sdl::irenderer &renderer) const noexcept
-{
-    auto texture = m_fps_text.render(renderer);
-    texture->set_scale_mode(sdl::scale_mode::nearest);
-    sdl::render_texture_options(renderer, *texture)
-        .render_origin(render_origin::top_right)
-        .dst(sdl::fpoint(APPLICATION_LOGICAL_WIDTH - 4, 4))
-        .render();
 }
 
 } // namespace ccsakura::scenes

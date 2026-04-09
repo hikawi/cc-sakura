@@ -30,7 +30,7 @@ TEST(SceneManager, CallsOnDetachWhenRemoved)
     scene_mgr.process_requests();
 }
 
-TEST(SceneManager, RendersFromBottomToTop)
+TEST(SceneManager, RenderClearsWithBackgroundColor)
 {
     ccsakura::scene_manager scene_mgr;
 
@@ -43,13 +43,10 @@ TEST(SceneManager, RendersFromBottomToTop)
     EXPECT_CALL(*s2, on_attach(testing::Ref(scene_mgr))).Times(1);
     EXPECT_CALL(*s3, on_attach(testing::Ref(scene_mgr))).Times(1);
 
-    {
-        using ::testing::InSequence;
-        InSequence seq;
-        EXPECT_CALL(*s3, on_render(testing::Ref(mock_renderer)));
-        EXPECT_CALL(*s2, on_render(testing::Ref(mock_renderer)));
-        EXPECT_CALL(*s1, on_render(testing::Ref(mock_renderer)));
-    }
+    EXPECT_CALL(mock_renderer, set_color(testing::An<float>(), testing::An<float>(), testing::An<float>(),
+                                        testing::An<float>()))
+        .Times(1);
+    EXPECT_CALL(mock_renderer, clear()).Times(1);
 
     scene_mgr.push_back(std::move(s1));
     scene_mgr.push_back(std::move(s2));

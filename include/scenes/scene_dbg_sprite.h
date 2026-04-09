@@ -2,7 +2,6 @@
 
 #include "engine/scene.h"
 #include "engine/text.h"
-#include "sdl/sdl_render.h"
 
 namespace ccsakura::scenes
 {
@@ -20,7 +19,6 @@ class dbg_sprite : public ccsakura::iscene
     void on_detach(scene_context &ctx) noexcept override;
     bool on_physical_tick(scene_context &ctx) noexcept override;
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
-    void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     vec2d m_velocity;

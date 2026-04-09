@@ -11,7 +11,7 @@
 namespace ccsakura::components
 {
 
-transform::transform(vec2d pos, double rot, vec2d scl) : position(pos), rotation(rot), scale(scl)
+transform::transform(vec2d pos, double rot) : position(pos), rotation(rot)
 {
 }
 
