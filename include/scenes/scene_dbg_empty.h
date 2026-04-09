@@ -18,7 +18,6 @@ class dbg_empty : public ccsakura::iscene
     void on_attach(scene_context &ctx) noexcept override;
     void on_detach(scene_context &ctx) noexcept override;
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
-    void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     sdl::fcolor m_color;

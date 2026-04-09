@@ -2,7 +2,6 @@
 
 #include "engine/scene.h"
 #include "engine/text.h"
-#include "sdl/sdl_render.h"
 
 namespace ccsakura::scenes
 {
@@ -19,7 +18,6 @@ class dbg_fps : public ccsakura::iscene
     void on_attach(scene_context &ctx) noexcept override;
     void on_detach(scene_context &ctx) noexcept override;
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
-    void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     text m_fps_text;

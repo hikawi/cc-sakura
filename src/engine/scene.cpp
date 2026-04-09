@@ -1,5 +1,9 @@
 #include "engine/scene.h"
 
+#include "engine/component.h"
+#include "engine/render.h"
+#include "engine/sprite.h"
+
 #include <algorithm>
 
 namespace ccsakura
@@ -17,19 +21,23 @@ entity *scene_entity_builder::build()
 
 scene_entity_builder iscene::construct_entity(uint32_t id)
 {
-    return scene_entity_builder(id, [this](entity e) -> entity * {
-        uint32_t eid = e.id();
-        add_entity(std::move(e));
-        return get_entity(eid);
-    });
+    return scene_entity_builder(id,
+                                [this](entity e) -> entity *
+                                {
+                                    uint32_t eid = e.id();
+                                    add_entity(std::move(e));
+                                    return get_entity(eid);
+                                });
 }
 
 intent_binder iscene::bind_intents(scene_context &ctx)
 {
-    return intent_binder([this, &ctx](std::vector<std::pair<sdl::keycode, intent>> bindings) {
-        m_intent_bindings = std::move(bindings);
-        m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
-    });
+    return intent_binder(
+        [this, &ctx](std::vector<std::pair<sdl::keycode, intent>> bindings)
+        {
+            m_intent_bindings = std::move(bindings);
+            m_intent_sub_id = ctx.subscribe(listener_priority::normal, &iscene::on_intent_key, this);
+        });
 }
 
 void iscene::on_attach(scene_context &)
@@ -49,10 +57,10 @@ bool iscene::on_physical_tick(scene_context &) noexcept
     return true;
 }
 
-void iscene::on_render(const sdl::irenderer &) const noexcept
+const std::unordered_map<uint32_t, std::unique_ptr<entity>> &iscene::entities() const noexcept
 {
+    return m_entities;
 }
-
 
 void iscene::unbind_intents(scene_context &ctx) noexcept
 {
@@ -92,7 +100,7 @@ entity *iscene::get_entity(uint32_t id) noexcept
     return it != m_entities.end() ? it->second.get() : nullptr;
 }
 
-entity *iscene::get_entity(uint32_t id) const noexcept
+const entity *iscene::get_entity(uint32_t id) const noexcept
 {
     const auto it = m_entities.find(id);
     return it != m_entities.end() ? it->second.get() : nullptr;
@@ -187,10 +195,53 @@ void scene_manager::physical_tick()
 
 void scene_manager::render(const sdl::irenderer &renderer) const noexcept
 {
+    renderer.set_color(m_background_color.r, m_background_color.g, m_background_color.b, m_background_color.a);
+    renderer.clear();
+
     for (auto it = m_stack.rbegin(); it != m_stack.rend(); ++it)
     {
-        (*it)->on_render(renderer);
+        for (const auto &[id, entity_ptr] : (*it)->entities())
+        {
+            if (!entity_ptr)
+            {
+                continue;
+            }
+            const auto transform = entity_ptr->get_component<components::transform>();
+            if (!transform)
+            {
+                continue;
+            }
+
+            const auto sprite = entity_ptr->get_component<components::sprite>();
+            if (sprite && sprite->spr)
+            {
+                const auto frame = sprite->spr->frame(sprite->frame_index);
+                sprite->spr->render_options(renderer)
+                    .srcrect(sdl::frect(frame.frame))
+                    .dst(world_to_screen(transform->position, m_camera))
+                    .rotate(transform->rotation)
+                    .render_origin(sprite->origin)
+                    .render();
+            }
+
+            // TODO: Add a mechanism to disable debug-mode rendering for colliders.
+            const auto hitbox = entity_ptr->get_component<components::hitbox>();
+            if (hitbox)
+            {
+                hitbox->get().render(renderer, m_camera);
+            }
+        }
     }
+}
+
+camera2d &scene_manager::camera() noexcept
+{
+    return m_camera;
+}
+
+void scene_manager::set_background_color(sdl::fcolor color) noexcept
+{
+    m_background_color = color;
 }
 
 void scene_manager::process_requests()

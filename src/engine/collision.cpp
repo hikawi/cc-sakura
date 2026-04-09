@@ -182,12 +182,13 @@ vec2d aabb_collider::get_extents() const noexcept
     return m_extents;
 }
 
-void aabb_collider::render(const sdl::irenderer &renderer) const noexcept
+void aabb_collider::render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept
 {
     renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
-    renderer.render_fill_rect(sdl::frect(static_cast<float>(m_center.x - m_extents.x),
-                                         static_cast<float>(m_center.y - m_extents.y),
-                                         static_cast<float>(m_extents.x * 2.0), static_cast<float>(m_extents.y * 2.0)));
+    const sdl::fpoint sc = world_to_screen(m_center, camera);
+    const float sw = static_cast<float>(m_extents.x * 2.0 * camera.zoom);
+    const float sh = static_cast<float>(m_extents.y * 2.0 * camera.zoom);
+    renderer.render_fill_rect(sdl::frect(sc.x - sw / 2, sc.y - sh / 2, sw, sh));
 }
 
 vec2d aabb_collider::closest_point_to(const vec2d p) const noexcept
@@ -367,7 +368,7 @@ void obb_collider::rotate(const double angle) noexcept
     m_angle += angle;
 }
 
-void obb_collider::render(const sdl::irenderer &renderer) const noexcept
+void obb_collider::render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept
 {
     renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
 
@@ -386,7 +387,7 @@ void obb_collider::render(const sdl::irenderer &renderer) const noexcept
     sdl::render_geometry_options opts(renderer);
     for (const auto &c : corners)
     {
-        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(c.x), static_cast<float>(c.y)), m_color));
+        opts.add_vertex(sdl::vertex(world_to_screen(c, camera), m_color));
     }
 
     opts.connect(0, 1, 2);
@@ -518,19 +519,23 @@ double circle_collider::get_radius() const noexcept
     return m_radius;
 }
 
-void circle_collider::render(const sdl::irenderer &renderer) const noexcept
+void circle_collider::render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept
 {
     renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
 
+    const sdl::fpoint sc = world_to_screen(m_center, camera);
+    const double sr = m_radius * camera.zoom;
+
     sdl::render_geometry_options opts(renderer);
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_center.x), static_cast<float>(m_center.y)), m_color));
+    opts.add_vertex(sdl::vertex(sc, m_color));
 
     constexpr int segments = 64;
     for (int i = 0; i <= segments; ++i)
     {
         double angle = 2.0 * std::numbers::pi * i / segments;
-        vec2d p = m_center + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
-        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+        sdl::fpoint p(sc.x + static_cast<float>(std::cos(angle) * sr),
+                      sc.y + static_cast<float>(std::sin(angle) * sr));
+        opts.add_vertex(sdl::vertex(p, m_color));
     }
 
     for (int i = 1; i <= segments; ++i)
@@ -653,34 +658,38 @@ double capsule_collider::get_radius() const noexcept
     return m_radius;
 }
 
-void capsule_collider::render(const sdl::irenderer &renderer) const noexcept
+void capsule_collider::render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept
 {
     renderer.set_color(m_color.r, m_color.g, m_color.b, m_color.a);
 
     // If it's just a circle, render it as such.
     if (m_p1 == m_p2)
     {
-        circle_collider(m_p1, m_radius).render(renderer);
+        circle_collider(m_p1, m_radius).render(renderer, camera);
         return;
     }
 
     vec2d d = m_p2 - m_p1;
     vec2d norm = d.orthogonal().normalized() * m_radius;
 
-    // Rectangle corners
-    vec2d r1 = m_p1 + norm;
-    vec2d r2 = m_p2 + norm;
-    vec2d r3 = m_p2 - norm;
-    vec2d r4 = m_p1 - norm;
+    // Rectangle corners (world-space, then transformed to screen)
+    const sdl::fpoint sr1 = world_to_screen(m_p1 + norm, camera);
+    const sdl::fpoint sr2 = world_to_screen(m_p2 + norm, camera);
+    const sdl::fpoint sr3 = world_to_screen(m_p2 - norm, camera);
+    const sdl::fpoint sr4 = world_to_screen(m_p1 - norm, camera);
+
+    const sdl::fpoint sp1 = world_to_screen(m_p1, camera);
+    const sdl::fpoint sp2 = world_to_screen(m_p2, camera);
+    const double sr = m_radius * camera.zoom;
 
     sdl::render_geometry_options opts(renderer);
 
     // Add rectangle vertices
     int rect_start = static_cast<int>(opts.vertices.size());
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r1.x), static_cast<float>(r1.y)), m_color));
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r2.x), static_cast<float>(r2.y)), m_color));
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r3.x), static_cast<float>(r3.y)), m_color));
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(r4.x), static_cast<float>(r4.y)), m_color));
+    opts.add_vertex(sdl::vertex(sr1, m_color));
+    opts.add_vertex(sdl::vertex(sr2, m_color));
+    opts.add_vertex(sdl::vertex(sr3, m_color));
+    opts.add_vertex(sdl::vertex(sr4, m_color));
 
     opts.connect(rect_start + 0, rect_start + 1, rect_start + 2);
     opts.connect(rect_start + 0, rect_start + 2, rect_start + 3);
@@ -691,12 +700,13 @@ void capsule_collider::render(const sdl::irenderer &renderer) const noexcept
 
     // Semi-circle at p1 (around p1, from r4 to r1, away from p2)
     int p1_center_idx = static_cast<int>(opts.vertices.size());
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_p1.x), static_cast<float>(m_p1.y)), m_color));
+    opts.add_vertex(sdl::vertex(sp1, m_color));
     for (int i = 0; i <= segments; ++i)
     {
         double angle = base_angle + std::numbers::pi * i / segments;
-        vec2d p = m_p1 + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
-        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+        sdl::fpoint p(sp1.x + static_cast<float>(std::cos(angle) * sr),
+                      sp1.y + static_cast<float>(std::sin(angle) * sr));
+        opts.add_vertex(sdl::vertex(p, m_color));
     }
     for (int i = 1; i <= segments; ++i)
     {
@@ -705,12 +715,13 @@ void capsule_collider::render(const sdl::irenderer &renderer) const noexcept
 
     // Semi-circle at p2 (around p2, from r2 to r3, away from p1)
     int p2_center_idx = static_cast<int>(opts.vertices.size());
-    opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(m_p2.x), static_cast<float>(m_p2.y)), m_color));
+    opts.add_vertex(sdl::vertex(sp2, m_color));
     for (int i = 0; i <= segments; ++i)
     {
         double angle = base_angle + std::numbers::pi + std::numbers::pi * i / segments;
-        vec2d p = m_p2 + vec2d(std::cos(angle), std::sin(angle)) * m_radius;
-        opts.add_vertex(sdl::vertex(sdl::fpoint(static_cast<float>(p.x), static_cast<float>(p.y)), m_color));
+        sdl::fpoint p(sp2.x + static_cast<float>(std::cos(angle) * sr),
+                      sp2.y + static_cast<float>(std::sin(angle) * sr));
+        opts.add_vertex(sdl::vertex(p, m_color));
     }
     for (int i = 1; i <= segments; ++i)
     {

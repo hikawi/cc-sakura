@@ -5,8 +5,6 @@
 #include "engine/entity.h"
 #include "engine/scene.h"
 #include "engine/sprite.h"
-#include "sdl/sdl_render.h"
-#include "sdl/sdl_surface.h"
 
 #include <algorithm>
 #include <numbers>
@@ -34,7 +32,7 @@ dbg_sprite::dbg_sprite() : m_score_text(typeface::rainy_hearts, 12), m_score(0)
                      .with_component<components::transform>(vec2d(240, 135))
                      .with_component<components::sprite>(&sprite::named("dbg_ball"))
                      .build();
-    const auto &bf = ball->get_component<components::sprite>().spr->frame(0);
+    const auto &bf = ball->get_component<components::sprite>()->spr->frame(0);
     ball->add_component<components::hitbox>(circle_collider({240, 135}, std::min(bf.source_w, bf.source_h) / 2.0));
 
     const vec2d key_pos = random_key_pos();
@@ -129,30 +127,6 @@ bool dbg_sprite::on_tick(scene_context &, const double dt) noexcept
         key->tick(dt);
     }
     return true;
-}
-
-void dbg_sprite::on_render(const sdl::irenderer &renderer) const noexcept
-{
-    get_entity_component<components::hitbox>(ENTITY_BALL)->get().render(renderer);
-    get_entity_component<components::hitbox>(ENTITY_KEY)->get().render(renderer);
-
-    auto texture = m_score_text.render(renderer);
-    texture->set_scale_mode(sdl::scale_mode::nearest);
-    sdl::render_texture_options(renderer, *texture).dst({4, 4}).render();
-
-    const auto kcomp = get_entity_component<components::transform>(ENTITY_KEY);
-    const auto kscomp = get_entity_component<components::sprite>(ENTITY_KEY);
-    if (kscomp && kcomp && kscomp->spr)
-    {
-        kscomp->spr->render(renderer, kcomp->position.to_fpoint(), kscomp->origin, kscomp->frame_index);
-    }
-
-    const auto &tcomp = get_entity_component<components::transform>(ENTITY_BALL);
-    const auto &scomp = get_entity_component<components::sprite>(ENTITY_BALL);
-    if (tcomp && scomp && scomp->spr)
-    {
-        scomp->spr->render(renderer, tcomp->position.to_fpoint(), scomp->origin, scomp->frame_index);
-    }
 }
 
 } // namespace ccsakura::scenes

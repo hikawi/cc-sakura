@@ -5,7 +5,6 @@
 #include "engine/entity.h"
 #include "engine/scene.h"
 #include "engine/sprite.h"
-#include "sdl/sdl_render.h"
 
 #include <algorithm>
 #include <format>
@@ -29,7 +28,7 @@ dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
                        .with_component<components::transform>(vec2d(240, 0))
                        .with_component<components::sprite>(&sprite::named("dbg_ball"))
                        .build();
-    const auto &bf = player->get_component<components::sprite>().spr->frame(0);
+    const auto &bf = player->get_component<components::sprite>()->spr->frame(0);
     player->add_component<components::hitbox>(circle_collider({240, 0}, std::min(bf.source_w, bf.source_h) / 2.0));
 
     // Floor
@@ -39,7 +38,7 @@ dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
                       .with_component<components::transform>(floor_pos)
                       .with_component<components::hitbox>(aabb_collider(floor_pos, floor_extents))
                       .build();
-    floor->get_component<components::hitbox>().get().set_color(0.0f, 1.0f, 0.0f, 0.5f);
+    floor->get_component<components::hitbox>()->get().set_color(0.0f, 1.0f, 0.0f, 0.5f);
 
     // Box on top of the floor
     const vec2d box_pos{240, 200};
@@ -48,7 +47,7 @@ dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
                     .with_component<components::transform>(box_pos)
                     .with_component<components::hitbox>(aabb_collider(box_pos, box_extents))
                     .build();
-    box->get_component<components::hitbox>().get().set_color(1.0f, 0.5f, 0.0f, 0.5f);
+    box->get_component<components::hitbox>()->get().set_color(1.0f, 0.5f, 0.0f, 0.5f);
 
     m_info_text.value = "Use A/D to move, W to jump";
 }
@@ -116,7 +115,7 @@ bool dbg_physics::on_physical_tick(scene_context &) noexcept
         const auto collision = player_collider.collides(other);
         if (collision.is_colliding)
         {
-            tcomp->position -= collision.normal * collision.depth;
+            tcomp->position += -collision.normal * collision.depth;
             player_collider.set_center(tcomp->position);
 
             if (collision.normal.y > 0)
@@ -151,29 +150,6 @@ bool dbg_physics::on_tick(scene_context &, const double dt) noexcept
         }
     }
     return true;
-}
-
-void dbg_physics::on_render(const sdl::irenderer &renderer) const noexcept
-{
-    // Render text
-    auto texture = m_info_text.render(renderer);
-    texture->set_scale_mode(sdl::scale_mode::nearest);
-    sdl::render_texture_options(renderer, *texture).dst({4, 4}).render();
-
-    // Render floor collider
-    get_entity_component<components::hitbox>(ENTITY_FLOOR)->get().render(renderer);
-
-    // Render box collider
-    get_entity_component<components::hitbox>(ENTITY_BOX)->get().render(renderer);
-
-    // Render player sprite and collider
-    const auto &tcomp = get_entity_component<components::transform>(ENTITY_PLAYER);
-    const auto &scomp = get_entity_component<components::sprite>(ENTITY_PLAYER);
-    if (tcomp && scomp && scomp->spr)
-    {
-        scomp->spr->render(renderer, tcomp->position.to_fpoint(), scomp->origin, scomp->frame_index);
-    }
-    get_entity_component<components::hitbox>(ENTITY_PLAYER)->get().render(renderer);
 }
 
 } // namespace ccsakura::scenes

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "engine/render.h"
 #include "engine/vec2d.h"
 #include "sdl/sdl_pixels.h"
 #include "sdl/sdl_render.h"
@@ -134,8 +135,9 @@ class collider
      * Renders the collider for debug purposes.
      *
      * \param renderer the renderer to render with
+     * \param camera the active camera for world-to-screen transformation
      */
-    virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
+    virtual void render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept = 0;
 
   protected:
     sdl::fcolor m_color = {0, 0, 0.5f, 0.3f}; ///< the color to render the collider with
@@ -159,7 +161,7 @@ class aabb_collider : public collider
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
     void shift(const vec2d dir) noexcept override;
-    void render(const sdl::irenderer &renderer) const noexcept override;
+    void render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept override;
 
     /**
      * Changes the center of the AABB.
@@ -225,7 +227,7 @@ class obb_collider : public collider
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
     void shift(const vec2d dir) noexcept override;
-    void render(const sdl::irenderer &renderer) const noexcept override;
+    void render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept override;
 
     /**
      * Changes the center of the OBB.
@@ -304,7 +306,7 @@ class circle_collider : public collider
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
     void shift(const vec2d dir) noexcept override;
-    void render(const sdl::irenderer &renderer) const noexcept override;
+    void render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept override;
 
     /**
      * Changes the center of the circle.
@@ -362,7 +364,7 @@ class capsule_collider : public collider
     collision collides_with(const circle_collider &circle) const noexcept override;
     collision collides_with(const capsule_collider &capsule) const noexcept override;
     void shift(const vec2d dir) noexcept override;
-    void render(const sdl::irenderer &renderer) const noexcept override;
+    void render(const sdl::irenderer &renderer, const camera2d &camera) const noexcept override;
 
     /**
      * Changes the first endpoint of the capsule.

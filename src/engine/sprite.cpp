@@ -189,6 +189,11 @@ void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const
     renderer.render_texture(opts);
 }
 
+sdl::render_texture_options sprite::render_options(const sdl::irenderer &renderer) const noexcept
+{
+    return sdl::render_texture_options(renderer, *m_texture);
+}
+
 const sprite_frame &sprite::frame(uint32_t index) const noexcept
 {
     return m_frames[index];

@@ -24,11 +24,11 @@ namespace ccsakura
  */
 enum class intent : uint8_t
 {
-    move_left,
-    move_right,
-    move_up,
-    move_down,
-    count ///< sentinel for array sizing
+    move_left,  ///< well, move left
+    move_right, ///< well, move right
+    move_up,    ///< well, move up
+    move_down,  ///< well, move down
+    count       ///< sentinel for array sizing
 };
 
 /// Tracks the pressed/released state for each intent.

@@ -155,9 +155,6 @@ void engine::render() const noexcept
     const sdl::irenderer &renderer = *m_deps.m_renderer;
     renderer.set_blend_mode(sdl::blend_mode::blend);
 
-    renderer.set_color(static_cast<uint8_t>(255), 255, 255, 255);
-    renderer.clear();
-
     m_scene_mgr.render(renderer);
 
     renderer.present();

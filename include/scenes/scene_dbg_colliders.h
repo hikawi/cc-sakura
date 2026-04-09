@@ -2,7 +2,6 @@
 
 #include "engine/collision.h"
 #include "engine/scene.h"
-#include "sdl/sdl_render.h"
 
 #include <memory>
 #include <vector>
@@ -22,7 +21,6 @@ class dbg_colliders : public ccsakura::iscene
     void on_attach(scene_context &ctx) noexcept override;
     void on_detach(scene_context &ctx) noexcept override;
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
-    void on_render(const sdl::irenderer &renderer) const noexcept override;
 
   private:
     std::vector<std::unique_ptr<collider>> m_colliders;

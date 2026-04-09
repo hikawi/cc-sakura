@@ -2,7 +2,6 @@
 
 #include "engine/collision.h"
 #include "engine/scene.h"
-#include "sdl/sdl_render.h"
 
 #include <cmath>
 #include <numbers>
@@ -80,14 +79,6 @@ bool dbg_colliders::on_tick(scene_context &, const double dt) noexcept
     m_capsule->set_p2(cap_center + cap_dir);
 
     return true;
-}
-
-void dbg_colliders::on_render(const sdl::irenderer &renderer) const noexcept
-{
-    for (const auto &c : m_colliders)
-    {
-        c->render(renderer);
-    }
 }
 
 } // namespace ccsakura::scenes
