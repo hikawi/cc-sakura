@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/scene.h"
-#include "sdl/sdl_render.h"
 
 namespace ccsakura::scenes
 {
@@ -22,8 +21,6 @@ class dbg_empty : public ccsakura::iscene
   private:
     sdl::fcolor m_color;
     sdl::fpoint m_point;
-
-    uint64_t m_mouse_event_callback;
 
     void on_mouse_event(signals::mouse &event);
 };

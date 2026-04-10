@@ -10,6 +10,8 @@ class mock_scene : public ccsakura::iscene
     MOCK_METHOD(ccsakura::scene_type, type, (), (const, noexcept, override));
     MOCK_METHOD(void, on_attach, (ccsakura::scene_context &), (override));
     MOCK_METHOD(void, on_detach, (ccsakura::scene_context &), (override));
+    MOCK_METHOD(void, on_pause, (ccsakura::scene_context &), (override));
+    MOCK_METHOD(void, on_start, (ccsakura::scene_context &), (override));
     MOCK_METHOD(bool, on_tick, (ccsakura::scene_context &, const double), (noexcept, override));
     MOCK_METHOD(bool, on_physical_tick, (ccsakura::scene_context &), (noexcept, override));
 };

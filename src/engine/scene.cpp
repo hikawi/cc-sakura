@@ -5,6 +5,7 @@
 #include "engine/render.h"
 #include "engine/sprite.h"
 #include "sdl/sdl_log.h"
+#include "sdl/sdl_surface.h"
 
 #include <algorithm>
 #include <cctype>
@@ -20,6 +21,11 @@ scene_entity_builder::scene_entity_builder(uint32_t id, std::function<entity *(e
 entity *scene_entity_builder::build()
 {
     return m_commit(m_builder.build());
+}
+
+signal_binder::signal_binder(scene_context &ctx, std::function<void(uint64_t)> on_subscribe)
+    : m_ctx(ctx), m_on_subscribe(std::move(on_subscribe))
+{
 }
 
 scene_entity_builder iscene::construct_entity(uint32_t id)
@@ -46,7 +52,16 @@ intent_binder iscene::bind_intents(scene_context &ctx)
 void iscene::on_attach(scene_context &)
 {
 }
+
 void iscene::on_detach(scene_context &)
+{
+}
+
+void iscene::on_pause(scene_context &)
+{
+}
+
+void iscene::on_start(scene_context &)
 {
 }
 
@@ -81,6 +96,20 @@ void iscene::unbind_intents(scene_context &ctx) noexcept
     ctx.unsubscribe(m_intent_sub_id);
     m_intent_bindings.clear();
     m_intent_state = {};
+}
+
+signal_binder iscene::bind_signals(scene_context &ctx)
+{
+    return signal_binder(ctx, [this](uint64_t id) { m_signal_sub_ids.push_back(id); });
+}
+
+void iscene::unbind_signals(scene_context &ctx) noexcept
+{
+    for (const uint64_t id : m_signal_sub_ids)
+    {
+        ctx.unsubscribe(id);
+    }
+    m_signal_sub_ids.clear();
 }
 
 bool iscene::is_intent_triggered(const intent i) const noexcept
@@ -178,6 +207,14 @@ std::unique_ptr<iscene> scene_manager::pop_of_type(const scene_type type)
     return nullptr;
 }
 
+bool scene_manager::start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type,
+                                     scene_transition transition)
+{
+    std::lock_guard<std::mutex> lock(m_requests_mutex);
+    m_requests.push({scene_request_type::start_transition, std::move(to_scene), from_type, nullptr, transition});
+    return true;
+}
+
 bool scene_manager::emit_signal(std::unique_ptr<isignal> signal)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
@@ -187,6 +224,30 @@ bool scene_manager::emit_signal(std::unique_ptr<isignal> signal)
 
 void scene_manager::tick(const double dt)
 {
+    if (m_transition.active())
+    {
+        m_transition.elapsed += dt;
+        if (m_transition.elapsed >= m_transition.config.duration)
+        {
+            iscene *from = m_transition.from_scene;
+            iscene *to = m_transition.to_scene;
+            m_transition = {}; // clear before on_detach to prevent re-entry
+
+            auto it = std::find_if(m_stack.begin(), m_stack.end(), [from](const auto &s) { return s.get() == from; });
+            if (it != m_stack.end())
+            {
+                auto scene = std::move(*it);
+                m_stack.erase(it);
+                m_render_targets.erase(scene.get());
+                scene->on_detach(*this);
+            }
+
+            auto to_it = std::find_if(m_stack.begin(), m_stack.end(), [to](const auto &s) { return s.get() == to; });
+            if (to_it != m_stack.end())
+                to->on_start(*this);
+        }
+    }
+
     for (auto &scene : m_stack)
     {
         if (!scene->on_tick(*this, dt))
@@ -243,132 +304,218 @@ void scene_manager::collision_tick()
 
 void scene_manager::render(const sdl::irenderer &renderer) const noexcept
 {
+    // Pass 1: render each scene into its own render target texture.
+    for (auto it = m_stack.rbegin(); it != m_stack.rend(); ++it)
+    {
+        iscene *scene_ptr = it->get();
+        auto &target = m_render_targets[scene_ptr];
+
+        if (!target)
+        {
+            try
+            {
+                target = renderer.create_texture(sdl::pixel_format::rgba8888, sdl::texture_access::target,
+                                                 static_cast<int>(m_camera.viewport.x),
+                                                 static_cast<int>(m_camera.viewport.y));
+                target->set_blend_mode(sdl::blend_mode::blend);
+
+                // We are a pixel art game, I think this might be needed.
+                target->set_scale_mode(sdl::scale_mode::nearest);
+            }
+            catch (...)
+            {
+                sdl::log_error("Failed to create render target for scene");
+                continue;
+            }
+        }
+
+        renderer.set_render_target(target.get());
+        renderer.set_color(uint8_t{0}, uint8_t{0}, uint8_t{0}, uint8_t{0});
+        renderer.clear();
+
+        render_scene(renderer, **it);
+    }
+
+    // Pass 2: composite all scene textures onto the window in the same order.
+    renderer.set_render_target(nullptr);
     renderer.set_color(m_background_color.r, m_background_color.g, m_background_color.b, m_background_color.a);
     renderer.clear();
 
+    const float vw = static_cast<float>(m_camera.viewport.x);
+    const float vh = static_cast<float>(m_camera.viewport.y);
+
     for (auto it = m_stack.rbegin(); it != m_stack.rend(); ++it)
     {
-        for (const auto &[id, entity_ptr] : (*it)->entities())
+        auto map_it = m_render_targets.find(it->get());
+        if (map_it == m_render_targets.end() || !map_it->second)
+            continue;
+
+        sdl::itexture &tex = *map_it->second;
+        sdl::frect dst{0.0f, 0.0f, vw, vh};
+        uint8_t alpha = 255;
+
+        if (m_transition.active())
         {
-            if (!entity_ptr)
-            {
-                continue;
-            }
+            const double t = m_transition.progress();
+            const bool is_from = (it->get() == m_transition.from_scene);
+            const bool is_to = (it->get() == m_transition.to_scene);
+            if (is_from || is_to)
+                apply_transition_effect(m_transition.config.type, t, is_from, vw, vh, dst, alpha);
+        }
 
-            const auto sprite = entity_ptr->get_component<components::sprite>();
-            const auto hitbox = entity_ptr->get_component<components::hitbox>();
-            const auto text = entity_ptr->get_component<components::text>();
+        tex.set_alpha_mod(alpha);
+        sdl::render_texture_options(renderer, tex).dstrect(dst).render();
+        tex.set_alpha_mod(255); // alpha mod is sticky — always restore
+    }
+}
 
-            if (!sprite && !hitbox && !text)
-            {
-                continue;
-            }
+void scene_manager::apply_transition_effect(scene_transition_type type, double t, bool is_from, float vw, float vh,
+                                            sdl::frect &dst, uint8_t &alpha) noexcept
+{
+    switch (type)
+    {
+    case scene_transition_type::fade:
+        alpha = is_from ? static_cast<uint8_t>(255.0 * (1.0 - t)) : static_cast<uint8_t>(255.0 * t);
+        break;
+    case scene_transition_type::slide_left:
+        dst.x = is_from ? -(vw * static_cast<float>(t)) : vw * static_cast<float>(1.0 - t);
+        break;
+    case scene_transition_type::slide_right:
+        dst.x = is_from ? vw * static_cast<float>(t) : -(vw * static_cast<float>(1.0 - t));
+        break;
+    case scene_transition_type::slide_up:
+        dst.y = is_from ? -(vh * static_cast<float>(t)) : vh * static_cast<float>(1.0 - t);
+        break;
+    case scene_transition_type::slide_down:
+        dst.y = is_from ? vh * static_cast<float>(t) : -(vh * static_cast<float>(1.0 - t));
+        break;
+    case scene_transition_type::none:
+        break;
+    }
+}
 
-            const auto transform = entity_ptr->get_component<components::transform>();
-            sdl::fpoint screen_pos{0.0f, 0.0f};
-            if (transform)
-            {
-                if (transform->fixed)
-                    screen_pos = {static_cast<float>(transform->position.x), static_cast<float>(transform->position.y)};
-                else
-                    screen_pos = world_to_screen(transform->position, m_camera);
-            }
+void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &scene) const noexcept
+{
+    for (const auto &[id, entity_ptr] : scene.entities())
+    {
+        if (!entity_ptr)
+        {
+            continue;
+        }
+
+        const auto sprite = entity_ptr->get_component<components::sprite>();
+        const auto hitbox = entity_ptr->get_component<components::hitbox>();
+        const auto text = entity_ptr->get_component<components::text>();
+
+        if (!sprite && !hitbox && !text)
+        {
+            continue;
+        }
+
+        const auto transform = entity_ptr->get_component<components::transform>();
+        sdl::fpoint screen_pos{0.0f, 0.0f};
+        if (transform)
+        {
+            if (transform->fixed)
+                screen_pos = {static_cast<float>(transform->position.x), static_cast<float>(transform->position.y)};
             else
+                screen_pos = world_to_screen(transform->position, m_camera);
+        }
+        else
+        {
+            if (sprite)
             {
-                if (sprite)
-                {
-                    sdl::log_warn("Entity {} has no transform but has sprite component", id);
-                }
-                if (hitbox)
-                {
-                    sdl::log_warn("Entity {} has no transform but has hitbox component", id);
-                }
-                if (text)
-                {
-                    sdl::log_warn("Entity {} has no transform but has text component", id);
-                }
+                sdl::log_warn("Entity {} has no transform but has sprite component", id);
             }
-
-            if (sprite && sprite->spr)
-            {
-                const auto frame = sprite->spr->frame(sprite->frame_index);
-                sprite->spr->render_options(renderer)
-                    .srcrect(sdl::frect(frame.frame))
-                    .dst(screen_pos)
-                    .rotate(transform ? transform->rotation : 0.0)
-                    .render_origin(sprite->origin)
-                    .render();
-            }
-
             if (hitbox)
             {
-                hitbox->get().render(renderer, m_camera);
+                sdl::log_warn("Entity {} has no transform but has hitbox component", id);
+            }
+            if (text)
+            {
+                sdl::log_warn("Entity {} has no transform but has text component", id);
+            }
+        }
+
+        if (sprite && sprite->spr)
+        {
+            const auto frame = sprite->spr->frame(sprite->frame_index);
+            sprite->spr->render_options(renderer)
+                .srcrect(sdl::frect(frame.frame))
+                .dst(screen_pos)
+                .rotate(transform ? transform->rotation : 0.0)
+                .render_origin(sprite->origin)
+                .render();
+        }
+
+        if (hitbox)
+        {
+            hitbox->get().render(renderer, m_camera);
+        }
+
+        if (text && !text->value.empty())
+        {
+            auto &font = sprite::named("font");
+
+            constexpr float SPACE_ADVANCE = 4.0f;
+            constexpr float PUNCT_GAP = 2.0f;
+            constexpr float CHAR_GAP = 1.0f;
+
+            // First pass: measure total block size for origin shifting.
+            float width = 0.0f, height = 0.0f;
+            const size_t len = text->value.size();
+            for (size_t i = 0; i < len; i++)
+            {
+                const char c = text->value[i];
+                if (c < 32 || c > 126)
+                {
+                    sdl::log_warn("Undisplayable char {} in entity {}", c, entity_ptr->id());
+                    continue;
+                }
+
+                if (c == ' ')
+                {
+                    if (i + 1 < len)
+                        width += SPACE_ADVANCE;
+                    continue;
+                }
+
+                const auto &frame = font.frame(static_cast<uint32_t>(c - 32));
+                height = std::max(height, static_cast<float>(frame.frame.h));
+                width += static_cast<float>(frame.frame.w);
+                if (i + 1 < len)
+                    width += std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
             }
 
-            if (text && !text->value.empty())
+            sdl::frect block{0.0f, 0.0f, width, height};
+            shift_origin(block, text->origin);
+
+            float render_x = screen_pos.x + block.x;
+            float render_y = screen_pos.y + block.y;
+
+            // Second pass: render each glyph.
+            for (std::size_t i = 0; i < len; ++i)
             {
-                auto &font = sprite::named("font");
+                const char c = text->value[i];
+                if (c < 32 || c > 126)
+                    continue;
 
-                constexpr float SPACE_ADVANCE = 4.0f;
-                constexpr float PUNCT_GAP = 2.0f;
-                constexpr float CHAR_GAP = 1.0f;
-
-                // First pass: measure total block size for origin shifting.
-                float width = 0.0f, height = 0.0f;
-                const size_t len = text->value.size();
-                for (size_t i = 0; i < len; i++)
+                if (c == ' ')
                 {
-                    const char c = text->value[i];
-                    if (c < 32 || c > 126)
-                    {
-                        sdl::log_warn("Undisplayable char {} in entity {}", c, entity_ptr->id());
-                        continue;
-                    }
-
-                    if (c == ' ')
-                    {
-                        if (i + 1 < len)
-                            width += SPACE_ADVANCE;
-                        continue;
-                    }
-
-                    const auto &frame = font.frame(static_cast<uint32_t>(c - 32));
-                    height = std::max(height, static_cast<float>(frame.frame.h));
-                    width += static_cast<float>(frame.frame.w);
-                    if (i + 1 < len)
-                        width += std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
+                    render_x += SPACE_ADVANCE;
+                    continue;
                 }
 
-                sdl::frect block{0.0f, 0.0f, width, height};
-                shift_origin(block, text->origin);
+                const auto &f = font.frame(static_cast<uint32_t>(c - 32));
 
-                float render_x = screen_pos.x + block.x;
-                float render_y = screen_pos.y + block.y;
+                font.render_options(renderer)
+                    .srcrect(sdl::frect(f.frame))
+                    .dst(sdl::fpoint{render_x + static_cast<float>(f.spr_source_size.x),
+                                     render_y + static_cast<float>(f.spr_source_size.y)})
+                    .render();
 
-                // Second pass: render each glyph.
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    const char c = text->value[i];
-                    if (c < 32 || c > 126)
-                        continue;
-
-                    if (c == ' ')
-                    {
-                        render_x += SPACE_ADVANCE;
-                        continue;
-                    }
-
-                    const auto &f = font.frame(static_cast<uint32_t>(c - 32));
-
-                    font.render_options(renderer)
-                        .srcrect(sdl::frect(f.frame))
-                        .dst(sdl::fpoint{render_x + static_cast<float>(f.spr_source_size.x),
-                                         render_y + static_cast<float>(f.spr_source_size.y)})
-                        .render();
-
-                    const float gap = std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
-                    render_x += static_cast<float>(f.frame.w) + gap;
-                }
+                const float gap = std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
+                render_x += static_cast<float>(f.frame.w) + gap;
             }
         }
     }
@@ -407,6 +554,7 @@ void scene_manager::process_requests()
             if (req.scene)
             {
                 req.scene->on_attach(*this);
+                req.scene->on_start(*this);
                 m_stack.push_back(std::move(req.scene));
             }
             break;
@@ -414,6 +562,7 @@ void scene_manager::process_requests()
             if (req.scene)
             {
                 req.scene->on_attach(*this);
+                req.scene->on_start(*this);
                 m_stack.push_front(std::move(req.scene));
             }
             break;
@@ -424,6 +573,7 @@ void scene_manager::process_requests()
                 auto it = std::find_if(m_stack.begin(), m_stack.end(),
                                        [&](const auto &s) { return s->type() == req.target_type; });
                 req.scene->on_attach(*this);
+                req.scene->on_start(*this);
                 if (it != m_stack.end())
                 {
                     m_stack.insert(it, std::move(req.scene));
@@ -442,6 +592,7 @@ void scene_manager::process_requests()
                 auto it = std::find_if(m_stack.rbegin(), m_stack.rend(),
                                        [&](const auto &s) { return s->type() == req.target_type; });
                 req.scene->on_attach(*this);
+                req.scene->on_start(*this);
                 if (it != m_stack.rend())
                 {
                     m_stack.insert(it.base(), std::move(req.scene));
@@ -458,6 +609,8 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(m_stack.front());
                 m_stack.pop_front();
+                m_render_targets.erase(scene.get());
+                scene->on_pause(*this);
                 scene->on_detach(*this);
             }
             break;
@@ -466,6 +619,8 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(m_stack.back());
                 m_stack.pop_back();
+                m_render_targets.erase(scene.get());
+                scene->on_pause(*this);
                 scene->on_detach(*this);
             }
             break;
@@ -477,6 +632,8 @@ void scene_manager::process_requests()
             {
                 auto scene = std::move(*it);
                 m_stack.erase(it);
+                m_render_targets.erase(scene.get());
+                scene->on_pause(*this);
                 scene->on_detach(*this);
             }
             break;
@@ -487,6 +644,24 @@ void scene_manager::process_requests()
                 m_outgoing_signals.emplace_back(std::move(req.signal));
             }
             break;
+        case scene_request_type::start_transition:
+        {
+            if (!req.scene || m_transition.active())
+                break;
+
+            auto it = std::find_if(m_stack.begin(), m_stack.end(),
+                                   [&](const auto &s) { return s->type() == req.target_type; });
+            if (it == m_stack.end())
+                break;
+
+            iscene *from = it->get();
+            from->on_pause(*this);
+            req.scene->on_attach(*this);
+            auto to_it = m_stack.insert(it, std::move(req.scene));
+            iscene *to = to_it->get();
+            m_transition = {from, to, 0.0, req.transition};
+            break;
+        }
         }
     }
 }
