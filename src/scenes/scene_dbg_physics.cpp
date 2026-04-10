@@ -17,11 +17,12 @@ static constexpr double MAX_FALL_SPEED = 8.0;
 static constexpr uint32_t ENTITY_PLAYER = 1;
 static constexpr uint32_t ENTITY_FLOOR = 2;
 static constexpr uint32_t ENTITY_BOX = 3;
+static constexpr uint32_t ENTITY_INFO = 4;
 
 namespace ccsakura::scenes
 {
 
-dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
+dbg_physics::dbg_physics()
 {
     // Player
     auto *player = construct_entity(ENTITY_PLAYER)
@@ -49,7 +50,11 @@ dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
                     .build();
     box->get_component<components::hitbox>()->get().set_color(1.0f, 0.5f, 0.0f, 0.5f);
 
-    m_info_text.value = "Use A/D to move, W to jump";
+    auto *info = construct_entity(ENTITY_INFO)
+                     .with_component<components::transform>(vec2d(4, 4), 0.0, true)
+                     .with_component<components::text>()
+                     .build();
+    info->get_component<components::text>()->set("Use A/D to move, W to jump");
 
     ON_COLLISION(ENTITY_PLAYER, ENTITY_FLOOR, { resolve_player(a, b, col); });
     ON_COLLISION(ENTITY_PLAYER, ENTITY_BOX, { resolve_player(a, b, col); });
@@ -99,10 +104,7 @@ bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
         m_grounded = false;
     }
 
-    m_velocity.y += GRAVITY;
-    if (m_velocity.y > MAX_FALL_SPEED)
-        m_velocity.y = MAX_FALL_SPEED;
-
+    m_velocity.y = std::min(MAX_FALL_SPEED, m_velocity.y + GRAVITY);
     auto tcomp = get_entity_component<components::transform>(ENTITY_PLAYER);
     tcomp->position += m_velocity;
 
@@ -110,17 +112,13 @@ bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
     player_collider.set_center(tcomp->position);
     m_grounded = false;
 
-    // 3. Camera movement
     ctx.camera().position = tcomp->position;
-
-    m_info_text.value = std::format("Velocity: {:.2f}, {:.2f} | Grounded: {}", m_velocity.x, m_velocity.y, m_grounded);
-
     return true;
 }
 
 bool dbg_physics::on_tick(scene_context &, const double dt) noexcept
 {
-    if (m_velocity.length_squared() > 0)
+    if (m_velocity.x * m_velocity.x > 0)
     {
         auto player_sprite = get_entity_component<components::sprite>(ENTITY_PLAYER);
         if (player_sprite)
@@ -129,6 +127,10 @@ bool dbg_physics::on_tick(scene_context &, const double dt) noexcept
             player_sprite->reverse = m_velocity.x < 0;
         }
     }
+
+    get_entity_component<components::text>(ENTITY_INFO)
+        ->set(std::format("Velocity: {:.2f}, {:.2f} | Grounded: {}", m_velocity.x, m_velocity.y, m_grounded));
+
     return true;
 }
 

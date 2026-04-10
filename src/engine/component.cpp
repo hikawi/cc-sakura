@@ -11,7 +11,7 @@
 namespace ccsakura::components
 {
 
-transform::transform(vec2d pos, double rot) : position(pos), rotation(rot)
+transform::transform(vec2d pos, double rot, bool fixed) : position(pos), rotation(rot), fixed(fixed)
 {
 }
 
@@ -63,6 +63,11 @@ void sprite::tick(double dt) noexcept
                 frame_index = t.from;
         }
     }
+}
+
+void text::set(std::string_view str) noexcept
+{
+    value = str;
 }
 
 } // namespace ccsakura::components

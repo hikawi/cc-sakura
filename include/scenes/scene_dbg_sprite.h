@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/scene.h"
-#include "engine/text.h"
 
 namespace ccsakura::scenes
 {
@@ -21,9 +20,10 @@ class dbg_sprite : public ccsakura::iscene
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
 
   private:
+    static constexpr uint32_t ENTITY_SCORE = 3;
+
     vec2d m_velocity;
-    text m_score_text;
-    uint64_t m_score;
+    uint64_t m_score = 0;
 };
 
 } // namespace ccsakura::scenes

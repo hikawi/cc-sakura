@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/scene.h"
-#include "engine/text.h"
 
 namespace ccsakura::scenes
 {
@@ -24,7 +23,6 @@ class dbg_physics : public ccsakura::iscene
     void resolve_player(uint32_t a, uint32_t b, const collision &col) noexcept;
 
     vec2d m_velocity;
-    text m_info_text;
     bool m_grounded = false;
     double m_box_dir = 1.0;
     uint64_t m_ticks = 0;

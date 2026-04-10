@@ -18,7 +18,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # Add SDL3 and related libraries
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
-find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(zstd REQUIRED)
 
 # Add your source files
@@ -34,7 +33,6 @@ target_link_libraries(
   PRIVATE
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
-    SDL3_ttf::SDL3_ttf
     zstd::libzstd)
 target_compile_definitions(
   CCSakuraLib
@@ -91,7 +89,6 @@ target_link_libraries(
     CCSakuraLib
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
-    SDL3_ttf::SDL3_ttf
     zstd::libzstd)
 target_include_directories(CCSakura PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_compile_definitions(

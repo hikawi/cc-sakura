@@ -26,7 +26,7 @@ static vec2d random_key_pos()
     return {dist_x(rng), dist_y(rng)};
 }
 
-dbg_sprite::dbg_sprite() : m_score_text(typeface::rainy_hearts, 12), m_score(0)
+dbg_sprite::dbg_sprite() : m_score(0)
 {
     auto *ball = construct_entity(ENTITY_BALL)
                      .with_component<components::transform>(vec2d(240, 135))
@@ -42,7 +42,11 @@ dbg_sprite::dbg_sprite() : m_score_text(typeface::rainy_hearts, 12), m_score(0)
         .with_component<components::hitbox>(aabb_collider({key_pos, {11, 4.5}}))
         .build();
 
-    m_score_text.value = "Score: 0";
+    construct_entity(ENTITY_SCORE)
+        .with_component<components::transform>(vec2d(4, 4), 0.0, true)
+        .with_component<components::text>()
+        .build();
+    get_entity_component<components::text>(ENTITY_SCORE)->set("Score: 0");
 }
 
 scene_type dbg_sprite::type() const noexcept
@@ -104,7 +108,7 @@ bool dbg_sprite::on_physical_tick(scene_context &) noexcept
         kcomp->position = new_pos;
         key_collider.set_center(new_pos);
         m_score++;
-        m_score_text.value = std::format("Score: {}", m_score);
+        get_entity_component<components::text>(ENTITY_SCORE)->set(std::format("Score: {}", m_score));
     }
 
     return true;

@@ -17,7 +17,7 @@ namespace ccsakura
 
 bool engine_deps::is_valid() const noexcept
 {
-    return m_renderer && m_window && m_app && m_font_cache && m_sprite_cache;
+    return m_renderer && m_window && m_app && m_sprite_cache;
 }
 
 engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
@@ -35,10 +35,6 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     sprite::use_cache(*m_deps.m_sprite_cache);
     sprite::use_renderer(*m_deps.m_renderer);
     sprite::use_storage_opener(sdl::open_title_storage);
-
-    // Let engine inject text dependencies also.
-    sdl::log_debug("Injecting Font dependencies");
-    text::use_cache(*m_deps.m_font_cache);
 
     // TODO: Remove
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 1, 1, 1)));

@@ -9,7 +9,6 @@
 #include "app.h"
 #include "engine/scene.h"
 #include "engine/sprite.h"
-#include "engine/text.h"
 #include "sdl/sdl_events.h"
 #include "sdl/sdl_render.h"
 #include "sdl/sdl_video.h"
@@ -42,7 +41,6 @@ struct engine_deps
     std::unique_ptr<sdl::iwindow> m_window;        ///< the window of the application
     std::unique_ptr<sdl::irenderer> m_renderer;    ///< the renderer of the application
     std::unique_ptr<iapp> m_app;                   ///< the application itself
-    std::unique_ptr<ifont_cache> m_font_cache;     ///< the font cache
     std::unique_ptr<isprite_cache> m_sprite_cache; ///< the sprite cache
 
     /**
