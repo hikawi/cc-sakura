@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "collision.h"
 #include "entity.h"
 #include "intent.h"
 #include "scenes/scene_id.h"
@@ -15,6 +16,7 @@
 #include <atomic>
 #include <deque>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -272,6 +274,21 @@ class iscene
     virtual bool on_physical_tick(scene_context &ctx) noexcept;
 
     /**
+     * \brief Called once per colliding entity pair after the physics step.
+     *
+     * Pair ordering is guaranteed: \c a < \c b (by entity id).
+     * \c col.normal is from \c a 's perspective (result of a.collides(b)).
+     *
+     * Default implementation dispatches to hooks registered via register_collision_pair().
+     * Override for full custom control; call dispatch_collision_hooks() to retain hook behaviour.
+     *
+     * \param a the entity id with the lower value
+     * \param b the entity id with the higher value
+     * \param col the collision result
+     */
+    virtual void on_collide(uint32_t a, uint32_t b, const collision &col) noexcept;
+
+    /**
      * Returns a const reference to this scene's entity registry.
      *
      * \returns a const reference to the entities map
@@ -359,6 +376,34 @@ class iscene
         return e->get_component<T>();
     }
 
+    using collision_hook_fn = std::function<void(uint32_t, uint32_t, const collision &)>;
+
+    /**
+     * Registers a callback invoked by the default on_collide() when entities with
+     * ids \c a and \c b collide. Pair order does not matter.
+     *
+     * \tparam Fn any callable with signature void(uint32_t, uint32_t, const collision &)
+     * \param a first entity id
+     * \param b second entity id
+     * \param fn the callback to invoke
+     */
+    template <typename Fn> void register_collision_pair(uint32_t a, uint32_t b, Fn &&fn)
+    {
+        this->m_collision_hooks[{std::min(a, b), std::max(a, b)}] = std::forward<Fn>(fn);
+    }
+
+    /**
+     * Dispatches the collision to the registered hook for this pair, if any.
+     *
+     * Call this inside an on_collide() override to retain hook behaviour
+     * while adding catch-all logic before or after it.
+     *
+     * \param a the entity id with the lower value
+     * \param b the entity id with the higher value
+     * \param col the collision result
+     */
+    void dispatch_collision_hooks(uint32_t a, uint32_t b, const collision &col) noexcept;
+
     /**
      * \brief Returns a fluent builder for registering key-to-intent bindings.
      *
@@ -391,10 +436,22 @@ class iscene
     std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
     intent_state m_intent_state{};
     uint64_t m_intent_sub_id{0};
+    std::map<std::pair<uint32_t, uint32_t>, collision_hook_fn> m_collision_hooks;
 
   protected:
     std::unordered_map<uint32_t, std::unique_ptr<entity>> m_entities; ///< Entity registry
 };
+
+/**
+ * Registers a collision hook inside a scene constructor or on_attach.
+ *
+ * Available identifiers inside \c body:
+ *   - \c uint32_t a  — the entity with the smaller id
+ *   - \c uint32_t b  — the entity with the larger id
+ *   - \c const collision& col — the collision result (normal is from a's perspective)
+ */
+#define ON_COLLISION(id_a, id_b, body)                                                                                 \
+    register_collision_pair((id_a), (id_b), [this](uint32_t a, uint32_t b, const collision &col) noexcept body)
 
 /**
  * \brief Manages the lifecycle and rendering of game scenes.
@@ -420,6 +477,15 @@ class iscene_manager : public scene_context
      * \brief Updates the physics of all active scenes.
      */
     virtual void physical_tick() = 0;
+
+    /**
+     * \brief Runs narrow-phase collision detection across all scenes,
+     *        calling on_collide() for each colliding entity pair.
+     *
+     * Broad-phase optimisations (culling, quadtrees) can be added inside
+     * the implementation without touching individual scenes.
+     */
+    virtual void collision_tick() = 0;
 
     /**
      * \brief Renders all active scenes in order.
@@ -491,6 +557,7 @@ class scene_manager : public iscene_manager
 
     void tick(const double dt) override;
     void physical_tick() override;
+    void collision_tick() override;
     void render(const sdl::irenderer &renderer) const noexcept override;
     void process_requests() override;
     void drain_signals(std::deque<std::unique_ptr<isignal>> &target) override;

@@ -1,5 +1,6 @@
 #include "engine/scene.h"
 
+#include "engine/collision.h"
 #include "engine/component.h"
 #include "engine/render.h"
 #include "engine/sprite.h"
@@ -55,6 +56,17 @@ bool iscene::on_tick(scene_context &, const double) noexcept
 bool iscene::on_physical_tick(scene_context &) noexcept
 {
     return true;
+}
+
+void iscene::on_collide(uint32_t a, uint32_t b, const collision &col) noexcept
+{
+    dispatch_collision_hooks(a, b, col);
+}
+
+void iscene::dispatch_collision_hooks(uint32_t a, uint32_t b, const collision &col) noexcept
+{
+    if (const auto it = m_collision_hooks.find({a, b}); it != m_collision_hooks.end())
+        it->second(a, b, col);
 }
 
 const std::unordered_map<uint32_t, std::unique_ptr<entity>> &iscene::entities() const noexcept
@@ -189,6 +201,40 @@ void scene_manager::physical_tick()
         if (!scene->on_physical_tick(*this))
         {
             break;
+        }
+    }
+}
+
+void scene_manager::collision_tick()
+{
+    for (auto &scene : m_stack)
+    {
+        std::vector<std::pair<uint32_t, const collider *>> collidables;
+        for (const auto &[id, ent] : scene->entities())
+        {
+            if (const auto *hb = ent->get_component<components::hitbox>())
+                collidables.push_back({id, &hb->get()});
+        }
+
+        // Narrow phase — broad phase can be inserted here in the future
+        for (size_t i = 0; i < collidables.size(); ++i)
+        {
+            for (size_t j = i + 1; j < collidables.size(); ++j)
+            {
+                // Guarantee a < b ordering before calling on_collide
+                const auto [id_i, coll_i] = collidables[i];
+                const auto [id_j, coll_j] = collidables[j];
+
+                const bool swapped = id_i > id_j;
+                const uint32_t id_a = swapped ? id_j : id_i;
+                const uint32_t id_b = swapped ? id_i : id_j;
+                const collider *coll_a = swapped ? coll_j : coll_i;
+                const collider *coll_b = swapped ? coll_i : coll_j;
+
+                const auto col = coll_a->collides(*coll_b);
+                if (col.is_colliding)
+                    scene->on_collide(id_a, id_b, col);
+            }
         }
     }
 }
