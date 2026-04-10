@@ -33,14 +33,35 @@ void sprite::tick(double dt) noexcept
 
     if (tag.empty())
     {
-        frame_index = (frame_index + 1) % spr->frame_count();
+        const uint32_t count = spr->frame_count();
+        if (reverse)
+        {
+            if (frame_index == 0)
+                frame_index = count - 1;
+            else
+                frame_index--;
+        }
+        else
+        {
+            frame_index = (frame_index + 1) % count;
+        }
     }
     else
     {
         const auto &t = spr->frame_tag(tag);
-        frame_index++;
-        if (frame_index > t.to)
-            frame_index = t.from;
+        if (reverse)
+        {
+            if (frame_index <= t.from)
+                frame_index = t.to;
+            else
+                frame_index--;
+        }
+        else
+        {
+            frame_index++;
+            if (frame_index > t.to)
+                frame_index = t.from;
+        }
     }
 }
 

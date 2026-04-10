@@ -80,9 +80,8 @@ bool engine::iterate(const uint64_t tick) noexcept
         sdl::log_trace("Running a physical tick at {}", tick);
         m_frame_data.accumulator -= s_time_step;
 
-        // TODO:
-        // Add signals handling collisions and physical ticking here
         m_scene_mgr.physical_tick();
+        m_scene_mgr.collision_tick();
     }
 
     m_scene_mgr.tick(dt);

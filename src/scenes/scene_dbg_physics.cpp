@@ -50,6 +50,9 @@ dbg_physics::dbg_physics() : m_info_text(typeface::rainy_hearts, 16)
     box->get_component<components::hitbox>()->get().set_color(1.0f, 0.5f, 0.0f, 0.5f);
 
     m_info_text.value = "Use A/D to move, W to jump";
+
+    ON_COLLISION(ENTITY_PLAYER, ENTITY_FLOOR, { resolve_player(a, b, col); });
+    ON_COLLISION(ENTITY_PLAYER, ENTITY_BOX, { resolve_player(a, b, col); });
 }
 
 scene_type dbg_physics::type() const noexcept
@@ -62,7 +65,7 @@ void dbg_physics::on_attach(scene_context &ctx) noexcept
     bind_intents(ctx)
         .map(sdl::keycode::a, intent::move_left)
         .map(sdl::keycode::d, intent::move_right)
-        .map(sdl::keycode::w, intent::move_up) // Jump
+        .map(sdl::keycode::space, intent::move_up)
         .bind();
 }
 
@@ -71,7 +74,7 @@ void dbg_physics::on_detach(scene_context &ctx) noexcept
     unbind_intents(ctx);
 }
 
-bool dbg_physics::on_physical_tick(scene_context &) noexcept
+bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
 {
     m_ticks++;
 
@@ -105,34 +108,10 @@ bool dbg_physics::on_physical_tick(scene_context &) noexcept
 
     auto &player_collider = get_entity_component<components::hitbox>(ENTITY_PLAYER)->as<circle_collider>();
     player_collider.set_center(tcomp->position);
-
-    // 3. Collision checks
     m_grounded = false;
 
-    // Helper to resolve collision
-    auto resolve = [&](const collider &other)
-    {
-        const auto collision = player_collider.collides(other);
-        if (collision.is_colliding)
-        {
-            tcomp->position += -collision.normal * collision.depth;
-            player_collider.set_center(tcomp->position);
-
-            if (collision.normal.y > 0)
-            {
-                m_grounded = true;
-                m_velocity.y = 0;
-            }
-            else if (collision.normal.y < 0)
-            {
-                m_velocity.y = 0;
-            }
-        }
-    };
-
-    auto &floor_collider = get_entity_component<components::hitbox>(ENTITY_FLOOR)->as<aabb_collider>();
-    resolve(floor_collider);
-    resolve(box_collider);
+    // 3. Camera movement
+    ctx.camera().position = tcomp->position;
 
     m_info_text.value = std::format("Velocity: {:.2f}, {:.2f} | Grounded: {}", m_velocity.x, m_velocity.y, m_grounded);
 
@@ -147,9 +126,32 @@ bool dbg_physics::on_tick(scene_context &, const double dt) noexcept
         if (player_sprite)
         {
             player_sprite->tick(dt);
+            player_sprite->reverse = m_velocity.x < 0;
         }
     }
     return true;
+}
+
+void dbg_physics::resolve_player(uint32_t a, uint32_t /*b*/, const collision &col) noexcept
+{
+    const bool a_is_player = (a == ENTITY_PLAYER);
+    const vec2d normal = a_is_player ? col.normal : -col.normal;
+
+    auto *tcomp = get_entity_component<components::transform>(ENTITY_PLAYER);
+    auto &pcol = get_entity_component<components::hitbox>(ENTITY_PLAYER)->as<circle_collider>();
+
+    tcomp->position += -normal * col.depth;
+    pcol.set_center(tcomp->position);
+
+    if (normal.y > 0)
+    {
+        m_grounded = true;
+        m_velocity.y = 0;
+    }
+    else if (normal.y < 0)
+    {
+        m_velocity.y = 0;
+    }
 }
 
 } // namespace ccsakura::scenes

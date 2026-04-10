@@ -21,6 +21,8 @@ class dbg_physics : public ccsakura::iscene
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
 
   private:
+    void resolve_player(uint32_t a, uint32_t b, const collision &col) noexcept;
+
     vec2d m_velocity;
     text m_info_text;
     bool m_grounded = false;

@@ -8,6 +8,7 @@
 
 #include "collision.h"
 #include "render.h"
+#include "sdl/sdl_surface.h"
 #include "vec2d.h"
 
 #include <cstdint>
@@ -53,11 +54,13 @@ struct transform : public component
  */
 struct sprite : public component
 {
-    isprite *spr;               ///< Non-owning pointer to the sprite resource
-    render_origin origin;       ///< Anchor point used for rendering alignment
-    uint32_t frame_index = 0;   ///< Current frame being displayed
-    double frame_elapsed = 0.0; ///< Seconds elapsed in the current frame
-    std::string tag = "";       ///< Active animation tag name; empty means play all frames
+    isprite *spr;                     ///< Non-owning pointer to the sprite resource
+    render_origin origin;             ///< Anchor point used for rendering alignment
+    uint32_t frame_index = 0;         ///< Current frame being displayed
+    double frame_elapsed = 0.0;       ///< Seconds elapsed in the current frame
+    std::string tag = "";             ///< Active animation tag name; empty means play all frames
+    sdl::flip flip = sdl::flip::none; ///< Flip mode
+    bool reverse = false;             ///< Whether to play the animation in reverse
 
     /**
      * Constructs a new sprite component.
