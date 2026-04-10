@@ -28,4 +28,5 @@ class mock_renderer : public sdl::irenderer
     MOCK_METHOD(sdl::fpoint, coordinates_from_window, (float x, float y), (const, noexcept, override));
     MOCK_METHOD(void, clear, (), (const, noexcept, override));
     MOCK_METHOD(void, present, (), (const, noexcept, override));
+    MOCK_METHOD(void, set_render_target, (sdl::itexture * texture), (const, noexcept, override));
 };

@@ -13,6 +13,7 @@
 #include "sdl/sdl_render.h"
 #include "signal.h"
 
+#include <algorithm>
 #include <atomic>
 #include <deque>
 #include <functional>
@@ -21,6 +22,7 @@
 #include <mutex>
 #include <queue>
 #include <set>
+#include <tuple>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +30,43 @@
 
 namespace ccsakura
 {
+
+enum class scene_transition_type
+{
+    none,
+    fade,
+    slide_left,
+    slide_right,
+    slide_up,
+    slide_down,
+};
+
+struct scene_transition
+{
+    scene_transition_type type = scene_transition_type::none;
+    double duration = 0.0;
+
+    static scene_transition fade(double d) noexcept
+    {
+        return {scene_transition_type::fade, d};
+    }
+    static scene_transition slide_left(double d) noexcept
+    {
+        return {scene_transition_type::slide_left, d};
+    }
+    static scene_transition slide_right(double d) noexcept
+    {
+        return {scene_transition_type::slide_right, d};
+    }
+    static scene_transition slide_up(double d) noexcept
+    {
+        return {scene_transition_type::slide_up, d};
+    }
+    static scene_transition slide_down(double d) noexcept
+    {
+        return {scene_transition_type::slide_down, d};
+    }
+};
 
 class iscene_manager;
 class iscene;
@@ -107,6 +146,24 @@ class scene_context
     virtual std::unique_ptr<iscene> pop_of_type(const scene_type type) = 0;
 
     /**
+     * \brief Queues a request to replace a scene in-place with a transition effect.
+     *
+     * The incoming scene is inserted at the same stack depth as the scene of
+     * \p from_type. Other scenes (e.g. HUD) remain untouched at their positions.
+     * The outgoing scene is removed once the transition completes.
+     *
+     * If no scene with \p from_type is found, the request is ignored.
+     * If a transition is already active, the request is ignored.
+     *
+     * \param to_scene  The incoming scene.
+     * \param from_type The scene_type of the outgoing scene to replace.
+     * \param transition The transition effect and duration.
+     * \returns true if queued successfully, false otherwise.
+     */
+    virtual bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type,
+                                  scene_transition transition) = 0;
+
+    /**
      * Emits a signal.
      *
      * \param signal the signal to emit
@@ -177,6 +234,62 @@ class scene_context
   protected:
     virtual uint64_t next_listener_id() noexcept = 0;
     virtual void register_listener(signal_listener listener) = 0;
+};
+
+/**
+ * Fluent builder that registers signal listeners and tracks their IDs.
+ * Obtain via iscene::bind_signals() rather than constructing directly.
+ */
+class signal_binder
+{
+  public:
+    signal_binder(scene_context &ctx, std::function<void(uint64_t)> on_subscribe);
+
+    /**
+     * Subscribes to a signal type at priority.
+     *
+     * \tparam T the signal type to subscribe to
+     * \param priority the listener priority
+     * \param callback the function to call when the signal is emitted
+     * \returns this builder for chaining
+     */
+    template <typename T>
+        requires std::derived_from<T, isignal>
+    signal_binder &on(listener_priority priority, std::function<void(T &)> callback)
+    {
+        uint64_t id = m_ctx.subscribe<T>(priority, std::move(callback));
+        m_on_subscribe(id);
+        return *this;
+    }
+
+    /**
+     * Subscribes to a signal type using a member function.
+     *
+     * \tparam T the signal type to subscribe to
+     * \tparam Class the class type containing the method
+     * \param priority the listener priority
+     * \param method the member function to call
+     * \param instance the class instance to call the method on
+     * \returns this builder for chaining
+     */
+    template <typename T, typename Class>
+        requires std::derived_from<T, isignal>
+    signal_binder &on(listener_priority priority, void (Class::*method)(T &), Class *instance)
+    {
+        return on<T>(priority, [instance, method](T &ev) { (instance->*method)(ev); });
+    }
+
+    /**
+     * Commits the builder. No-op since subscriptions are registered immediately,
+     * but provided for consistency with intent_binder.
+     */
+    void bind()
+    {
+    }
+
+  private:
+    scene_context &m_ctx;
+    std::function<void(uint64_t)> m_on_subscribe;
 };
 
 /**
@@ -257,6 +370,25 @@ class iscene
      * \param ctx the scene context for queuing further requests
      */
     virtual void on_detach(scene_context &ctx);
+
+    /**
+     * \brief Called when a transition targeting this scene begins.
+     *
+     * If this scene was popped by a request without a scene transition,
+     * this will get called instantly before `on_detach`.
+     *
+     * \param ctx the scene context for queuing further requests
+     */
+    virtual void on_pause(scene_context &ctx);
+
+    /**
+     * \brief Called when this scene has fully transitioned in and is now active.
+     *
+     * When used with push_front or push_back, this gets called instantly.
+     *
+     * \param ctx the scene context for queuing further requests
+     */
+    virtual void on_start(scene_context &ctx);
 
     /**
      * \brief Logic update phase.
@@ -376,6 +508,86 @@ class iscene
         return e->get_component<T>();
     }
 
+    /**
+     * Returns a tuple of pointers to the requested components for the given ID.
+     * If a component or the entity is not found, its pointer will be nullptr.
+     *
+     * \tparam Comps the component types to retrieve
+     * \param id the entity ID
+     * \returns a tuple of pointers
+     */
+    template <typename... Comps>
+        requires((std::is_base_of_v<component, Comps>) && ...)
+    std::tuple<Comps *...> get_entity_components(uint32_t id) noexcept
+    {
+        auto *e = get_entity(id);
+        if (!e)
+        {
+            return {static_cast<Comps *>(nullptr)...};
+        }
+        return {e->get_component<Comps>()...};
+    }
+
+    /**
+     * Returns a tuple of pointers to the requested components for the given ID.
+     * If a component or the entity is not found, its pointer will be nullptr.
+     *
+     * \tparam Comps the component types to retrieve
+     * \param id the entity ID
+     * \returns a tuple of pointers
+     */
+    template <typename... Comps>
+        requires((std::is_base_of_v<component, Comps>) && ...)
+    std::tuple<const Comps *...> get_entity_components(uint32_t id) const noexcept
+    {
+        const auto *e = get_entity(id);
+        if (!e)
+        {
+            return {static_cast<const Comps *>(nullptr)...};
+        }
+        return {e->get_component<Comps>()...};
+    }
+
+    /**
+     * Safely executes a function with the requested components if they are all present.
+     *
+     * \tparam Comps the component types to retrieve
+     * \tparam Fn callable taking references to the components: void(Comps&...)
+     * \param id the entity ID
+     * \param fn the function to execute
+     */
+    template <typename... Comps, typename Fn>
+        requires((std::is_base_of_v<component, Comps>) && ...)
+    void with_entity_components(uint32_t id, Fn &&fn)
+    {
+        auto components = get_entity_components<Comps...>(id);
+        bool all_exist = std::apply([](auto *...pts) { return (pts && ...); }, components);
+        if (all_exist)
+        {
+            std::apply([&fn](auto *...pts) { fn(*pts...); }, components);
+        }
+    }
+
+    /**
+     * Safely executes a function with the requested components if they are all present.
+     *
+     * \tparam Comps the component types to retrieve
+     * \tparam Fn callable taking const references to the components: void(const Comps&...)
+     * \param id the entity ID
+     * \param fn the function to execute
+     */
+    template <typename... Comps, typename Fn>
+        requires((std::is_base_of_v<component, Comps>) && ...)
+    void with_entity_components(uint32_t id, Fn &&fn) const
+    {
+        auto components = get_entity_components<Comps...>(id);
+        bool all_exist = std::apply([](auto *...pts) { return (pts && ...); }, components);
+        if (all_exist)
+        {
+            std::apply([&fn](auto *...pts) { fn(*pts...); }, components);
+        }
+    }
+
     using collision_hook_fn = std::function<void(uint32_t, uint32_t, const collision &)>;
 
     /**
@@ -430,12 +642,32 @@ class iscene
      */
     bool is_intent_triggered(const intent i) const noexcept;
 
+    /**
+     * \brief Returns a fluent builder for registering signal listeners.
+     *
+     * Call \c .on().bind() in on_attach. Subscriptions are tracked and removed in \c unbind_signals.
+     *
+     * \param ctx the scene context
+     * \returns a signal_binder for chaining
+     */
+    signal_binder bind_signals(scene_context &ctx);
+
+    /**
+     * \brief Unregisters all signal listeners registered via bind_signals.
+     *
+     * Call in on_detach.
+     *
+     * \param ctx the scene context
+     */
+    void unbind_signals(scene_context &ctx) noexcept;
+
   private:
     void on_intent_key(signals::key &e) noexcept;
 
     std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
     intent_state m_intent_state{};
     uint64_t m_intent_sub_id{0};
+    std::vector<uint64_t> m_signal_sub_ids;
     std::map<std::pair<uint32_t, uint32_t>, collision_hook_fn> m_collision_hooks;
 
   protected:
@@ -493,7 +725,18 @@ class iscene_manager : public scene_context
      */
     virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
 
+    /**
+     * Retrieves the current active camera.
+     *
+     * \returns a camera2d reference
+     */
     virtual camera2d &camera() noexcept = 0;
+
+    /**
+     * Sets the background color for a clear.
+     *
+     * \param color the color to set to.
+     */
     virtual void set_background_color(sdl::fcolor color) noexcept = 0;
 
     /**
@@ -526,6 +769,7 @@ enum class scene_request_type
     pop_last,
     pop_of_type,
     emit_signal,
+    start_transition,
 };
 
 /**
@@ -537,6 +781,7 @@ struct scene_request
     std::unique_ptr<iscene> scene = nullptr;
     scene_type target_type = scene_type::dbg_none;
     std::unique_ptr<isignal> signal = nullptr;
+    scene_transition transition{};
 };
 
 /**
@@ -552,6 +797,7 @@ class scene_manager : public iscene_manager
     std::unique_ptr<iscene> pop_front() override;
     std::unique_ptr<iscene> pop_last() override;
     std::unique_ptr<iscene> pop_of_type(const scene_type type) override;
+    bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type, scene_transition transition) override;
     bool emit_signal(std::unique_ptr<isignal> signal) override;
     bool unsubscribe(uint64_t id) override;
 
@@ -578,8 +824,31 @@ class scene_manager : public iscene_manager
 
     std::atomic<uint64_t> m_listener_id_counter{0};
 
+    void render_scene(const sdl::irenderer &renderer, const iscene &scene) const noexcept;
+    static void apply_transition_effect(scene_transition_type type, double t, bool is_from, float vw, float vh,
+                                        sdl::frect &dst, uint8_t &alpha) noexcept;
+
+    struct transition_state
+    {
+        iscene *from_scene = nullptr; ///< raw observer ptr — still owned by m_stack
+        iscene *to_scene = nullptr;   ///< raw observer ptr — still owned by m_stack
+        double elapsed = 0.0;
+        scene_transition config{};
+
+        bool active() const noexcept
+        {
+            return config.type != scene_transition_type::none && from_scene != nullptr;
+        }
+        double progress() const noexcept
+        {
+            return config.duration <= 0.0 ? 1.0 : std::clamp(elapsed / config.duration, 0.0, 1.0);
+        }
+    };
+
     camera2d m_camera{{240.0, 135.0}, 0.0, 1.0, {480.0, 270.0}};
     sdl::fcolor m_background_color{1.0f, 1.0f, 1.0f, 1.0f};
+    mutable std::unordered_map<iscene *, std::unique_ptr<sdl::itexture>> m_render_targets;
+    transition_state m_transition{};
 };
 
 } // namespace ccsakura

@@ -142,7 +142,7 @@ class entity_builder
         requires(std::is_base_of_v<component, T>)
     entity_builder &edit_component(Fn &&fn)
     {
-        fn(m_entity.get_component<T>());
+        fn(*m_entity.get_component<T>());
         return *this;
     }
 

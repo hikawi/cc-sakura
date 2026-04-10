@@ -98,6 +98,21 @@ void texture::set_scale_mode(const scale_mode mode) const noexcept
     }
 }
 
+uint8_t texture::get_alpha_mod() const noexcept
+{
+    Uint8 alpha = 255;
+    SDL_GetTextureAlphaMod(m_texture.get(), &alpha);
+    return static_cast<uint8_t>(alpha);
+}
+
+void texture::set_alpha_mod(const uint8_t alpha) const noexcept
+{
+    if (!SDL_SetTextureAlphaMod(m_texture.get(), alpha))
+    {
+        sdl::log_error("Failed to set texture alpha mod: {}", SDL_GetError());
+    }
+}
+
 // =============================================
 
 render_geometry_options::render_geometry_options(const irenderer &renderer) : renderer(renderer)
@@ -285,6 +300,11 @@ void renderer::present() const noexcept
 {
     sdl::log_trace("sdl::renderer {} present", m_name);
     SDL_RenderPresent(m_renderer.get());
+}
+
+void renderer::set_render_target(sdl::itexture *texture) const noexcept
+{
+    SDL_SetRenderTarget(m_renderer.get(), texture ? texture->get() : nullptr);
 }
 
 renderer::~renderer()

@@ -176,6 +176,20 @@ class itexture
      * \param mode the mode to change to
      */
     virtual void set_scale_mode(const scale_mode mode) const noexcept = 0;
+
+    /**
+     * Retrieves the current alpha modulation of the texture (0–255).
+     *
+     * \returns the current alpha mod value
+     */
+    virtual uint8_t get_alpha_mod() const noexcept = 0;
+
+    /**
+     * Sets the alpha modulation applied when this texture is rendered.
+     *
+     * \param alpha the alpha mod value (0 = fully transparent, 255 = fully opaque)
+     */
+    virtual void set_alpha_mod(uint8_t alpha) const noexcept = 0;
 };
 
 /**
@@ -192,6 +206,8 @@ class texture : public itexture
     void set_blend_mode(const blend_mode mode) const noexcept override;
     scale_mode get_scale_mode() const noexcept override;
     void set_scale_mode(const scale_mode mode) const noexcept override;
+    uint8_t get_alpha_mod() const noexcept override;
+    void set_alpha_mod(uint8_t alpha) const noexcept override;
 
   private:
     std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> m_texture;
@@ -360,6 +376,14 @@ class irenderer
      * Updates the window with newly drawn context.
      */
     virtual void present() const noexcept = 0;
+
+    /**
+     * Sets the render target for subsequent drawing operations.
+     * Pass nullptr to restore rendering to the window.
+     *
+     * \param texture the target texture, or nullptr to restore window
+     */
+    virtual void set_render_target(sdl::itexture *texture) const noexcept = 0;
 };
 
 /**
@@ -393,6 +417,7 @@ class renderer : public irenderer
     sdl::fpoint coordinates_from_window(float x, float y) const noexcept override;
     void clear() const noexcept override;
     void present() const noexcept override;
+    void set_render_target(sdl::itexture *texture) const noexcept override;
 
   private:
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> m_renderer;
