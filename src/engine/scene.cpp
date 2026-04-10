@@ -4,8 +4,10 @@
 #include "engine/component.h"
 #include "engine/render.h"
 #include "engine/sprite.h"
+#include "sdl/sdl_log.h"
 
 #include <algorithm>
+#include <cctype>
 
 namespace ccsakura
 {
@@ -252,29 +254,121 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
             {
                 continue;
             }
-            const auto transform = entity_ptr->get_component<components::transform>();
-            if (!transform)
+
+            const auto sprite = entity_ptr->get_component<components::sprite>();
+            const auto hitbox = entity_ptr->get_component<components::hitbox>();
+            const auto text = entity_ptr->get_component<components::text>();
+
+            if (!sprite && !hitbox && !text)
             {
                 continue;
             }
 
-            const auto sprite = entity_ptr->get_component<components::sprite>();
+            const auto transform = entity_ptr->get_component<components::transform>();
+            sdl::fpoint screen_pos{0.0f, 0.0f};
+            if (transform)
+            {
+                if (transform->fixed)
+                    screen_pos = {static_cast<float>(transform->position.x), static_cast<float>(transform->position.y)};
+                else
+                    screen_pos = world_to_screen(transform->position, m_camera);
+            }
+            else
+            {
+                if (sprite)
+                {
+                    sdl::log_warn("Entity {} has no transform but has sprite component", id);
+                }
+                if (hitbox)
+                {
+                    sdl::log_warn("Entity {} has no transform but has hitbox component", id);
+                }
+                if (text)
+                {
+                    sdl::log_warn("Entity {} has no transform but has text component", id);
+                }
+            }
+
             if (sprite && sprite->spr)
             {
                 const auto frame = sprite->spr->frame(sprite->frame_index);
                 sprite->spr->render_options(renderer)
                     .srcrect(sdl::frect(frame.frame))
-                    .dst(world_to_screen(transform->position, m_camera))
-                    .rotate(transform->rotation)
+                    .dst(screen_pos)
+                    .rotate(transform ? transform->rotation : 0.0)
                     .render_origin(sprite->origin)
                     .render();
             }
 
-            // TODO: Add a mechanism to disable debug-mode rendering for colliders.
-            const auto hitbox = entity_ptr->get_component<components::hitbox>();
             if (hitbox)
             {
                 hitbox->get().render(renderer, m_camera);
+            }
+
+            if (text && !text->value.empty())
+            {
+                auto &font = sprite::named("font");
+
+                constexpr float SPACE_ADVANCE = 4.0f;
+                constexpr float PUNCT_GAP = 2.0f;
+                constexpr float CHAR_GAP = 1.0f;
+
+                // First pass: measure total block size for origin shifting.
+                float width = 0.0f, height = 0.0f;
+                const size_t len = text->value.size();
+                for (size_t i = 0; i < len; i++)
+                {
+                    const char c = text->value[i];
+                    if (c < 32 || c > 126)
+                    {
+                        sdl::log_warn("Undisplayable char {} in entity {}", c, entity_ptr->id());
+                        continue;
+                    }
+
+                    if (c == ' ')
+                    {
+                        if (i + 1 < len)
+                            width += SPACE_ADVANCE;
+                        continue;
+                    }
+
+                    const auto &frame = font.frame(static_cast<uint32_t>(c - 32));
+                    height = std::max(height, static_cast<float>(frame.frame.h));
+                    width += static_cast<float>(frame.frame.w);
+                    if (i + 1 < len)
+                        width += std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
+                }
+
+                sdl::frect block{0.0f, 0.0f, width, height};
+                shift_origin(block, text->origin);
+
+                float render_x = screen_pos.x + block.x;
+                float render_y = screen_pos.y + block.y;
+
+                // Second pass: render each glyph.
+                for (std::size_t i = 0; i < len; ++i)
+                {
+                    const char c = text->value[i];
+                    if (c < 32 || c > 126)
+                        continue;
+
+                    if (c == ' ')
+                    {
+                        render_x += SPACE_ADVANCE;
+                        continue;
+                    }
+
+                    const auto &f = font.frame(static_cast<uint32_t>(c - 32));
+
+                    font.render_options(renderer)
+                        .srcrect(sdl::frect(f.frame))
+                        .dst(sdl::fpoint{render_x + static_cast<float>(f.spr_source_size.x),
+                                         render_y + static_cast<float>(f.spr_source_size.y)})
+                        .render();
+
+                    const float gap = std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
+                    render_x += static_cast<float>(f.frame.w) + gap;
+                }
             }
         }
     }

@@ -15,7 +15,6 @@ target_link_libraries(
     CCSakuraLib
     SDL3::SDL3
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
-    SDL3_ttf::SDL3_ttf
     zstd::libzstd
     GTest::gtest
     GTest::gmock)

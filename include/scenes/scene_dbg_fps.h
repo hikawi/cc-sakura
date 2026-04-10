@@ -1,7 +1,6 @@
 #pragma once
 
 #include "engine/scene.h"
-#include "engine/text.h"
 
 namespace ccsakura::scenes
 {
@@ -20,7 +19,7 @@ class dbg_fps : public ccsakura::iscene
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
 
   private:
-    text m_fps_text;
+    static constexpr uint32_t ENTITY_FPS = 1;
 
     double m_accumulator = 0;
     uint32_t m_frame_count = 0;

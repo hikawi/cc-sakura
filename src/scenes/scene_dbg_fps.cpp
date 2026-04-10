@@ -1,16 +1,21 @@
 #include "scenes/scene_dbg_fps.h"
 
-#include "engine/text.h"
+#include "engine/component.h"
+#include "engine/render.h"
 
 #include <format>
 
 namespace ccsakura::scenes
 {
 
-dbg_fps::dbg_fps() : m_fps_text(text(typeface::rainy_hearts, 16))
+dbg_fps::dbg_fps()
 {
-    m_fps_text.color = sdl::color(0, 0, 255, 255);
-    m_fps_text.value = "0 FPS";
+    auto *fps = construct_entity(ENTITY_FPS)
+                    .with_component<components::transform>(vec2d(476, 4), 0.0, true)
+                    .with_component<components::text>()
+                    .build();
+    fps->get_component<components::text>()->origin = render_origin::top_right;
+    fps->get_component<components::text>()->set("0 FPS");
 }
 
 scene_type dbg_fps::type() const noexcept
@@ -33,7 +38,7 @@ bool dbg_fps::on_tick(scene_context &, const double dt) noexcept
     if (m_accumulator >= 1.0)
     {
         m_fps = m_frame_count;
-        m_fps_text.value = std::format("{} FPS", m_fps);
+        get_entity_component<components::text>(ENTITY_FPS)->set(std::format("{} FPS", m_fps));
         m_frame_count = 0;
         m_accumulator -= 1.0;
     }

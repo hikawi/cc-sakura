@@ -5,10 +5,6 @@
       "name": "sdl3-image",
       "features": ["png"]
     },
-    {
-      "name": "sdl3-ttf",
-      "features": ["harfbuzz"]
-    },
     "zstd",
     "gtest"
   ]

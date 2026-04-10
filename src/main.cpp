@@ -1,7 +1,6 @@
 #define SDL_MAIN_USE_CALLBACKS
 
 #include "engine/engine.h"
-#include "engine/text.h"
 #include "sdl/sdl_events.h"
 #include "sdl/sdl_init.h"
 #include "sdl/sdl_log.h"
@@ -35,7 +34,6 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
                                                       APPLICATION_ORIGINAL_HEIGHT, sdl::window_flags::resizable);
         deps.m_renderer = std::make_unique<sdl::renderer>(*deps.m_window, nullptr);
         deps.m_app = std::make_unique<ccsakura::app>();
-        deps.m_font_cache = std::make_unique<ccsakura::font_cache>();
         deps.m_sprite_cache = std::make_unique<ccsakura::sprite_cache>();
 
         deps.m_renderer->set_logical_presentation(APPLICATION_LOGICAL_WIDTH, APPLICATION_LOGICAL_HEIGHT,
