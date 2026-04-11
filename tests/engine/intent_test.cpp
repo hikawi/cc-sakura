@@ -1,5 +1,5 @@
 #include "engine/intent.h"
-#include "engine/scene.h"
+#include "engine/scene_manager.h"
 #include "engine/signal.h"
 #include "sdl/sdl_events.h"
 

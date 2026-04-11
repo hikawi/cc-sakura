@@ -1,4 +1,4 @@
-#include "engine/scene.h"
+#include "engine/scene_manager.h"
 #include "mocks/mock_renderer.h"
 #include "mocks/mock_scene.h"
 #include "mocks/mock_texture.h"

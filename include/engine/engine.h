@@ -7,7 +7,7 @@
 #pragma once
 
 #include "app.h"
-#include "engine/scene.h"
+#include "engine/scene_manager.h"
 #include "engine/sprite.h"
 #include "sdl/sdl_events.h"
 #include "sdl/sdl_render.h"
