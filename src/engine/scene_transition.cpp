@@ -51,7 +51,7 @@ void apply_slide_down(const sdl::irenderer &r, sdl::itexture &from, sdl::itextur
 }
 
 void apply_split_horizontal(const sdl::irenderer &r, sdl::itexture &from, sdl::itexture &to, float t, float vw,
-                             float vh) noexcept
+                            float vh) noexcept
 {
     const float half = vh * 0.5f;
     draw(r, to, {0, 0, vw, vh}, {0, 0, vw, vh});
@@ -60,7 +60,7 @@ void apply_split_horizontal(const sdl::irenderer &r, sdl::itexture &from, sdl::i
 }
 
 void apply_split_vertical(const sdl::irenderer &r, sdl::itexture &from, sdl::itexture &to, float t, float vw,
-                           float vh) noexcept
+                          float vh) noexcept
 {
     const float half = vw * 0.5f;
     draw(r, to, {0, 0, vw, vh}, {0, 0, vw, vh});
