@@ -36,13 +36,13 @@ target_link_libraries(
     zstd::libzstd)
 target_compile_definitions(
   CCSakuraLib
-  PRIVATE APPLICATION_NAME="Sakura and the Clow Cards"
-          APPLICATION_IDENTIFIER="dev.luny.ccsakura"
-          APPLICATION_VERSION="${PROJECT_VERSION}"
-          APPLICATION_ORIGINAL_WIDTH=1920
-          APPLICATION_ORIGINAL_HEIGHT=1080
-          APPLICATION_LOGICAL_WIDTH=480
-          APPLICATION_LOGICAL_HEIGHT=270)
+  PUBLIC APPLICATION_NAME="Sakura and the Clow Cards"
+         APPLICATION_IDENTIFIER="dev.luny.ccsakura"
+         APPLICATION_VERSION="${PROJECT_VERSION}"
+         APPLICATION_ORIGINAL_WIDTH=1920
+         APPLICATION_ORIGINAL_HEIGHT=1080
+         APPLICATION_LOGICAL_WIDTH=480
+         APPLICATION_LOGICAL_HEIGHT=270)
 
 # Create the game executable
 if(APPLE)
@@ -91,15 +91,6 @@ target_link_libraries(
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
     zstd::libzstd)
 target_include_directories(CCSakura PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_compile_definitions(
-  CCSakura
-  PRIVATE APPLICATION_NAME="Sakura and the Clow Cards"
-          APPLICATION_IDENTIFIER="dev.luny.ccsakura"
-          APPLICATION_VERSION="${PROJECT_VERSION}"
-          APPLICATION_ORIGINAL_WIDTH=1920
-          APPLICATION_ORIGINAL_HEIGHT=1080
-          APPLICATION_LOGICAL_WIDTH=480
-          APPLICATION_LOGICAL_HEIGHT=270)
 
 # CTest integration
 enable_testing()

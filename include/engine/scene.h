@@ -144,16 +144,6 @@ class scene_context
     virtual bool unsubscribe(uint64_t id) = 0;
 
     /**
-     * Returns the active camera for this scene stack.
-     *
-     * Be careful of modifying this, because this might affect the render pass for ALL scenes,
-     * not just one.
-     *
-     * \returns the current camera instance
-     */
-    virtual camera2d &camera() noexcept = 0;
-
-    /**
      * Sets the background color used to clear the screen each frame.
      *
      * \param color the desired background color
@@ -401,8 +391,32 @@ class iscene
         return m_background_color;
     }
 
+    /**
+     * Returns this scene's camera.
+     *
+     * \returns a reference to the per-scene camera
+     */
+    camera2d &camera() noexcept
+    {
+        return m_camera;
+    }
+
+    /**
+     * Returns this scene's camera.
+     *
+     * \returns a const reference to the per-scene camera
+     */
+    const camera2d &camera() const noexcept
+    {
+        return m_camera;
+    }
+
   protected:
     sdl::fcolor m_background_color{0.0f, 0.0f, 0.0f, 0.0f}; ///< Per-scene clear color
+    camera2d m_camera{{APPLICATION_LOGICAL_WIDTH / 2.0, APPLICATION_LOGICAL_HEIGHT / 2.0},
+                      0.0,
+                      1.0,
+                      {APPLICATION_LOGICAL_WIDTH, APPLICATION_LOGICAL_HEIGHT}}; ///< Per-scene camera
     /**
      * Adds an entity to the registry, keyed by its ID.
      * Replaces any existing entity with the same ID.
@@ -701,13 +715,6 @@ class iscene_manager : public scene_context
     virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
 
     /**
-     * Retrieves the current active camera.
-     *
-     * \returns a camera2d reference
-     */
-    virtual camera2d &camera() noexcept = 0;
-
-    /**
      * Sets the background color for a clear.
      *
      * \param color the color to set to.
@@ -783,7 +790,6 @@ class scene_manager : public iscene_manager
     void process_requests() override;
     void drain_signals(std::deque<std::unique_ptr<isignal>> &target) override;
     void propagate_signals(isignal &signal) override;
-    camera2d &camera() noexcept override;
     void set_background_color(sdl::fcolor color) noexcept override;
 
   protected:
@@ -799,7 +805,7 @@ class scene_manager : public iscene_manager
 
     std::atomic<uint64_t> m_listener_id_counter{0};
 
-    void render_scene(const sdl::irenderer &renderer, const iscene &scene) const noexcept;
+    void render_scene(const sdl::irenderer &renderer, const iscene &scene, const camera2d &cam) const noexcept;
 
     struct transition_state
     {
@@ -818,7 +824,6 @@ class scene_manager : public iscene_manager
         }
     };
 
-    camera2d m_camera{{240.0, 135.0}, 0.0, 1.0, {480.0, 270.0}};
     sdl::fcolor m_background_color{1.0f, 1.0f, 1.0f, 1.0f};
     mutable std::unordered_map<iscene *, std::unique_ptr<sdl::itexture>> m_render_targets;
     transition_state m_transition{};

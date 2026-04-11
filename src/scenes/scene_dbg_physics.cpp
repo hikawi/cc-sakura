@@ -25,6 +25,7 @@ namespace ccsakura::scenes
 dbg_physics::dbg_physics()
 {
     m_background_color = {1.0f, 1.0f, 1.0f, 1.0f};
+
     // Player
     auto *player = construct_entity(ENTITY_PLAYER)
                        .with_component<components::transform>(vec2d(240, 0))
@@ -88,7 +89,10 @@ void dbg_physics::on_detach(scene_context &ctx) noexcept
 bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
 {
     if (m_transitioning)
+    {
+        m_camera.position = get_entity_component<components::transform>(ENTITY_PLAYER)->position;
         return true;
+    }
 
     m_ticks++;
 
@@ -100,7 +104,8 @@ bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
                                                                           if (m_ticks % 100 == 0)
                                                                               m_box_dir *= -1.0;
                                                                           bcomp.position.x += m_box_dir * 1.5;
-                                                                          hbox.template as<aabb_collider>().set_center(bcomp.position);
+                                                                          hbox.template as<aabb_collider>().set_center(
+                                                                              bcomp.position);
                                                                       });
 
     // 2. Player movement
@@ -116,13 +121,14 @@ bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
 
     m_velocity.y = std::min(MAX_FALL_SPEED, m_velocity.y + GRAVITY);
 
-    with_entity_components<components::transform, components::hitbox>(ENTITY_PLAYER,
-                                                                      [&](auto &tcomp, auto &hbox)
-                                                                      {
-                                                                          tcomp.position += m_velocity;
-                                                                          hbox.template as<circle_collider>().set_center(tcomp.position);
-                                                                          ctx.camera().position = tcomp.position;
-                                                                      });
+    with_entity_components<components::transform, components::hitbox>(
+        ENTITY_PLAYER,
+        [&](auto &tcomp, auto &hbox)
+        {
+            tcomp.position += m_velocity;
+            hbox.template as<circle_collider>().set_center(tcomp.position);
+            m_camera.position = tcomp.position;
+        });
 
     m_grounded = false;
     return true;
@@ -151,22 +157,23 @@ void dbg_physics::resolve_player(uint32_t a, uint32_t /*b*/, const collision &co
     const bool a_is_player = (a == ENTITY_PLAYER);
     const vec2d normal = a_is_player ? col.normal : -col.normal;
 
-    with_entity_components<components::transform, components::hitbox>(ENTITY_PLAYER,
-                                                                      [&](auto &tcomp, auto &hitbox)
-                                                                      {
-                                                                          tcomp.position += -normal * col.depth;
-                                                                          hitbox.template as<circle_collider>().set_center(tcomp.position);
+    with_entity_components<components::transform, components::hitbox>(
+        ENTITY_PLAYER,
+        [&](auto &tcomp, auto &hitbox)
+        {
+            tcomp.position += -normal * col.depth;
+            hitbox.template as<circle_collider>().set_center(tcomp.position);
 
-                                                                          if (normal.y > 0)
-                                                                          {
-                                                                              m_grounded = true;
-                                                                              m_velocity.y = 0;
-                                                                          }
-                                                                          else if (normal.y < 0)
-                                                                          {
-                                                                              m_velocity.y = 0;
-                                                                          }
-                                                                      });
+            if (normal.y > 0)
+            {
+                m_grounded = true;
+                m_velocity.y = 0;
+            }
+            else if (normal.y < 0)
+            {
+                m_velocity.y = 0;
+            }
+        });
 }
 
 } // namespace ccsakura::scenes
