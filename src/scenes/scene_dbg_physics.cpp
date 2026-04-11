@@ -24,6 +24,7 @@ namespace ccsakura::scenes
 
 dbg_physics::dbg_physics()
 {
+    m_background_color = {1.0f, 1.0f, 1.0f, 1.0f};
     // Player
     auto *player = construct_entity(ENTITY_PLAYER)
                        .with_component<components::transform>(vec2d(240, 0))
@@ -65,8 +66,13 @@ scene_type dbg_physics::type() const noexcept
     return scene_type::dbg_physics;
 }
 
-void dbg_physics::on_attach(scene_context &ctx) noexcept
+void dbg_physics::on_attach(scene_context &) noexcept
 {
+}
+
+void dbg_physics::on_start(scene_context &ctx) noexcept
+{
+    m_transitioning = false;
     bind_intents(ctx)
         .map(sdl::keycode::a, intent::move_left)
         .map(sdl::keycode::d, intent::move_right)
@@ -81,6 +87,9 @@ void dbg_physics::on_detach(scene_context &ctx) noexcept
 
 bool dbg_physics::on_physical_tick(scene_context &ctx) noexcept
 {
+    if (m_transitioning)
+        return true;
+
     m_ticks++;
 
     // 1. Box movement

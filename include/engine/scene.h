@@ -9,6 +9,7 @@
 #include "collision.h"
 #include "entity.h"
 #include "intent.h"
+#include "scene_transition.h"
 #include "scenes/scene_id.h"
 #include "sdl/sdl_render.h"
 #include "signal.h"
@@ -30,43 +31,6 @@
 
 namespace ccsakura
 {
-
-enum class scene_transition_type
-{
-    none,
-    fade,
-    slide_left,
-    slide_right,
-    slide_up,
-    slide_down,
-};
-
-struct scene_transition
-{
-    scene_transition_type type = scene_transition_type::none;
-    double duration = 0.0;
-
-    static scene_transition fade(double d) noexcept
-    {
-        return {scene_transition_type::fade, d};
-    }
-    static scene_transition slide_left(double d) noexcept
-    {
-        return {scene_transition_type::slide_left, d};
-    }
-    static scene_transition slide_right(double d) noexcept
-    {
-        return {scene_transition_type::slide_right, d};
-    }
-    static scene_transition slide_up(double d) noexcept
-    {
-        return {scene_transition_type::slide_up, d};
-    }
-    static scene_transition slide_down(double d) noexcept
-    {
-        return {scene_transition_type::slide_down, d};
-    }
-};
 
 class iscene_manager;
 class iscene;
@@ -427,7 +391,18 @@ class iscene
      */
     const std::unordered_map<uint32_t, std::unique_ptr<entity>> &entities() const noexcept;
 
+    /**
+     * Returns the background color used to clear this scene's render target each frame.
+     *
+     * \returns the scene's background color
+     */
+    sdl::fcolor background_color() const noexcept
+    {
+        return m_background_color;
+    }
+
   protected:
+    sdl::fcolor m_background_color{0.0f, 0.0f, 0.0f, 0.0f}; ///< Per-scene clear color
     /**
      * Adds an entity to the registry, keyed by its ID.
      * Replaces any existing entity with the same ID.
@@ -825,8 +800,6 @@ class scene_manager : public iscene_manager
     std::atomic<uint64_t> m_listener_id_counter{0};
 
     void render_scene(const sdl::irenderer &renderer, const iscene &scene) const noexcept;
-    static void apply_transition_effect(scene_transition_type type, double t, bool is_from, float vw, float vh,
-                                        sdl::frect &dst, uint8_t &alpha) noexcept;
 
     struct transition_state
     {

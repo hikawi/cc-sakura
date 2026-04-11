@@ -19,7 +19,6 @@ class dbg_empty : public ccsakura::iscene
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
 
   private:
-    sdl::fcolor m_color;
     sdl::fpoint m_point;
 
     void on_mouse_event(signals::mouse &event);

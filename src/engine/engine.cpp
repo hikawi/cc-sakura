@@ -37,8 +37,9 @@ engine::engine(engine_deps &&deps) : m_deps(std::move(deps))
     sprite::use_storage_opener(sdl::open_title_storage);
 
     // TODO: Remove
-    m_scene_mgr.push_front(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 1, 1, 1)));
-    m_scene_mgr.push_front(std::make_unique<scenes::dbg_physics>());
+    m_scene_mgr.push_back(std::make_unique<scenes::dbg_empty>(sdl::fcolor(1, 0, 1, 1)));
+    m_scene_mgr.start_transition(std::make_unique<scenes::dbg_physics>(), scene_type::dbg_empty,
+                                 scene_transition::slide_left(5.0));
     m_scene_mgr.push_front(std::make_unique<scenes::dbg_fps>());
 }
 
