@@ -306,10 +306,7 @@ struct vec2d
      *
      * \returns an sdl::fpoint of the vec2d
      */
-    constexpr sdl::fpoint to_fpoint() const noexcept
-    {
-        return {static_cast<float>(x), static_cast<float>(y)};
-    }
+    sdl::fpoint to_fpoint() const noexcept;
 };
 
 /**

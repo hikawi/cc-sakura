@@ -44,6 +44,11 @@ double vec2d::rotation() const noexcept
     return (rhs - *this).length();
 }
 
+sdl::fpoint vec2d::to_fpoint() const noexcept
+{
+    return {static_cast<float>(x), static_cast<float>(y)};
+}
+
 vec2d closest_point_on_segment(const vec2d a, const vec2d b, const vec2d p) noexcept
 {
     vec2d ab = b - a;
