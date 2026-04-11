@@ -314,9 +314,9 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
         {
             try
             {
+                const auto &cam = (*it)->camera();
                 target = renderer.create_texture(sdl::pixel_format::rgba8888, sdl::texture_access::target,
-                                                 static_cast<int>(m_camera.viewport.x),
-                                                 static_cast<int>(m_camera.viewport.y));
+                                                 static_cast<int>(cam.viewport.x), static_cast<int>(cam.viewport.y));
                 target->set_blend_mode(sdl::blend_mode::blend);
 
                 // We are a pixel art game, I think this might be needed.
@@ -334,7 +334,7 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
         renderer.set_color(bg.r, bg.g, bg.b, bg.a);
         renderer.clear();
 
-        render_scene(renderer, **it);
+        render_scene(renderer, **it, (*it)->camera());
     }
 
     // Pass 2: composite all scene textures onto the window in the same order.
@@ -342,8 +342,8 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
     renderer.set_color(m_background_color.r, m_background_color.g, m_background_color.b, m_background_color.a);
     renderer.clear();
 
-    const float vw = static_cast<float>(m_camera.viewport.x);
-    const float vh = static_cast<float>(m_camera.viewport.y);
+    constexpr float vw = static_cast<float>(APPLICATION_LOGICAL_WIDTH);
+    constexpr float vh = static_cast<float>(APPLICATION_LOGICAL_HEIGHT);
 
     for (auto it = m_stack.rbegin(); it != m_stack.rend(); ++it)
     {
@@ -375,7 +375,8 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
     }
 }
 
-void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &scene) const noexcept
+void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &scene,
+                                 const camera2d &cam) const noexcept
 {
     for (const auto &[id, entity_ptr] : scene.entities())
     {
@@ -400,7 +401,7 @@ void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &s
             if (transform->fixed)
                 screen_pos = {static_cast<float>(transform->position.x), static_cast<float>(transform->position.y)};
             else
-                screen_pos = world_to_screen(transform->position, m_camera);
+                screen_pos = world_to_screen(transform->position, cam);
         }
         else
         {
@@ -431,7 +432,7 @@ void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &s
 
         if (hitbox)
         {
-            hitbox->get().render(renderer, m_camera);
+            hitbox->get().render(renderer, cam);
         }
 
         if (text && !text->value.empty())
@@ -501,11 +502,6 @@ void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &s
             }
         }
     }
-}
-
-camera2d &scene_manager::camera() noexcept
-{
-    return m_camera;
 }
 
 void scene_manager::set_background_color(sdl::fcolor color) noexcept
