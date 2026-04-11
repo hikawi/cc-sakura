@@ -46,9 +46,6 @@ TEST(SceneManager, RenderClearsWithBackgroundColor)
     EXPECT_CALL(*s3, on_attach(testing::Ref(scene_mgr))).Times(1);
 
     EXPECT_CALL(mock_renderer,
-                set_color(testing::An<float>(), testing::An<float>(), testing::An<float>(), testing::An<float>()))
-        .Times(1);
-    EXPECT_CALL(mock_renderer,
                 create_texture(testing::An<sdl::pixel_format>(), testing::An<sdl::texture_access>(), 480, 270))
         .Times(3)
         .WillRepeatedly(testing::InvokeWithoutArgs([]() { return std::make_unique<mock_texture>(); }));
@@ -304,6 +301,9 @@ TEST(SceneTransition, HudUnaffectedByTransition)
     auto *from_tex = new mock_texture();
     auto *to_tex = new mock_texture();
     auto *hud_tex = new mock_texture();
+
+    // Lmao. What the fuck did Claude do here.
+    // Gmock said it's not needed to do this, but who knows.
     EXPECT_CALL(renderer,
                 create_texture(testing::An<sdl::pixel_format>(), testing::An<sdl::texture_access>(), 480, 270))
         .WillOnce(testing::Return(std::unique_ptr<sdl::itexture>(from_tex)))

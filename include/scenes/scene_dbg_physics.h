@@ -15,6 +15,7 @@ class dbg_physics : public ccsakura::iscene
     ~dbg_physics() = default;
     scene_type type() const noexcept override;
     void on_attach(scene_context &ctx) noexcept override;
+    void on_start(scene_context &ctx) noexcept override;
     void on_detach(scene_context &ctx) noexcept override;
     bool on_physical_tick(scene_context &ctx) noexcept override;
     bool on_tick(scene_context &ctx, const double dt) noexcept override;
@@ -24,6 +25,7 @@ class dbg_physics : public ccsakura::iscene
 
     vec2d m_velocity;
     bool m_grounded = false;
+    bool m_transitioning = true;
     double m_box_dir = 1.0;
     uint64_t m_ticks = 0;
 };

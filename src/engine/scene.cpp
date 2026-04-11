@@ -330,7 +330,8 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
         }
 
         renderer.set_render_target(target.get());
-        renderer.set_color(uint8_t{0}, uint8_t{0}, uint8_t{0}, uint8_t{0});
+        const auto bg = (*it)->background_color();
+        renderer.set_color(bg.r, bg.g, bg.b, bg.a);
         renderer.clear();
 
         render_scene(renderer, **it);
@@ -351,46 +352,26 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
             continue;
 
         sdl::itexture &tex = *map_it->second;
-        sdl::frect dst{0.0f, 0.0f, vw, vh};
-        uint8_t alpha = 255;
 
         if (m_transition.active())
         {
-            const double t = m_transition.progress();
-            const bool is_from = (it->get() == m_transition.from_scene);
-            const bool is_to = (it->get() == m_transition.to_scene);
-            if (is_from || is_to)
-                apply_transition_effect(m_transition.config.type, t, is_from, vw, vh, dst, alpha);
+            if (it->get() == m_transition.to_scene)
+                continue; // rendered as part of from's render_transition call
+
+            if (it->get() == m_transition.from_scene)
+            {
+                auto to_it = m_render_targets.find(m_transition.to_scene);
+                if (to_it != m_render_targets.end() && to_it->second)
+                {
+                    render_transition(renderer, tex, *to_it->second, m_transition.config.type, m_transition.progress(),
+                                      vw, vh);
+                    continue;
+                }
+            }
         }
 
-        tex.set_alpha_mod(alpha);
-        sdl::render_texture_options(renderer, tex).dstrect(dst).render();
-        tex.set_alpha_mod(255); // alpha mod is sticky — always restore
-    }
-}
-
-void scene_manager::apply_transition_effect(scene_transition_type type, double t, bool is_from, float vw, float vh,
-                                            sdl::frect &dst, uint8_t &alpha) noexcept
-{
-    switch (type)
-    {
-    case scene_transition_type::fade:
-        alpha = is_from ? static_cast<uint8_t>(255.0 * (1.0 - t)) : static_cast<uint8_t>(255.0 * t);
-        break;
-    case scene_transition_type::slide_left:
-        dst.x = is_from ? -(vw * static_cast<float>(t)) : vw * static_cast<float>(1.0 - t);
-        break;
-    case scene_transition_type::slide_right:
-        dst.x = is_from ? vw * static_cast<float>(t) : -(vw * static_cast<float>(1.0 - t));
-        break;
-    case scene_transition_type::slide_up:
-        dst.y = is_from ? -(vh * static_cast<float>(t)) : vh * static_cast<float>(1.0 - t);
-        break;
-    case scene_transition_type::slide_down:
-        dst.y = is_from ? vh * static_cast<float>(t) : -(vh * static_cast<float>(1.0 - t));
-        break;
-    case scene_transition_type::none:
-        break;
+        tex.set_alpha_mod(255);
+        sdl::render_texture_options(renderer, tex).dstrect({0.0f, 0.0f, vw, vh}).render();
     }
 }
 
@@ -512,6 +493,7 @@ void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &s
                     .srcrect(sdl::frect(f.frame))
                     .dst(sdl::fpoint{render_x + static_cast<float>(f.spr_source_size.x),
                                      render_y + static_cast<float>(f.spr_source_size.y)})
+                    .color_mod(text->color)
                     .render();
 
                 const float gap = std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;

@@ -113,6 +113,18 @@ void texture::set_alpha_mod(const uint8_t alpha) const noexcept
     }
 }
 
+sdl::fcolor texture::get_color_mod() const noexcept
+{
+    float r = 1.0f, g = 1.0f, b = 1.0f;
+    SDL_GetTextureColorModFloat(m_texture.get(), &r, &g, &b);
+    return {r, g, b, 1.0f};
+}
+
+void texture::set_color_mod(float r, float g, float b) const noexcept
+{
+    SDL_SetTextureColorModFloat(m_texture.get(), r, g, b);
+}
+
 // =============================================
 
 render_geometry_options::render_geometry_options(const irenderer &renderer) : renderer(renderer)
@@ -375,9 +387,19 @@ render_texture_options &render_texture_options::flip(const sdl::flip flipmode) n
     return *this;
 }
 
+render_texture_options &render_texture_options::color_mod(const sdl::fcolor c) noexcept
+{
+    m_color_mod = c;
+    return *this;
+}
+
 void render_texture_options::render() const noexcept
 {
+    if (m_color_mod)
+        m_texture.set_color_mod(m_color_mod->r, m_color_mod->g, m_color_mod->b);
     m_renderer.render_texture(*this);
+    if (m_color_mod)
+        m_texture.set_color_mod(1.0f, 1.0f, 1.0f);
 }
 
 } // namespace sdl

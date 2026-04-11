@@ -190,6 +190,22 @@ class itexture
      * \param alpha the alpha mod value (0 = fully transparent, 255 = fully opaque)
      */
     virtual void set_alpha_mod(uint8_t alpha) const noexcept = 0;
+
+    /**
+     * Retrieves the current RGB color modulation of the texture.
+     *
+     * \returns the color mod as an fcolor (alpha is always 1.0)
+     */
+    virtual sdl::fcolor get_color_mod() const noexcept = 0;
+
+    /**
+     * Sets the RGB color modulation applied when this texture is rendered.
+     *
+     * \param r red multiplier (0.0 = none, 1.0 = full)
+     * \param g green multiplier
+     * \param b blue multiplier
+     */
+    virtual void set_color_mod(float r, float g, float b) const noexcept = 0;
 };
 
 /**
@@ -208,6 +224,8 @@ class texture : public itexture
     void set_scale_mode(const scale_mode mode) const noexcept override;
     uint8_t get_alpha_mod() const noexcept override;
     void set_alpha_mod(uint8_t alpha) const noexcept override;
+    sdl::fcolor get_color_mod() const noexcept override;
+    void set_color_mod(float r, float g, float b) const noexcept override;
 
   private:
     std::unique_ptr<SDL_Texture, void (*)(SDL_Texture *)> m_texture;
@@ -433,8 +451,9 @@ struct render_texture_options
     std::optional<sdl::fpoint> m_origin = std::nullopt; ///< the origin to rotate the texture by
     ccsakura::render_origin m_render_origin =
         ccsakura::render_origin::top_left;   ///< the rendering origin to shift the destination by
-    sdl::flip m_flip_mode = sdl::flip::none; ///< whether to flip the texture
-    double m_rotation = 0;                   ///< the rotation angle of the texture
+    sdl::flip m_flip_mode = sdl::flip::none;              ///< whether to flip the texture
+    double m_rotation = 0;                                ///< the rotation angle of the texture
+    std::optional<sdl::fcolor> m_color_mod = std::nullopt; ///< RGB color modulation to apply during render
 
     /**
      * Constructs a simple texture rendering options.
@@ -502,6 +521,16 @@ struct render_texture_options
      * \returns A reference to the current object for method chaining.
      */
     render_texture_options &rotate(const double angle) noexcept;
+
+    /**
+     * Sets the RGB color modulation applied for this render call.
+     *
+     * The texture's color mod is restored to white (1, 1, 1) after rendering.
+     *
+     * \param c the color to modulate with (alpha is ignored)
+     * \returns A reference to the current object for method chaining.
+     */
+    render_texture_options &color_mod(sdl::fcolor c) noexcept;
 
     /**
      * Renders the texture using the provided options and renderer.
