@@ -6,6 +6,7 @@
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
+#include "sdl/sdl_surface.h"
 
 #include <cstddef>
 #include <memory>
@@ -181,17 +182,17 @@ void sprite::render(const sdl::irenderer &renderer, const sdl::fpoint pos, const
                     uint32_t frame_index) const noexcept
 {
     const sprite_frame &f = m_frames[frame_index];
-    sdl::render_texture_options opts(renderer, *m_texture.get());
+    ccsakura::render_texture_options opts(renderer, *m_texture.get());
     opts.srcrect(sdl::frect{static_cast<float>(f.frame.x), static_cast<float>(f.frame.y), static_cast<float>(f.frame.w),
                             static_cast<float>(f.frame.h)})
         .dst(pos)
         .render_origin(origin);
-    renderer.render_texture(opts);
+    opts.render();
 }
 
-sdl::render_texture_options sprite::render_options(const sdl::irenderer &renderer) const noexcept
+ccsakura::render_texture_options sprite::render_options(const sdl::irenderer &renderer) const noexcept
 {
-    return sdl::render_texture_options(renderer, *m_texture);
+    return ccsakura::render_texture_options(renderer, *m_texture);
 }
 
 const sprite_frame &sprite::frame(uint32_t index) const noexcept

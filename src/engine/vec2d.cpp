@@ -134,6 +134,14 @@ std::pair<vec2d, vec2d> closest_points_between_segments(const vec2d p1, const ve
         t = ((c1 - q1).dot(d2)) / e;
         t = std::clamp(t, 0.0, 1.0);
         c2 = q1 + d2 * t;
+
+        // If t was also clamped (e.g. parallel segments with no overlap), recompute s
+        if (t == 0.0 || t == 1.0)
+        {
+            s = ((c2 - p1).dot(d1)) / a;
+            s = std::clamp(s, 0.0, 1.0);
+            c1 = p1 + d1 * s;
+        }
     }
     // If we clamped t, recompute s as projection of c2 onto segment p
     else if (t == 0.0 || t == 1.0)

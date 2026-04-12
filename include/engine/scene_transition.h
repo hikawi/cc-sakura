@@ -11,16 +11,19 @@
 namespace ccsakura
 {
 
+/**
+ * The type of the scene transition to animate.
+ */
 enum class scene_transition_type
 {
-    none,
-    fade,
-    slide_left,
-    slide_right,
-    slide_up,
-    slide_down,
-    split_horizontal,
-    split_vertical,
+    none,             ///< Do nothing, similar to pushing.
+    fade,             ///< Fade into the destination scene.
+    slide_left,       ///< Current scene slides left as the destination scene slides in.
+    slide_right,      ///< Current scene slides right as the destination scene slides in.
+    slide_up,         ///< Current scene slides up as the destination scene slides in.
+    slide_down,       ///< Current scene slides down as the destination scene slides in.
+    split_horizontal, ///< Current scene splits horizontally revealing the destination scene underneath.
+    split_vertical,   ///< Current scene splits vertically revealing the destination scene underneath.
 };
 
 struct scene_transition

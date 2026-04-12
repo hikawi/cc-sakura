@@ -1,5 +1,7 @@
 #include "engine/scene_transition.h"
 
+#include "engine/render_helper.h"
+
 namespace ccsakura
 {
 
@@ -8,7 +10,7 @@ namespace
 
 void draw(const sdl::irenderer &r, sdl::itexture &tex, sdl::frect src, sdl::frect dst) noexcept
 {
-    sdl::render_texture_options(r, tex).srcrect(src).dstrect(dst).render();
+    render_texture_options(r, tex).srcrect(src).dstrect(dst).render();
 }
 
 void apply_fade(const sdl::irenderer &r, sdl::itexture &from, sdl::itexture &to, float t, float vw, float vh) noexcept
@@ -98,7 +100,7 @@ void render_transition(const sdl::irenderer &renderer, sdl::itexture &from_tex, 
         apply_split_vertical(renderer, from_tex, to_tex, tf, vw, vh);
         break;
     case scene_transition_type::none:
-        sdl::render_texture_options(renderer, from_tex).dstrect({0.0f, 0.0f, vw, vh}).render();
+        render_texture_options(renderer, from_tex).dstrect({0.0f, 0.0f, vw, vh}).render();
         break;
     }
 }

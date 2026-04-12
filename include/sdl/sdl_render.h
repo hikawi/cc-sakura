@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "engine/render.h"
 #include "sdl/sdl_pixels.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_surface.h"
@@ -16,7 +15,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <SDL3/SDL_render.h>
 #include <vector>
 
@@ -89,13 +87,6 @@ struct vertex
  * Virtual interface for a renderer.
  */
 class irenderer;
-
-/**
- * Represents options for rendering a piece of texture using a renderer.
- *
- * This provides method chaining options for constructing a render.
- */
-struct render_texture_options;
 
 /**
  * Plain old data object for a geometry rendering call.
@@ -202,11 +193,40 @@ class irenderer
     virtual std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const = 0;
 
     /**
-     * Renders a texture based on the provided options.
+     * Renders a texture. Maps directly to SDL_RenderTexture.
      *
-     * \param options the options for rendering
+     * \param texture the texture to render
+     * \param srcrect source rectangle, or nullptr for the full texture
+     * \param dstrect destination rectangle, or nullptr for the full renderer
      */
-    virtual void render_texture(const render_texture_options &options) const noexcept = 0;
+    virtual void render_texture(sdl::itexture &texture, const sdl::frect *srcrect,
+                                const sdl::frect *dstrect) const noexcept = 0;
+
+    /**
+     * Renders a texture with rotation and flip. Maps directly to SDL_RenderTextureRotated.
+     *
+     * \param texture the texture to render
+     * \param srcrect source rectangle, or nullptr for the full texture
+     * \param dstrect destination rectangle, or nullptr for the full renderer
+     * \param angle rotation angle in degrees, clockwise
+     * \param center rotation center point, or nullptr for dstrect center
+     * \param flip_mode flip mode to apply
+     */
+    virtual void render_texture_rotated(sdl::itexture &texture, const sdl::frect *srcrect, const sdl::frect *dstrect,
+                                        double angle, const sdl::fpoint *center,
+                                        sdl::flip flip_mode) const noexcept = 0;
+
+    /**
+     * Renders a texture with an affine transform. Maps directly to SDL_RenderTextureAffine.
+     *
+     * \param texture the texture to render
+     * \param srcrect source rectangle, or nullptr for the full texture
+     * \param origin top-left corner of the destination, or nullptr for (0,0)
+     * \param right direction and length of the destination's right edge
+     * \param down direction and length of the destination's bottom edge
+     */
+    virtual void render_texture_affine(sdl::itexture &texture, const sdl::frect *srcrect, const sdl::fpoint *origin,
+                                       const sdl::fpoint *right, const sdl::fpoint *down) const noexcept = 0;
 
     /**
      * Renders a rectangle on the screen.
@@ -293,7 +313,12 @@ class renderer : public irenderer
     std::unique_ptr<itexture> create_texture(const pixel_format format, const texture_access access, const int w,
                                              const int h) const override;
     std::unique_ptr<itexture> create_texture(const sdl::isurface &surface) const override;
-    void render_texture(const render_texture_options &options) const noexcept override;
+    void render_texture(sdl::itexture &texture, const sdl::frect *srcrect,
+                        const sdl::frect *dstrect) const noexcept override;
+    void render_texture_rotated(sdl::itexture &texture, const sdl::frect *srcrect, const sdl::frect *dstrect,
+                                double angle, const sdl::fpoint *center, sdl::flip flip_mode) const noexcept override;
+    void render_texture_affine(sdl::itexture &texture, const sdl::frect *srcrect, const sdl::fpoint *origin,
+                               const sdl::fpoint *right, const sdl::fpoint *down) const noexcept override;
     void render_fill_rect(const sdl::frect &rect) const noexcept override;
     void render_geometry(const render_geometry_options &opts) const noexcept override;
     void set_color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) const noexcept override;
@@ -306,102 +331,6 @@ class renderer : public irenderer
   private:
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> m_renderer;
     std::string m_name;
-};
-
-struct render_texture_options
-{
-    const sdl::irenderer &m_renderer;
-    sdl::itexture &m_texture;                           ///< the texture to be rendered
-    std::optional<sdl::frect> m_srcrect = std::nullopt; ///< where to render from the texture
-    std::optional<sdl::frect> m_dstrect = std::nullopt; ///< where to render to on the renderer
-    std::optional<sdl::fpoint> m_origin = std::nullopt; ///< the origin to rotate the texture by
-    ccsakura::render_origin m_render_origin =
-        ccsakura::render_origin::top_left;                 ///< the rendering origin to shift the destination by
-    sdl::flip m_flip_mode = sdl::flip::none;               ///< whether to flip the texture
-    double m_rotation = 0;                                 ///< the rotation angle of the texture
-    std::optional<sdl::fcolor> m_color_mod = std::nullopt; ///< RGB color modulation to apply during render
-
-    /**
-     * Constructs a simple texture rendering options.
-     *
-     * \param renderer the renderer to use
-     * \param texture the texture to render
-     * \param renderer the renderer to use
-     */
-    render_texture_options(const sdl::irenderer &renderer, sdl::itexture &texture);
-
-    /**
-     * Sets the source rectangle for rendering.
-     *
-     * \param rect The source rectangle within the texture.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &srcrect(const sdl::frect rect) noexcept;
-
-    /**
-     * Sets the destination position for rendering.
-     *
-     * The destination rectangle will be sized to the source rectangle.
-     *
-     * \param pos The position of the top-left corner of the destination.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &dst(const sdl::fpoint pos) noexcept;
-
-    /**
-     * Sets the destination rectangle for rendering.
-     *
-     * \param rect The destination rectangle on the renderer.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &dstrect(const sdl::frect rect) noexcept;
-
-    /**
-     * Sets the rotation origin for the texture.
-     *
-     * \param pos The position of the rotation origin.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &origin(const sdl::fpoint pos) noexcept;
-
-    /**
-     * Sets the rotation origin based on a predefined enumeration.
-     *
-     * \param origin The predefined render origin.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &render_origin(const ccsakura::render_origin origin) noexcept;
-
-    /**
-     * Sets the flip mode for the texture.
-     *
-     * \param flipmode The flip mode to apply (e.g., horizontal or vertical).
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &flip(const sdl::flip flipmode) noexcept;
-
-    /**
-     * Sets the rotation angle for the texture.
-     *
-     * \param angle The rotation angle in degrees.
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &rotate(const double angle) noexcept;
-
-    /**
-     * Sets the RGB color modulation applied for this render call.
-     *
-     * The texture's color mod is restored to white (1, 1, 1) after rendering.
-     *
-     * \param c the color to modulate with (alpha is ignored)
-     * \returns A reference to the current object for method chaining.
-     */
-    render_texture_options &color_mod(sdl::fcolor c) noexcept;
-
-    /**
-     * Renders the texture using the provided options and renderer.
-     */
-    void render() const noexcept;
 };
 
 } // namespace sdl

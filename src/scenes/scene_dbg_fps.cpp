@@ -1,7 +1,7 @@
 #include "scenes/scene_dbg_fps.h"
 
-#include "engine/component.h"
-#include "engine/render.h"
+#include "engine/component/text.h"
+#include "engine/component/transform.h"
 
 #include <format>
 

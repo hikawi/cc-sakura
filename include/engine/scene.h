@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "engine/camera.h"
 #include "engine/collision.h"
 #include "engine/entity.h"
 #include "engine/intent.h"

@@ -1,7 +1,8 @@
-#include "engine/component.h"
+#include "engine/component/sprite.h"
 #include "mocks/mock_sprite.h"
-#include "gtest/gtest.h"
+
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace ccsakura;
 using namespace ::testing;

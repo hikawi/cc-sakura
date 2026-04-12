@@ -1,8 +1,9 @@
 #include "engine/scene_manager.h"
 
-#include "engine/collision.h"
-#include "engine/component.h"
-#include "engine/render.h"
+#include "engine/component/collider.h"
+#include "engine/render_helper.h"
+#include "engine/system/collision.h"
+#include "engine/system/render.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_surface.h"
 
@@ -126,11 +127,11 @@ void scene_manager::collision_tick()
 {
     for (auto &scene : m_stack)
     {
-        std::vector<std::pair<uint32_t, const collider *>> collidables;
+        std::vector<std::pair<uint32_t, const components::collider *>> collidables;
         for (const auto &[id, ent] : scene->entities())
         {
-            if (const auto *hb = ent->get_component<components::hitbox>())
-                collidables.push_back({id, &hb->get()});
+            if (const auto *hb = ent->get_component<components::collider>())
+                collidables.push_back({id, hb});
         }
 
         // Narrow phase — broad phase can be inserted here in the future
@@ -143,10 +144,10 @@ void scene_manager::collision_tick()
                 const auto [id_j, coll_j] = collidables[j];
 
                 auto [id_a, id_b] = std::minmax(id_i, id_j);
-                const collider *coll_a = (id_a == id_i) ? coll_i : coll_j;
-                const collider *coll_b = (id_a == id_i) ? coll_j : coll_i;
+                const components::collider *coll_a = (id_a == id_i) ? coll_i : coll_j;
+                const components::collider *coll_b = (id_a == id_i) ? coll_j : coll_i;
 
-                const auto col = coll_a->collides(*coll_b);
+                const auto col = system::check_collisions(*coll_a, *coll_b);
                 if (col.is_colliding)
                 {
                     scene->on_collide(id_a, id_b, col);
@@ -190,7 +191,7 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
 
         for (const auto &[id, entity_ptr] : (*it)->entities())
             if (entity_ptr)
-                render_entity(renderer, *entity_ptr, (*it)->camera());
+                system::render_entity(renderer, *entity_ptr, (*it)->camera());
     }
 
     // Pass 2: composite all scene textures onto the window in the same order.
@@ -227,7 +228,7 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
         }
 
         tex.set_alpha_mod(255);
-        sdl::render_texture_options(renderer, tex).dstrect({0.0f, 0.0f, vw, vh}).render();
+        render_texture_options(renderer, tex).dstrect({0.0f, 0.0f, vw, vh}).render();
     }
 }
 
