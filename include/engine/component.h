@@ -154,7 +154,7 @@ struct hitbox : public component
  */
 struct text : public component
 {
-    sdl::fcolor color{1.0f, 1.0f, 1.0f, 1.0f};     ///< Tint color applied to glyphs.
+    sdl::fcolor color{1.0f, 1.0f, 1.0f, 1.0f};      ///< Tint color applied to glyphs.
     render_origin origin = render_origin::top_left; ///< Anchor point for the entire text block.
     std::string value{""};                          ///< Text content
 

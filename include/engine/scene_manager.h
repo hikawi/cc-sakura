@@ -152,8 +152,6 @@ class scene_manager : public iscene_manager
 
     std::atomic<uint64_t> m_listener_id_counter{0};
 
-    void render_scene(const sdl::irenderer &renderer, const iscene &scene, const camera2d &cam) const noexcept;
-
     struct transition_state
     {
         iscene *from_scene = nullptr; ///< raw observer ptr — still owned by m_stack

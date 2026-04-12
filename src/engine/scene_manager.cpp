@@ -3,12 +3,11 @@
 #include "engine/collision.h"
 #include "engine/component.h"
 #include "engine/render.h"
-#include "engine/sprite.h"
 #include "sdl/sdl_log.h"
 #include "sdl/sdl_surface.h"
 
 #include <algorithm>
-#include <cctype>
+#include <iterator>
 
 namespace ccsakura
 {
@@ -143,15 +142,15 @@ void scene_manager::collision_tick()
                 const auto [id_i, coll_i] = collidables[i];
                 const auto [id_j, coll_j] = collidables[j];
 
-                const bool swapped = id_i > id_j;
-                const uint32_t id_a = swapped ? id_j : id_i;
-                const uint32_t id_b = swapped ? id_i : id_j;
-                const collider *coll_a = swapped ? coll_j : coll_i;
-                const collider *coll_b = swapped ? coll_i : coll_j;
+                auto [id_a, id_b] = std::minmax(id_i, id_j);
+                const collider *coll_a = (id_a == id_i) ? coll_i : coll_j;
+                const collider *coll_b = (id_a == id_i) ? coll_j : coll_i;
 
                 const auto col = coll_a->collides(*coll_b);
                 if (col.is_colliding)
+                {
                     scene->on_collide(id_a, id_b, col);
+                }
             }
         }
     }
@@ -189,7 +188,9 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
         renderer.set_color(bg.r, bg.g, bg.b, bg.a);
         renderer.clear();
 
-        render_scene(renderer, **it, (*it)->camera());
+        for (const auto &[id, entity_ptr] : (*it)->entities())
+            if (entity_ptr)
+                render_entity(renderer, *entity_ptr, (*it)->camera());
     }
 
     // Pass 2: composite all scene textures onto the window in the same order.
@@ -230,135 +231,6 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
     }
 }
 
-void scene_manager::render_scene(const sdl::irenderer &renderer, const iscene &scene,
-                                 const camera2d &cam) const noexcept
-{
-    for (const auto &[id, entity_ptr] : scene.entities())
-    {
-        if (!entity_ptr)
-        {
-            continue;
-        }
-
-        const auto sprite = entity_ptr->get_component<components::sprite>();
-        const auto hitbox = entity_ptr->get_component<components::hitbox>();
-        const auto text = entity_ptr->get_component<components::text>();
-
-        if (!sprite && !hitbox && !text)
-        {
-            continue;
-        }
-
-        const auto transform = entity_ptr->get_component<components::transform>();
-        sdl::fpoint screen_pos{0.0f, 0.0f};
-        if (transform)
-        {
-            if (transform->fixed)
-                screen_pos = {static_cast<float>(transform->position.x), static_cast<float>(transform->position.y)};
-            else
-                screen_pos = world_to_screen(transform->position, cam);
-        }
-        else
-        {
-            if (sprite)
-            {
-                sdl::log_warn("Entity {} has no transform but has sprite component", id);
-            }
-            if (hitbox)
-            {
-                sdl::log_warn("Entity {} has no transform but has hitbox component", id);
-            }
-            if (text)
-            {
-                sdl::log_warn("Entity {} has no transform but has text component", id);
-            }
-        }
-
-        if (sprite && sprite->spr)
-        {
-            const auto frame = sprite->spr->frame(sprite->frame_index);
-            sprite->spr->render_options(renderer)
-                .srcrect(sdl::frect(frame.frame))
-                .dst(screen_pos)
-                .rotate(transform ? transform->rotation : 0.0)
-                .render_origin(sprite->origin)
-                .render();
-        }
-
-        if (hitbox)
-        {
-            hitbox->get().render(renderer, cam);
-        }
-
-        if (text && !text->value.empty())
-        {
-            auto &font = sprite::named("font");
-
-            constexpr float SPACE_ADVANCE = 4.0f;
-            constexpr float PUNCT_GAP = 2.0f;
-            constexpr float CHAR_GAP = 1.0f;
-
-            // First pass: measure total block size for origin shifting.
-            float width = 0.0f, height = 0.0f;
-            const size_t len = text->value.size();
-            for (size_t i = 0; i < len; i++)
-            {
-                const char c = text->value[i];
-                if (c < 32 || c > 126)
-                {
-                    sdl::log_warn("Undisplayable char {} in entity {}", c, entity_ptr->id());
-                    continue;
-                }
-
-                if (c == ' ')
-                {
-                    if (i + 1 < len)
-                        width += SPACE_ADVANCE;
-                    continue;
-                }
-
-                const auto &frame = font.frame(static_cast<uint32_t>(c - 32));
-                height = std::max(height, static_cast<float>(frame.frame.h));
-                width += static_cast<float>(frame.frame.w);
-                if (i + 1 < len)
-                    width += std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
-            }
-
-            sdl::frect block{0.0f, 0.0f, width, height};
-            shift_origin(block, text->origin);
-
-            float render_x = screen_pos.x + block.x;
-            float render_y = screen_pos.y + block.y;
-
-            // Second pass: render each glyph.
-            for (std::size_t i = 0; i < len; ++i)
-            {
-                const char c = text->value[i];
-                if (c < 32 || c > 126)
-                    continue;
-
-                if (c == ' ')
-                {
-                    render_x += SPACE_ADVANCE;
-                    continue;
-                }
-
-                const auto &f = font.frame(static_cast<uint32_t>(c - 32));
-
-                font.render_options(renderer)
-                    .srcrect(sdl::frect(f.frame))
-                    .dst(sdl::fpoint{render_x + static_cast<float>(f.spr_source_size.x),
-                                     render_y + static_cast<float>(f.spr_source_size.y)})
-                    .color_mod(text->color)
-                    .render();
-
-                const float gap = std::ispunct(static_cast<unsigned char>(c)) ? PUNCT_GAP : CHAR_GAP;
-                render_x += static_cast<float>(f.frame.w) + gap;
-            }
-        }
-    }
-}
-
 void scene_manager::set_background_color(sdl::fcolor color) noexcept
 {
     m_background_color = color;
@@ -367,6 +239,9 @@ void scene_manager::set_background_color(sdl::fcolor color) noexcept
 void scene_manager::process_requests()
 {
     std::queue<scene_request> requests_to_process;
+
+    // Acquire the rest of the requests.
+    // We only lock the mutex until we swap, so signals pushed during processing are not ignored.
     {
         std::lock_guard<std::mutex> lock(m_requests_mutex);
         if (m_requests.empty())

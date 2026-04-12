@@ -9,8 +9,21 @@
 #include "engine/vec2d.h"
 #include "sdl/sdl_rect.h"
 
+namespace sdl
+{
+class irenderer;
+} // namespace sdl
+
 namespace ccsakura
 {
+
+class entity;
+
+namespace components
+{
+struct sprite;
+struct text;
+} // namespace components
 
 /**
  * Specifies the location to start rendering.
@@ -67,5 +80,38 @@ sdl::fpoint world_to_screen(const vec2d &world, const camera2d &cam) noexcept;
  * \returns the screen-space position
  */
 sdl::frect world_to_screen(const sdl::frect &world, const camera2d &cam) noexcept;
+
+void render_hitbox();
+
+/**
+ * Renders a sprite component at the given screen position.
+ *
+ * \param renderer the renderer to use
+ * \param spr the sprite component
+ * \param screen_pos screen-space position
+ * \param rotation rotation in radians
+ */
+void render_sprite(const sdl::irenderer &renderer, const components::sprite &spr,
+                   const sdl::fpoint &screen_pos, double rotation) noexcept;
+
+/**
+ * Renders a text component at the given screen position.
+ * Uses the "font" sprite sheet; ASCII 32–126 are supported.
+ *
+ * \param renderer the renderer to use
+ * \param txt the text component
+ * \param screen_pos screen-space position
+ */
+void render_text(const sdl::irenderer &renderer, const components::text &txt,
+                 const sdl::fpoint &screen_pos) noexcept;
+
+/**
+ * Renders all renderable components of an entity (sprite, hitbox, text).
+ *
+ * \param renderer the renderer to use
+ * \param ent the entity to render
+ * \param cam the active camera
+ */
+void render_entity(const sdl::irenderer &renderer, const entity &ent, const camera2d &cam) noexcept;
 
 } // namespace ccsakura
