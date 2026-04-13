@@ -146,6 +146,13 @@ class iscene
     virtual scene_type type() const noexcept = 0;
 
     /**
+     * \brief Returns the unique handle assigned by the scene manager on push.
+     *
+     * Returns invalid_scene_handle until the push request is processed.
+     */
+    scene_handle handle() const noexcept { return m_handle; }
+
+    /**
      * \brief Called when the scene is added to the scene manager.
      * \param ctx the scene context for queuing further requests
      */
@@ -483,6 +490,8 @@ class iscene
     void unbind_signals(scene_context &ctx) noexcept;
 
   private:
+    friend class scene_manager;
+
     void on_intent_key(signals::key &e) noexcept;
 
     std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
@@ -490,6 +499,7 @@ class iscene
     uint64_t m_intent_sub_id{0};
     std::vector<uint64_t> m_signal_sub_ids;
     std::map<std::pair<uint32_t, uint32_t>, collision_hook_fn> m_collision_hooks;
+    scene_handle m_handle{invalid_scene_handle};
 
   protected:
     std::unordered_map<uint32_t, std::unique_ptr<entity>> m_entities; ///< Entity registry

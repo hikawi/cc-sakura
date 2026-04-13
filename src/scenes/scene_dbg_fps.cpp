@@ -20,7 +20,7 @@ dbg_fps::dbg_fps()
 
 scene_type dbg_fps::type() const noexcept
 {
-    return scene_type::dbg_fps;
+    return scene_type::debug;
 }
 
 void dbg_fps::on_attach(scene_context &) noexcept

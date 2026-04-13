@@ -33,16 +33,16 @@ class scene_context
     /**
      * \brief Queues a request to add a new scene.
      * \param scene The scene to add.
-     * \returns true if it succeeded, false otherwise.
+     * \returns the handle assigned to the scene.
      */
-    virtual bool push_back(std::unique_ptr<iscene> scene) = 0;
+    virtual scene_handle push_back(std::unique_ptr<iscene> scene) = 0;
 
     /**
      * \brief Queues a request to push a scene to the front of the stack.
      * \param scene The scene to add.
-     * \returns true if it succeeded, false otherwise.
+     * \returns the handle assigned to the scene.
      */
-    virtual bool push_front(std::unique_ptr<iscene> scene) = 0;
+    virtual scene_handle push_front(std::unique_ptr<iscene> scene) = 0;
 
     /**
      * \brief Queues a request to push a scene before the first scene found of that type.
@@ -50,10 +50,10 @@ class scene_context
      * If there is no scene with that type, acts the same as `push_front`.
      *
      * \param scene the scene to add.
-     * \param type the type of scene to push before.
-     * \returns true if it succeeded, false otherwise.
+     * \param type the category of scene to push before.
+     * \returns the handle assigned to the scene.
      */
-    virtual bool push_before(std::unique_ptr<iscene> scene, const scene_type type) = 0;
+    virtual scene_handle push_before(std::unique_ptr<iscene> scene, const scene_type type) = 0;
 
     /**
      * \brief Queues a request to push a scene right after the last scene found of that type.
@@ -61,56 +61,62 @@ class scene_context
      * If there is no scene with that type, acts the same as `push_back`.
      *
      * \param scene the scene to add.
-     * \param type the type of scene to push before.
-     * \returns true if it succeeded, false otherwise.
+     * \param type the category of scene to push after.
+     * \returns the handle assigned to the scene.
      */
-    virtual bool push_after(std::unique_ptr<iscene> scene, const scene_type type) = 0;
+    virtual scene_handle push_after(std::unique_ptr<iscene> scene, const scene_type type) = 0;
 
     /**
-     * \brief Pops the first scene of the stack.
+     * \brief Queues a request to remove the front scene from the stack.
      *
-     * If the stack is empty, returns nullptr.
-     *
-     * \returns the scene ownership, null if it is empty.
+     * If the stack is empty at processing time, the request is ignored.
      */
-    virtual std::unique_ptr<iscene> pop_front() = 0;
+    virtual void pop_front() = 0;
 
     /**
-     * \brief Pops the last scene of the stack.
+     * \brief Queues a request to remove the last scene from the stack.
      *
-     * If the stack is empty, returns nullptr.
-     *
-     * \returns the scene ownership, null if it is empty.
+     * If the stack is empty at processing time, the request is ignored.
      */
-    virtual std::unique_ptr<iscene> pop_last() = 0;
+    virtual void pop_last() = 0;
 
     /**
-     * \brief Pops the first scene of the stack with type.
+     * \brief Queues a request to remove the first scene of the given category.
      *
-     * If the stack is empty, returns nullptr.
+     * If no scene with \p type is found at processing time, the request is ignored.
      *
-     * \param type the type of scene to pop
-     * \returns the scene ownership, null if it is not found.
+     * \param type the category of scene to remove.
      */
-    virtual std::unique_ptr<iscene> pop_of_type(const scene_type type) = 0;
+    virtual void pop_of_type(const scene_type type) = 0;
 
     /**
      * \brief Queues a request to replace a scene in-place with a transition effect.
      *
-     * The incoming scene is inserted at the same stack depth as the scene of
-     * \p from_type. Other scenes (e.g. HUD) remain untouched at their positions.
-     * The outgoing scene is removed once the transition completes.
+     * The incoming scene is inserted at the same stack depth as \p from. Other
+     * scenes (e.g. HUD) remain untouched at their positions. The outgoing scene
+     * is removed once the transition completes.
      *
-     * If no scene with \p from_type is found, the request is ignored.
-     * If a transition is already active, the request is ignored.
+     * If no scene with \p from is found in the stack, the request is ignored.
+     * If the scene identified by \p from is already part of an active transition,
+     * the request is ignored.
      *
-     * \param to_scene  The incoming scene.
-     * \param from_type The scene_type of the outgoing scene to replace.
+     * \param to_scene   The incoming scene.
+     * \param from       Handle of the outgoing scene to replace.
      * \param transition The transition effect and duration.
-     * \returns true if queued successfully, false otherwise.
+     * \returns the handle assigned to to_scene, or invalid_scene_handle if ignored.
      */
-    virtual bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type,
-                                  scene_transition transition) = 0;
+    virtual scene_handle start_transition(std::unique_ptr<iscene> to_scene, scene_handle from,
+                                          scene_transition transition) = 0;
+
+    /**
+     * \brief Queues a request to remove a specific scene instance by handle.
+     *
+     * Calls on_pause then on_detach on the scene. If no scene with \p handle
+     * is found in the stack, the request is ignored.
+     *
+     * \param handle the handle of the scene to remove.
+     */
+    virtual void pop(scene_handle handle) = 0;
 
     /**
      * Emits a signal.

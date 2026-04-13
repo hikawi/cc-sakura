@@ -7,8 +7,21 @@ dotenv:
   - .env
 
 tasks:
+  clean:
+    desc: Clean up
+    cmds:
+      - rm -rf build
+
   build:
     desc: Build the project
+    cmds:
+      - cmake -S . -B "build" -G "$GENERATOR" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" -DCMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+      - cmake --build "build" --config Debug -j
+
+  build:gcc:
+    desc: Build with GCC/G++
+    env:
+      CMAKE_CXX_COMPILER: g++
     cmds:
       - cmake -S . -B "build" -G "$GENERATOR" -DCMAKE_TOOLCHAIN_FILE="$VCPKG_TOOLCHAIN_FILE" -DCMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
       - cmake --build "build" --config Debug -j

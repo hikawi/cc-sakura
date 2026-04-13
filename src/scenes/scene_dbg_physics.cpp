@@ -66,7 +66,7 @@ dbg_physics::dbg_physics()
 
 scene_type dbg_physics::type() const noexcept
 {
-    return scene_type::dbg_physics;
+    return scene_type::debug;
 }
 
 void dbg_physics::on_attach(scene_context &) noexcept

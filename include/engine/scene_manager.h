@@ -17,6 +17,7 @@
 #include <set>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 namespace ccsakura
 {
@@ -97,6 +98,7 @@ enum class scene_request_type
     pop_front,
     pop_last,
     pop_of_type,
+    pop,
     emit_signal,
     start_transition,
 };
@@ -107,10 +109,25 @@ enum class scene_request_type
 struct scene_request
 {
     scene_request_type type;
-    std::unique_ptr<iscene> scene = nullptr;
-    scene_type target_type = scene_type::dbg_none;
+    std::unique_ptr<iscene> scene   = nullptr;
+    scene_type target_type          = scene_type::none;
     std::unique_ptr<isignal> signal = nullptr;
     scene_transition transition{};
+    scene_handle assigned_handle    = invalid_scene_handle; ///< handle given to the new scene being pushed
+    scene_handle target_handle      = invalid_scene_handle; ///< handle of the existing scene to operate on
+};
+
+struct transition_state
+{
+    iscene *from_scene = nullptr; ///< raw observer ptr — still owned by m_stack
+    iscene *to_scene = nullptr;   ///< raw observer ptr — still owned by m_stack
+    double elapsed = 0.0;
+    scene_transition transition{};
+
+    double progress() const noexcept
+    {
+        return transition.duration <= 0.0 ? 1.0 : std::clamp(elapsed / transition.duration, 0.0, 1.0);
+    }
 };
 
 /**
@@ -119,14 +136,16 @@ struct scene_request
 class scene_manager : public iscene_manager
 {
   public:
-    bool push_back(std::unique_ptr<iscene> scene) override;
-    bool push_front(std::unique_ptr<iscene> scene) override;
-    bool push_before(std::unique_ptr<iscene> scene, const scene_type type) override;
-    bool push_after(std::unique_ptr<iscene> scene, const scene_type type) override;
-    std::unique_ptr<iscene> pop_front() override;
-    std::unique_ptr<iscene> pop_last() override;
-    std::unique_ptr<iscene> pop_of_type(const scene_type type) override;
-    bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type, scene_transition transition) override;
+    scene_handle push_back(std::unique_ptr<iscene> scene) override;
+    scene_handle push_front(std::unique_ptr<iscene> scene) override;
+    scene_handle push_before(std::unique_ptr<iscene> scene, const scene_type type) override;
+    scene_handle push_after(std::unique_ptr<iscene> scene, const scene_type type) override;
+    void pop_front() override;
+    void pop_last() override;
+    void pop_of_type(const scene_type type) override;
+    scene_handle start_transition(std::unique_ptr<iscene> to_scene, scene_handle from,
+                                  scene_transition transition) override;
+    void pop(scene_handle handle) override;
     bool emit_signal(std::unique_ptr<isignal> signal) override;
     bool unsubscribe(uint64_t id) override;
 
@@ -151,27 +170,22 @@ class scene_manager : public iscene_manager
     std::unordered_map<std::type_index, std::set<signal_listener>> m_listeners;
 
     std::atomic<uint64_t> m_listener_id_counter{0};
-
-    struct transition_state
-    {
-        iscene *from_scene = nullptr; ///< raw observer ptr — still owned by m_stack
-        iscene *to_scene = nullptr;   ///< raw observer ptr — still owned by m_stack
-        double elapsed = 0.0;
-        scene_transition config{};
-
-        bool active() const noexcept
-        {
-            return config.type != scene_transition_type::none && from_scene != nullptr;
-        }
-        double progress() const noexcept
-        {
-            return config.duration <= 0.0 ? 1.0 : std::clamp(elapsed / config.duration, 0.0, 1.0);
-        }
-    };
+    std::atomic<scene_handle> m_scene_handle_counter{0};
 
     sdl::fcolor m_background_color{1.0f, 1.0f, 1.0f, 1.0f};
     mutable std::unordered_map<iscene *, std::unique_ptr<sdl::itexture>> m_render_targets;
-    transition_state m_transition{};
+    std::vector<transition_state> m_transitions;
+
+    void process_push_back(scene_request &req);
+    void process_push_front(scene_request &req);
+    void process_push_before(scene_request &req);
+    void process_push_after(scene_request &req);
+    void process_pop_front();
+    void process_pop_last();
+    void process_pop_of_type(scene_request &req);
+    void process_pop(scene_request &req);
+    void process_emit_signal(scene_request &req);
+    void process_start_transition(scene_request &req);
 };
 
 } // namespace ccsakura

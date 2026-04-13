@@ -55,7 +55,7 @@ dbg_sprite::dbg_sprite() : m_score(0)
 
 scene_type dbg_sprite::type() const noexcept
 {
-    return scene_type::dbg_sprite;
+    return scene_type::debug;
 }
 
 void dbg_sprite::on_attach(scene_context &ctx) noexcept

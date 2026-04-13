@@ -5,6 +5,8 @@
 #include "sdl/sdl_log.h"
 #include "utils.h"
 
+#include <algorithm>
+#include <array>
 #include <variant>
 
 namespace ccsakura::system

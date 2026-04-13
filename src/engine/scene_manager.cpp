@@ -9,98 +9,114 @@
 
 #include <algorithm>
 #include <iterator>
+#include <unordered_set>
+#include <utility>
 
 namespace ccsakura
 {
 
-bool scene_manager::push_back(std::unique_ptr<iscene> scene)
+scene_handle scene_manager::push_back(std::unique_ptr<iscene> scene)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::push_back, std::move(scene), scene_type::dbg_none});
-    return true;
+    scene_handle h = ++m_scene_handle_counter;
+    m_requests.push({scene_request_type::push_back, std::move(scene), scene_type::none, nullptr, {}, h});
+    return h;
 }
 
-bool scene_manager::push_front(std::unique_ptr<iscene> scene)
+scene_handle scene_manager::push_front(std::unique_ptr<iscene> scene)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::push_front, std::move(scene), scene_type::dbg_none});
-    return true;
+    scene_handle h = ++m_scene_handle_counter;
+    m_requests.push({scene_request_type::push_front, std::move(scene), scene_type::none, nullptr, {}, h});
+    return h;
 }
 
-bool scene_manager::push_before(std::unique_ptr<iscene> scene, const scene_type type)
+scene_handle scene_manager::push_before(std::unique_ptr<iscene> scene, const scene_type type)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::push_before, std::move(scene), type});
-    return true;
+    scene_handle h = ++m_scene_handle_counter;
+    m_requests.push({scene_request_type::push_before, std::move(scene), type, nullptr, {}, h});
+    return h;
 }
 
-bool scene_manager::push_after(std::unique_ptr<iscene> scene, const scene_type type)
+scene_handle scene_manager::push_after(std::unique_ptr<iscene> scene, const scene_type type)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::push_after, std::move(scene), type});
-    return true;
+    scene_handle h = ++m_scene_handle_counter;
+    m_requests.push({scene_request_type::push_after, std::move(scene), type, nullptr, {}, h});
+    return h;
 }
 
-std::unique_ptr<iscene> scene_manager::pop_front()
+void scene_manager::pop_front()
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::pop_front, nullptr, scene_type::dbg_none});
-    return nullptr;
+    m_requests.push({scene_request_type::pop_front});
 }
 
-std::unique_ptr<iscene> scene_manager::pop_last()
+void scene_manager::pop_last()
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::pop_last, nullptr, scene_type::dbg_none});
-    return nullptr;
+    m_requests.push({scene_request_type::pop_last});
 }
 
-std::unique_ptr<iscene> scene_manager::pop_of_type(const scene_type type)
+void scene_manager::pop_of_type(const scene_type type)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
     m_requests.push({scene_request_type::pop_of_type, nullptr, type});
-    return nullptr;
 }
 
-bool scene_manager::start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type,
-                                     scene_transition transition)
+void scene_manager::pop(scene_handle handle)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::start_transition, std::move(to_scene), from_type, nullptr, transition});
-    return true;
+    m_requests.push({scene_request_type::pop, nullptr, scene_type::none, nullptr, {}, invalid_scene_handle, handle});
+}
+
+scene_handle scene_manager::start_transition(std::unique_ptr<iscene> to_scene, scene_handle from,
+                                             scene_transition transition)
+{
+    std::lock_guard<std::mutex> lock(m_requests_mutex);
+    scene_handle to_handle = ++m_scene_handle_counter;
+    m_requests.push({scene_request_type::start_transition, std::move(to_scene), scene_type::none, nullptr, transition,
+                     to_handle, from});
+    return to_handle;
 }
 
 bool scene_manager::emit_signal(std::unique_ptr<isignal> signal)
 {
     std::lock_guard<std::mutex> lock(m_requests_mutex);
-    m_requests.push({scene_request_type::emit_signal, nullptr, scene_type::dbg_none, std::move(signal)});
+    m_requests.push({scene_request_type::emit_signal, nullptr, scene_type::none, std::move(signal)});
     return true;
 }
 
 void scene_manager::tick(const double dt)
 {
-    if (m_transition.active())
+    for (auto &t : m_transitions)
+        t.elapsed += dt;
+
+    auto it = m_transitions.begin();
+    while (it != m_transitions.end())
     {
-        m_transition.elapsed += dt;
-        if (m_transition.elapsed >= m_transition.config.duration)
+        if (it->elapsed < it->transition.duration)
         {
-            iscene *from = m_transition.from_scene;
-            iscene *to = m_transition.to_scene;
-            m_transition = {}; // clear before on_detach to prevent re-entry
-
-            auto it = std::find_if(m_stack.begin(), m_stack.end(), [from](const auto &s) { return s.get() == from; });
-            if (it != m_stack.end())
-            {
-                auto scene = std::move(*it);
-                m_stack.erase(it);
-                m_render_targets.erase(scene.get());
-                scene->on_detach(*this);
-            }
-
-            auto to_it = std::find_if(m_stack.begin(), m_stack.end(), [to](const auto &s) { return s.get() == to; });
-            if (to_it != m_stack.end())
-                to->on_start(*this);
+            ++it;
+            continue;
         }
+        iscene *from = it->from_scene;
+        iscene *to = it->to_scene;
+        it = m_transitions.erase(it); // erase before lifecycle calls to prevent re-entry
+
+        auto from_it = std::find_if(m_stack.begin(), m_stack.end(), [from](const auto &s) { return s.get() == from; });
+        if (from_it != m_stack.end())
+        {
+            auto scene = std::move(*from_it);
+            m_stack.erase(from_it);
+            m_render_targets.erase(scene.get());
+            scene->on_detach(*this);
+        }
+
+        auto to_it = std::find_if(m_stack.begin(), m_stack.end(), [to](const auto &s) { return s.get() == to; });
+        if (to_it != m_stack.end())
+            to->on_start(*this);
     }
 
     for (auto &scene : m_stack)
@@ -128,6 +144,7 @@ void scene_manager::collision_tick()
     for (auto &scene : m_stack)
     {
         std::vector<std::pair<uint32_t, const components::collider *>> collidables;
+
         for (const auto &[id, ent] : scene->entities())
         {
             if (const auto *hb = ent->get_component<components::collider>())
@@ -202,6 +219,10 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
     constexpr float vw = static_cast<float>(APPLICATION_LOGICAL_WIDTH);
     constexpr float vh = static_cast<float>(APPLICATION_LOGICAL_HEIGHT);
 
+    std::unordered_set<iscene *> transition_targets;
+    for (const auto &t : m_transitions)
+        transition_targets.insert(t.to_scene);
+
     for (auto it = m_stack.rbegin(); it != m_stack.rend(); ++it)
     {
         auto map_it = m_render_targets.find(it->get());
@@ -210,20 +231,19 @@ void scene_manager::render(const sdl::irenderer &renderer) const noexcept
 
         sdl::itexture &tex = *map_it->second;
 
-        if (m_transition.active())
-        {
-            if (it->get() == m_transition.to_scene)
-                continue; // rendered as part of from's render_transition call
+        if (transition_targets.count(it->get()))
+            continue; // rendered as part of from_scene's render_transition call
 
-            if (it->get() == m_transition.from_scene)
+        auto trans_it = std::find_if(m_transitions.begin(), m_transitions.end(),
+                                     [&](const auto &t) { return t.from_scene == it->get(); });
+        if (trans_it != m_transitions.end())
+        {
+            auto to_tex_it = m_render_targets.find(trans_it->to_scene);
+            if (to_tex_it != m_render_targets.end() && to_tex_it->second)
             {
-                auto to_it = m_render_targets.find(m_transition.to_scene);
-                if (to_it != m_render_targets.end() && to_it->second)
-                {
-                    render_transition(renderer, tex, *to_it->second, m_transition.config.type, m_transition.progress(),
-                                      vw, vh);
-                    continue;
-                }
+                render_transition(renderer, tex, *to_tex_it->second, trans_it->transition.type, trans_it->progress(),
+                                  vw, vh);
+                continue;
             }
         }
 
@@ -237,6 +257,136 @@ void scene_manager::set_background_color(sdl::fcolor color) noexcept
     m_background_color = color;
 }
 
+void scene_manager::process_push_back(scene_request &req)
+{
+    if (!req.scene)
+        return;
+    req.scene->m_handle = req.assigned_handle;
+    req.scene->on_attach(*this);
+    req.scene->on_start(*this);
+    m_stack.push_back(std::move(req.scene));
+}
+
+void scene_manager::process_push_front(scene_request &req)
+{
+    if (!req.scene)
+        return;
+    req.scene->m_handle = req.assigned_handle;
+    req.scene->on_attach(*this);
+    req.scene->on_start(*this);
+    m_stack.push_front(std::move(req.scene));
+}
+
+void scene_manager::process_push_before(scene_request &req)
+{
+    if (!req.scene)
+        return;
+    auto it = std::find_if(m_stack.begin(), m_stack.end(), [&](const auto &s) { return s->type() == req.target_type; });
+    req.scene->m_handle = req.assigned_handle;
+    req.scene->on_attach(*this);
+    req.scene->on_start(*this);
+    if (it != m_stack.end())
+        m_stack.insert(it, std::move(req.scene));
+    else
+        m_stack.push_front(std::move(req.scene));
+}
+
+void scene_manager::process_push_after(scene_request &req)
+{
+    if (!req.scene)
+        return;
+    auto it =
+        std::find_if(m_stack.rbegin(), m_stack.rend(), [&](const auto &s) { return s->type() == req.target_type; });
+    req.scene->m_handle = req.assigned_handle;
+    req.scene->on_attach(*this);
+    req.scene->on_start(*this);
+    if (it != m_stack.rend())
+        m_stack.insert(it.base(), std::move(req.scene));
+    else
+        m_stack.push_back(std::move(req.scene));
+}
+
+void scene_manager::process_pop_front()
+{
+    if (m_stack.empty())
+        return;
+    auto scene = std::move(m_stack.front());
+    m_stack.pop_front();
+    m_render_targets.erase(scene.get());
+    scene->on_pause(*this);
+    scene->on_detach(*this);
+}
+
+void scene_manager::process_pop_last()
+{
+    if (m_stack.empty())
+        return;
+    auto scene = std::move(m_stack.back());
+    m_stack.pop_back();
+    m_render_targets.erase(scene.get());
+    scene->on_pause(*this);
+    scene->on_detach(*this);
+}
+
+void scene_manager::process_pop_of_type(scene_request &req)
+{
+    auto it = std::find_if(m_stack.begin(), m_stack.end(), [&](const auto &s) { return s->type() == req.target_type; });
+    if (it == m_stack.end())
+    {
+        return;
+    }
+
+    auto scene = std::move(*it);
+    m_stack.erase(it);
+    m_render_targets.erase(scene.get());
+    scene->on_pause(*this);
+    scene->on_detach(*this);
+}
+
+void scene_manager::process_emit_signal(scene_request &req)
+{
+    if (req.signal)
+    {
+        m_outgoing_signals.emplace_back(std::move(req.signal));
+    }
+}
+
+void scene_manager::process_pop(scene_request &req)
+{
+    auto it =
+        std::find_if(m_stack.begin(), m_stack.end(), [&](const auto &s) { return s->handle() == req.target_handle; });
+    if (it == m_stack.end())
+        return;
+    auto scene = std::move(*it);
+    m_stack.erase(it);
+    m_render_targets.erase(scene.get());
+    scene->on_pause(*this);
+    scene->on_detach(*this);
+}
+
+void scene_manager::process_start_transition(scene_request &req)
+{
+    if (!req.scene)
+        return;
+    auto it =
+        std::find_if(m_stack.begin(), m_stack.end(), [&](const auto &s) { return s->handle() == req.target_handle; });
+    if (it == m_stack.end())
+        return;
+    iscene *from = it->get();
+    bool already_transitioning = std::any_of(m_transitions.begin(), m_transitions.end(), [from](const auto &t)
+                                             { return t.from_scene == from || t.to_scene == from; });
+    if (already_transitioning)
+    {
+        sdl::log_error("Scene is one of the scenes already transitioning, ignoring...");
+        return;
+    }
+    from->on_pause(*this);
+    req.scene->m_handle = req.assigned_handle;
+    req.scene->on_attach(*this);
+    auto to_it = m_stack.insert(it, std::move(req.scene));
+    m_transitions.push_back({from, to_it->get(), 0.0, req.transition});
+}
+
 void scene_manager::process_requests()
 {
     std::queue<scene_request> requests_to_process;
@@ -246,9 +396,7 @@ void scene_manager::process_requests()
     {
         std::lock_guard<std::mutex> lock(m_requests_mutex);
         if (m_requests.empty())
-        {
             return;
-        }
         requests_to_process.swap(m_requests);
     }
 
@@ -260,117 +408,35 @@ void scene_manager::process_requests()
         switch (req.type)
         {
         case scene_request_type::push_back:
-            if (req.scene)
-            {
-                req.scene->on_attach(*this);
-                req.scene->on_start(*this);
-                m_stack.push_back(std::move(req.scene));
-            }
+            process_push_back(req);
             break;
         case scene_request_type::push_front:
-            if (req.scene)
-            {
-                req.scene->on_attach(*this);
-                req.scene->on_start(*this);
-                m_stack.push_front(std::move(req.scene));
-            }
+            process_push_front(req);
             break;
         case scene_request_type::push_before:
-        {
-            if (req.scene)
-            {
-                auto it = std::find_if(m_stack.begin(), m_stack.end(),
-                                       [&](const auto &s) { return s->type() == req.target_type; });
-                req.scene->on_attach(*this);
-                req.scene->on_start(*this);
-                if (it != m_stack.end())
-                {
-                    m_stack.insert(it, std::move(req.scene));
-                }
-                else
-                {
-                    m_stack.push_front(std::move(req.scene));
-                }
-            }
+            process_push_before(req);
             break;
-        }
         case scene_request_type::push_after:
-        {
-            if (req.scene)
-            {
-                auto it = std::find_if(m_stack.rbegin(), m_stack.rend(),
-                                       [&](const auto &s) { return s->type() == req.target_type; });
-                req.scene->on_attach(*this);
-                req.scene->on_start(*this);
-                if (it != m_stack.rend())
-                {
-                    m_stack.insert(it.base(), std::move(req.scene));
-                }
-                else
-                {
-                    m_stack.push_back(std::move(req.scene));
-                }
-            }
+            process_push_after(req);
             break;
-        }
         case scene_request_type::pop_front:
-            if (!m_stack.empty())
-            {
-                auto scene = std::move(m_stack.front());
-                m_stack.pop_front();
-                m_render_targets.erase(scene.get());
-                scene->on_pause(*this);
-                scene->on_detach(*this);
-            }
+            process_pop_front();
             break;
         case scene_request_type::pop_last:
-            if (!m_stack.empty())
-            {
-                auto scene = std::move(m_stack.back());
-                m_stack.pop_back();
-                m_render_targets.erase(scene.get());
-                scene->on_pause(*this);
-                scene->on_detach(*this);
-            }
+            process_pop_last();
             break;
         case scene_request_type::pop_of_type:
-        {
-            auto it = std::find_if(m_stack.begin(), m_stack.end(),
-                                   [&](const auto &s) { return s->type() == req.target_type; });
-            if (it != m_stack.end())
-            {
-                auto scene = std::move(*it);
-                m_stack.erase(it);
-                m_render_targets.erase(scene.get());
-                scene->on_pause(*this);
-                scene->on_detach(*this);
-            }
+            process_pop_of_type(req);
             break;
-        }
+        case scene_request_type::pop:
+            process_pop(req);
+            break;
         case scene_request_type::emit_signal:
-            if (req.signal)
-            {
-                m_outgoing_signals.emplace_back(std::move(req.signal));
-            }
+            process_emit_signal(req);
             break;
         case scene_request_type::start_transition:
-        {
-            if (!req.scene || m_transition.active())
-                break;
-
-            auto it = std::find_if(m_stack.begin(), m_stack.end(),
-                                   [&](const auto &s) { return s->type() == req.target_type; });
-            if (it == m_stack.end())
-                break;
-
-            iscene *from = it->get();
-            from->on_pause(*this);
-            req.scene->on_attach(*this);
-            auto to_it = m_stack.insert(it, std::move(req.scene));
-            iscene *to = to_it->get();
-            m_transition = {from, to, 0.0, req.transition};
+            process_start_transition(req);
             break;
-        }
         }
     }
 }

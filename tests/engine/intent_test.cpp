@@ -60,7 +60,7 @@ class intent_test_scene : public iscene
   public:
     scene_type type() const noexcept override
     {
-        return scene_type::dbg_none;
+        return scene_type::none;
     }
 
     void setup(scene_context &ctx)

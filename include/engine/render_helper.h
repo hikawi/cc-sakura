@@ -23,14 +23,14 @@ namespace ccsakura
 struct render_texture_options
 {
     const sdl::irenderer &m_renderer;
-    sdl::itexture &m_texture;                                ///< the texture to be rendered
-    std::optional<sdl::frect> m_srcrect = std::nullopt;      ///< where to render from the texture
-    std::optional<sdl::frect> m_dstrect = std::nullopt;      ///< where to render to on the renderer
-    std::optional<sdl::fpoint> m_origin = std::nullopt;      ///< the rotation center point
-    render_origin m_render_origin = render_origin::top_left; ///< the rendering origin to shift the destination by
-    sdl::flip m_flip_mode = sdl::flip::none;                 ///< whether to flip the texture
-    double m_rotation = 0;                                   ///< the rotation angle of the texture
-    std::optional<sdl::fcolor> m_color_mod = std::nullopt;   ///< RGB color modulation to apply during render
+    sdl::itexture &m_texture;                                     ///< the texture to be rendered
+    std::optional<sdl::frect> m_srcrect = std::nullopt;           ///< where to render from the texture
+    std::optional<sdl::frect> m_dstrect = std::nullopt;           ///< where to render to on the renderer
+    std::optional<sdl::fpoint> m_origin = std::nullopt;           ///< the rotation center point
+    enum render_origin m_render_origin = render_origin::top_left; ///< the rendering origin to shift the destination by
+    sdl::flip m_flip_mode = sdl::flip::none;                      ///< whether to flip the texture
+    double m_rotation = 0;                                        ///< the rotation angle of the texture
+    std::optional<sdl::fcolor> m_color_mod = std::nullopt;        ///< RGB color modulation to apply during render
 
     /**
      * Constructs a simple texture rendering options.
