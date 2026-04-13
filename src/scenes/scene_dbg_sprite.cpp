@@ -1,10 +1,13 @@
 #include "scenes/scene_dbg_sprite.h"
 
-#include "engine/collision.h"
-#include "engine/component.h"
+#include "engine/component/collider.h"
+#include "engine/component/sprite.h"
+#include "engine/component/text.h"
+#include "engine/component/transform.h"
 #include "engine/entity.h"
 #include "engine/scene.h"
 #include "engine/sprite.h"
+#include "engine/system/collision.h"
 
 #include <algorithm>
 #include <numbers>
@@ -33,13 +36,14 @@ dbg_sprite::dbg_sprite() : m_score(0)
                      .with_component<components::sprite>(&sprite::named("dbg_ball"))
                      .build();
     const auto &bf = ball->get_component<components::sprite>()->spr->frame(0);
-    ball->add_component<components::hitbox>(circle_collider({240, 135}, std::min(bf.source_w, bf.source_h) / 2.0));
+    ball->add_component<components::collider>(
+        components::circle_collider({240, 135}, std::min(bf.source_w, bf.source_h) / 2.0));
 
     const vec2d key_pos = random_key_pos();
     construct_entity(ENTITY_KEY)
         .with_component<components::transform>(key_pos)
         .with_component<components::sprite>(&sprite::named("dbg_key"))
-        .with_component<components::hitbox>(aabb_collider({key_pos, {11, 4.5}}))
+        .with_component<components::collider>(components::aabb_collider({key_pos, {11, 4.5}}))
         .build();
 
     construct_entity(ENTITY_SCORE)
@@ -51,7 +55,7 @@ dbg_sprite::dbg_sprite() : m_score(0)
 
 scene_type dbg_sprite::type() const noexcept
 {
-    return scene_type::dbg_sprite;
+    return scene_type::debug;
 }
 
 void dbg_sprite::on_attach(scene_context &ctx) noexcept
@@ -90,7 +94,7 @@ bool dbg_sprite::on_physical_tick(scene_context &) noexcept
         m_velocity = {0, 0};
     }
 
-    with_entity_components<components::transform, components::hitbox>(
+    with_entity_components<components::transform, components::collider>(
         ENTITY_BALL,
         [&](auto &tcomp, auto &bhbox)
         {
@@ -98,20 +102,20 @@ bool dbg_sprite::on_physical_tick(scene_context &) noexcept
             tcomp.position.x = std::clamp(tcomp.position.x, 0.0, static_cast<double>(APPLICATION_LOGICAL_WIDTH));
             tcomp.position.y = std::clamp(tcomp.position.y, 0.0, static_cast<double>(APPLICATION_LOGICAL_HEIGHT));
 
-            auto &ball_collider = bhbox.template as<circle_collider>();
-            ball_collider.set_center(tcomp.position);
+            auto &ball_collider = bhbox.template as<components::circle_collider>();
+            ball_collider.center = tcomp.position;
 
-            with_entity_components<components::transform, components::hitbox>(
+            with_entity_components<components::transform, components::collider>(
                 ENTITY_KEY,
                 [&](auto &kcomp, auto &khbox)
                 {
-                    auto &key_collider = khbox.template as<aabb_collider>();
-                    const auto collision = ball_collider.collides(key_collider);
+                    auto &key_collider = khbox.template as<components::aabb_collider>();
+                    const auto collision = system::check_collisions(bhbox, khbox);
                     if (collision.is_colliding && collision.depth >= 1)
                     {
                         const vec2d new_pos = random_key_pos();
                         kcomp.position = new_pos;
-                        key_collider.set_center(new_pos);
+                        key_collider.center = new_pos;
                         m_score++;
                         get_entity_component<components::text>(ENTITY_SCORE)->set(std::format("Score: {}", m_score));
                     }

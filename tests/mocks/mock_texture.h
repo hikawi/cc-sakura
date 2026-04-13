@@ -1,4 +1,4 @@
-#include "sdl/sdl_render.h"
+#include "sdl/sdl_texture.h"
 
 #include "gmock/gmock.h"
 

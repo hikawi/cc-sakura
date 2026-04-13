@@ -1,4 +1,4 @@
-#include "engine/scene.h"
+#include "engine/scene_manager.h"
 #include "mocks/mock_renderer.h"
 #include "mocks/mock_scene.h"
 #include "mocks/mock_texture.h"
@@ -182,14 +182,12 @@ TEST(SceneTransition, CompletesAndCallsDetach)
     EXPECT_CALL(*to, on_attach(testing::Ref(scene_mgr))).Times(1);
     EXPECT_CALL(*to, on_start(testing::Ref(scene_mgr))).Times(1);
     EXPECT_CALL(*to, on_detach).Times(0);
-    ON_CALL(*from, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_sprite));
-    ON_CALL(*to, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_physics));
     EXPECT_CALL(*to, on_tick(testing::Ref(scene_mgr), testing::_)).WillRepeatedly(testing::Return(true));
 
-    scene_mgr.push_back(std::move(from));
+    const auto from_handle = scene_mgr.push_back(std::move(from));
     scene_mgr.process_requests();
 
-    scene_mgr.start_transition(std::move(to), ccsakura::scene_type::dbg_sprite, ccsakura::scene_transition::fade(0.5));
+    scene_mgr.start_transition(std::move(to), from_handle, ccsakura::scene_transition::fade(0.5));
     scene_mgr.process_requests();
 
     // Tick past the duration — from_scene detached, to_scene started
@@ -202,8 +200,6 @@ TEST(SceneTransition, PauseCalledBeforeTicksFreezeAndStartAfterDetach)
 
     auto from = std::make_unique<mock_scene>();
     auto to = std::make_unique<mock_scene>();
-    ON_CALL(*from, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_sprite));
-    ON_CALL(*to, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_physics));
 
     std::vector<std::string> events;
 
@@ -214,10 +210,10 @@ TEST(SceneTransition, PauseCalledBeforeTicksFreezeAndStartAfterDetach)
     EXPECT_CALL(*to, on_start).WillOnce([&](auto &) { events.push_back("to:start"); });
     EXPECT_CALL(*to, on_tick).WillRepeatedly(testing::Return(true));
 
-    scene_mgr.push_back(std::move(from));
+    const auto from_handle = scene_mgr.push_back(std::move(from));
     scene_mgr.process_requests();
 
-    scene_mgr.start_transition(std::move(to), ccsakura::scene_type::dbg_sprite, ccsakura::scene_transition::fade(0.2));
+    scene_mgr.start_transition(std::move(to), from_handle, ccsakura::scene_transition::fade(0.2));
     scene_mgr.process_requests();
     scene_mgr.tick(0.3);
 
@@ -236,8 +232,6 @@ TEST(SceneTransition, FadeAppliesAlphaMod)
 
     auto from = std::make_unique<mock_scene>();
     auto to = std::make_unique<mock_scene>();
-    ON_CALL(*from, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_sprite));
-    ON_CALL(*to, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_physics));
     EXPECT_CALL(*from, on_attach).Times(1);
     EXPECT_CALL(*to, on_attach).Times(1);
 
@@ -272,10 +266,10 @@ TEST(SceneTransition, FadeAppliesAlphaMod)
     EXPECT_CALL(*to_tex, set_alpha_mod(uint8_t{127})).Times(1);
     EXPECT_CALL(*to_tex, set_alpha_mod(uint8_t{255})).Times(1);
 
-    scene_mgr.push_back(std::move(from));
+    const auto from_handle = scene_mgr.push_back(std::move(from));
     scene_mgr.process_requests();
 
-    scene_mgr.start_transition(std::move(to), ccsakura::scene_type::dbg_sprite, ccsakura::scene_transition::fade(1.0));
+    scene_mgr.start_transition(std::move(to), from_handle, ccsakura::scene_transition::fade(1.0));
     scene_mgr.process_requests();
 
     scene_mgr.tick(0.5);
@@ -290,9 +284,6 @@ TEST(SceneTransition, HudUnaffectedByTransition)
     auto hud = std::make_unique<mock_scene>();
     auto from = std::make_unique<mock_scene>();
     auto to = std::make_unique<mock_scene>();
-    ON_CALL(*hud, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_fps));
-    ON_CALL(*from, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_sprite));
-    ON_CALL(*to, type()).WillByDefault(testing::Return(ccsakura::scene_type::dbg_physics));
     EXPECT_CALL(*hud, on_attach).Times(1);
     EXPECT_CALL(*from, on_attach).Times(1);
     EXPECT_CALL(*to, on_attach).Times(1);
@@ -331,11 +322,10 @@ TEST(SceneTransition, HudUnaffectedByTransition)
     EXPECT_CALL(*hud_tex, set_alpha_mod(testing::Ne(uint8_t{255}))).Times(0);
 
     scene_mgr.push_front(std::move(hud)); // front = highest layer
-    scene_mgr.push_back(std::move(from));
+    const auto from_handle = scene_mgr.push_back(std::move(from));
     scene_mgr.process_requests();
 
-    scene_mgr.start_transition(std::move(to), ccsakura::scene_type::dbg_sprite,
-                               ccsakura::scene_transition::slide_left(1.0));
+    scene_mgr.start_transition(std::move(to), from_handle, ccsakura::scene_transition::slide_left(1.0));
     scene_mgr.process_requests();
 
     scene_mgr.tick(0.5);
@@ -347,11 +337,11 @@ TEST(SceneTransition, NoFromSceneDoesNothing)
     ccsakura::scene_manager scene_mgr;
 
     auto to = std::make_unique<mock_scene>();
-    EXPECT_CALL(*to, on_attach).Times(0); // must not be attached if from not found
+    EXPECT_CALL(*to, on_attach).Times(0); // must not be attached if handle not found in stack
     EXPECT_CALL(*to, on_detach).Times(0);
 
-    // start_transition targeting a type not present in the stack
-    scene_mgr.start_transition(std::move(to), ccsakura::scene_type::dbg_sprite, ccsakura::scene_transition::fade(1.0));
+    // start_transition with a handle that does not exist in the stack
+    scene_mgr.start_transition(std::move(to), ccsakura::invalid_scene_handle, ccsakura::scene_transition::fade(1.0));
     scene_mgr.process_requests();
     // No crash, no transition started
 }

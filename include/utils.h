@@ -25,3 +25,11 @@ bool float_equal(const float a, const float b) noexcept;
  * \returns true if they are equal enough
  */
 bool double_equal(const double a, const double b) noexcept;
+
+/**
+ * Overloaded function overloader for std::visit.
+ */
+template <class... Ts> struct overloaded : Ts...
+{
+    using Ts::operator()...;
+};

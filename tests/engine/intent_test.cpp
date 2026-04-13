@@ -1,5 +1,5 @@
 #include "engine/intent.h"
-#include "engine/scene.h"
+#include "engine/scene_manager.h"
 #include "engine/signal.h"
 #include "sdl/sdl_events.h"
 
@@ -60,7 +60,7 @@ class intent_test_scene : public iscene
   public:
     scene_type type() const noexcept override
     {
-        return scene_type::dbg_none;
+        return scene_type::none;
     }
 
     void setup(scene_context &ctx)

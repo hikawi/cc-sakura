@@ -6,189 +6,21 @@
 
 #pragma once
 
-#include "collision.h"
-#include "entity.h"
-#include "intent.h"
-#include "scene_transition.h"
-#include "scenes/scene_id.h"
-#include "sdl/sdl_render.h"
-#include "signal.h"
+#include "engine/camera.h"
+#include "engine/collision.h"
+#include "engine/entity.h"
+#include "engine/intent.h"
+#include "engine/scene_context.h"
 
-#include <algorithm>
-#include <atomic>
-#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <queue>
-#include <set>
 #include <tuple>
-#include <typeindex>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace ccsakura
 {
-
-class iscene_manager;
-class iscene;
-class scene_context;
-
-/**
- * Represents a proxy of scene manager to allow scenes to manipulate the scenes stack
- * queue their requests, instead of breaking the normal operation flow.
- */
-class scene_context
-{
-  public:
-    virtual ~scene_context() = default;
-
-    /**
-     * \brief Queues a request to add a new scene.
-     * \param scene The scene to add.
-     * \returns true if it succeeded, false otherwise.
-     */
-    virtual bool push_back(std::unique_ptr<iscene> scene) = 0;
-
-    /**
-     * \brief Queues a request to push a scene to the front of the stack.
-     * \param scene The scene to add.
-     * \returns true if it succeeded, false otherwise.
-     */
-    virtual bool push_front(std::unique_ptr<iscene> scene) = 0;
-
-    /**
-     * \brief Queues a request to push a scene before the first scene found of that type.
-     *
-     * If there is no scene with that type, acts the same as `push_front`.
-     *
-     * \param scene the scene to add.
-     * \param type the type of scene to push before.
-     * \returns true if it succeeded, false otherwise.
-     */
-    virtual bool push_before(std::unique_ptr<iscene> scene, const scene_type type) = 0;
-
-    /**
-     * \brief Queues a request to push a scene right after the last scene found of that type.
-     *
-     * If there is no scene with that type, acts the same as `push_back`.
-     *
-     * \param scene the scene to add.
-     * \param type the type of scene to push before.
-     * \returns true if it succeeded, false otherwise.
-     */
-    virtual bool push_after(std::unique_ptr<iscene> scene, const scene_type type) = 0;
-
-    /**
-     * \brief Pops the first scene of the stack.
-     *
-     * If the stack is empty, returns nullptr.
-     *
-     * \returns the scene ownership, null if it is empty.
-     */
-    virtual std::unique_ptr<iscene> pop_front() = 0;
-
-    /**
-     * \brief Pops the last scene of the stack.
-     *
-     * If the stack is empty, returns nullptr.
-     *
-     * \returns the scene ownership, null if it is empty.
-     */
-    virtual std::unique_ptr<iscene> pop_last() = 0;
-
-    /**
-     * \brief Pops the first scene of the stack with type.
-     *
-     * If the stack is empty, returns nullptr.
-     *
-     * \param type the type of scene to pop
-     * \returns the scene ownership, null if it is not found.
-     */
-    virtual std::unique_ptr<iscene> pop_of_type(const scene_type type) = 0;
-
-    /**
-     * \brief Queues a request to replace a scene in-place with a transition effect.
-     *
-     * The incoming scene is inserted at the same stack depth as the scene of
-     * \p from_type. Other scenes (e.g. HUD) remain untouched at their positions.
-     * The outgoing scene is removed once the transition completes.
-     *
-     * If no scene with \p from_type is found, the request is ignored.
-     * If a transition is already active, the request is ignored.
-     *
-     * \param to_scene  The incoming scene.
-     * \param from_type The scene_type of the outgoing scene to replace.
-     * \param transition The transition effect and duration.
-     * \returns true if queued successfully, false otherwise.
-     */
-    virtual bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type,
-                                  scene_transition transition) = 0;
-
-    /**
-     * Emits a signal.
-     *
-     * \param signal the signal to emit
-     * \returns true if the request was queued, false otherwise.
-     */
-    virtual bool emit_signal(std::unique_ptr<isignal> signal) = 0;
-
-    /**
-     * Unsubscribes a previously registered listener by its ID.
-     *
-     * \param id the subscription ID
-     * \returns true if removed successfully, false if not found.
-     */
-    virtual bool unsubscribe(uint64_t id) = 0;
-
-    /**
-     * Sets the background color used to clear the screen each frame.
-     *
-     * \param color the desired background color
-     */
-    virtual void set_background_color(sdl::fcolor color) noexcept = 0;
-
-    /**
-     * Subscribes to a signal type at priority.
-     *
-     * \tparam T the signal type to subscribe to
-     * \param priority the listener priority
-     * \param callback the function to call when the signal is emitted
-     * \returns the new subscriber id
-     */
-    template <typename T>
-        requires std::derived_from<T, isignal>
-    uint64_t subscribe(listener_priority priority, std::function<void(T &)> callback)
-    {
-        uint64_t id = next_listener_id();
-        signal_listener listener(priority, id, callback);
-        register_listener(std::move(listener));
-        return id;
-    }
-
-    /**
-     * Subscribes to a signal type at priority using a member function.
-     *
-     * \tparam T the signal type to subscribe to
-     * \tparam Class the class type containing the method
-     * \param priority the listener priority
-     * \param method the member function to call
-     * \param instance the class instance to call the method on
-     * \returns the new subscriber id
-     */
-    template <typename T, typename Class>
-        requires std::derived_from<T, isignal>
-    uint64_t subscribe(listener_priority priority, void (Class::*method)(T &), Class *instance)
-    {
-        return subscribe<T>(priority, [instance, method](T &ev) { (instance->*method)(ev); });
-    }
-
-  protected:
-    virtual uint64_t next_listener_id() noexcept = 0;
-    virtual void register_listener(signal_listener listener) = 0;
-};
 
 /**
  * Fluent builder that registers signal listeners and tracks their IDs.
@@ -312,6 +144,13 @@ class iscene
      * \returns the scene type
      */
     virtual scene_type type() const noexcept = 0;
+
+    /**
+     * \brief Returns the unique handle assigned by the scene manager on push.
+     *
+     * Returns invalid_scene_handle until the push request is processed.
+     */
+    scene_handle handle() const noexcept { return m_handle; }
 
     /**
      * \brief Called when the scene is added to the scene manager.
@@ -651,6 +490,8 @@ class iscene
     void unbind_signals(scene_context &ctx) noexcept;
 
   private:
+    friend class scene_manager;
+
     void on_intent_key(signals::key &e) noexcept;
 
     std::vector<std::pair<sdl::keycode, intent>> m_intent_bindings;
@@ -658,6 +499,7 @@ class iscene
     uint64_t m_intent_sub_id{0};
     std::vector<uint64_t> m_signal_sub_ids;
     std::map<std::pair<uint32_t, uint32_t>, collision_hook_fn> m_collision_hooks;
+    scene_handle m_handle{invalid_scene_handle};
 
   protected:
     std::unordered_map<uint32_t, std::unique_ptr<entity>> m_entities; ///< Entity registry
@@ -673,160 +515,5 @@ class iscene
  */
 #define ON_COLLISION(id_a, id_b, body)                                                                                 \
     register_collision_pair((id_a), (id_b), [this](uint32_t a, uint32_t b, const collision &col) noexcept body)
-
-/**
- * \brief Manages the lifecycle and rendering of game scenes.
- *
- * This interface defines how the engine interacts with the scene management system.
- * It supports adding and removing scenes, processing updates, handling events, and rendering.
- */
-class iscene_manager : public scene_context
-{
-  public:
-    virtual ~iscene_manager() = default;
-
-    /**
-     * \brief Updates the logic of all active scenes.
-     *
-     * Processes any pending scene change requests after the update loop.
-     *
-     * \param dt Delta time in seconds.
-     */
-    virtual void tick(const double dt) = 0;
-
-    /**
-     * \brief Updates the physics of all active scenes.
-     */
-    virtual void physical_tick() = 0;
-
-    /**
-     * \brief Runs narrow-phase collision detection across all scenes,
-     *        calling on_collide() for each colliding entity pair.
-     *
-     * Broad-phase optimisations (culling, quadtrees) can be added inside
-     * the implementation without touching individual scenes.
-     */
-    virtual void collision_tick() = 0;
-
-    /**
-     * \brief Renders all active scenes in order.
-     * \param renderer The renderer to use.
-     */
-    virtual void render(const sdl::irenderer &renderer) const noexcept = 0;
-
-    /**
-     * Sets the background color for a clear.
-     *
-     * \param color the color to set to.
-     */
-    virtual void set_background_color(sdl::fcolor color) noexcept = 0;
-
-    /**
-     * Processes all pending requests.
-     */
-    virtual void process_requests() = 0;
-
-    /**
-     * Drains all emitted signals into the target deque.
-     *
-     * \param target the deque to move signals into
-     */
-    virtual void drain_signals(std::deque<std::unique_ptr<isignal>> &target) = 0;
-
-    /**
-     * Propagates a signal down to all subscribers.
-     *
-     * \param signal the signal to propagate
-     */
-    virtual void propagate_signals(isignal &signal) = 0;
-};
-
-enum class scene_request_type
-{
-    push_back,
-    push_front,
-    push_before,
-    push_after,
-    pop_front,
-    pop_last,
-    pop_of_type,
-    emit_signal,
-    start_transition,
-};
-
-/**
- * Internal struct for scene managers.
- */
-struct scene_request
-{
-    scene_request_type type;
-    std::unique_ptr<iscene> scene = nullptr;
-    scene_type target_type = scene_type::dbg_none;
-    std::unique_ptr<isignal> signal = nullptr;
-    scene_transition transition{};
-};
-
-/**
- * \brief Provides a concrete manager of scenes.
- */
-class scene_manager : public iscene_manager
-{
-  public:
-    bool push_back(std::unique_ptr<iscene> scene) override;
-    bool push_front(std::unique_ptr<iscene> scene) override;
-    bool push_before(std::unique_ptr<iscene> scene, const scene_type type) override;
-    bool push_after(std::unique_ptr<iscene> scene, const scene_type type) override;
-    std::unique_ptr<iscene> pop_front() override;
-    std::unique_ptr<iscene> pop_last() override;
-    std::unique_ptr<iscene> pop_of_type(const scene_type type) override;
-    bool start_transition(std::unique_ptr<iscene> to_scene, scene_type from_type, scene_transition transition) override;
-    bool emit_signal(std::unique_ptr<isignal> signal) override;
-    bool unsubscribe(uint64_t id) override;
-
-    void tick(const double dt) override;
-    void physical_tick() override;
-    void collision_tick() override;
-    void render(const sdl::irenderer &renderer) const noexcept override;
-    void process_requests() override;
-    void drain_signals(std::deque<std::unique_ptr<isignal>> &target) override;
-    void propagate_signals(isignal &signal) override;
-    void set_background_color(sdl::fcolor color) noexcept override;
-
-  protected:
-    uint64_t next_listener_id() noexcept override;
-    void register_listener(signal_listener listener) override;
-
-  private:
-    std::mutex m_requests_mutex;
-    std::queue<scene_request> m_requests;
-    std::deque<std::unique_ptr<iscene>> m_stack;
-    std::deque<std::unique_ptr<isignal>> m_outgoing_signals;
-    std::unordered_map<std::type_index, std::set<signal_listener>> m_listeners;
-
-    std::atomic<uint64_t> m_listener_id_counter{0};
-
-    void render_scene(const sdl::irenderer &renderer, const iscene &scene, const camera2d &cam) const noexcept;
-
-    struct transition_state
-    {
-        iscene *from_scene = nullptr; ///< raw observer ptr — still owned by m_stack
-        iscene *to_scene = nullptr;   ///< raw observer ptr — still owned by m_stack
-        double elapsed = 0.0;
-        scene_transition config{};
-
-        bool active() const noexcept
-        {
-            return config.type != scene_transition_type::none && from_scene != nullptr;
-        }
-        double progress() const noexcept
-        {
-            return config.duration <= 0.0 ? 1.0 : std::clamp(elapsed / config.duration, 0.0, 1.0);
-        }
-    };
-
-    sdl::fcolor m_background_color{1.0f, 1.0f, 1.0f, 1.0f};
-    mutable std::unordered_map<iscene *, std::unique_ptr<sdl::itexture>> m_render_targets;
-    transition_state m_transition{};
-};
 
 } // namespace ccsakura

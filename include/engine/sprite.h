@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "engine/render.h"
+#include "engine/render_helper.h"
+#include "engine/render_origin.h"
 #include "sdl/sdl_iostream.h"
 #include "sdl/sdl_rect.h"
 #include "sdl/sdl_render.h"
@@ -90,7 +91,7 @@ class isprite
      * \param renderer the renderer to use
      * \returns a render texture options
      */
-    virtual sdl::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept = 0;
+    virtual ccsakura::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept = 0;
 
     /**
      * Returns the total number of frames in the sprite.
@@ -193,7 +194,7 @@ class sprite : public isprite
 
     void render(const sdl::irenderer &renderer, const sdl::fpoint pos, const render_origin origin,
                 uint32_t frame_index) const noexcept override;
-    sdl::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept override;
+    ccsakura::render_texture_options render_options(const sdl::irenderer &renderer) const noexcept override;
     const sprite_frame &frame(uint32_t index) const noexcept override;
     const sprite_frame_tag &frame_tag(const std::string &name) const noexcept override;
     uint32_t frame_count() const noexcept override;

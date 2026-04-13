@@ -14,7 +14,7 @@ dbg_empty::dbg_empty(sdl::fcolor color)
 
 scene_type dbg_empty::type() const noexcept
 {
-    return scene_type::dbg_empty;
+    return scene_type::debug;
 }
 
 void dbg_empty::on_attach(scene_context &ctx) noexcept

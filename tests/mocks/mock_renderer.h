@@ -18,7 +18,16 @@ class mock_renderer : public sdl::irenderer
                 (const, noexcept, override));
     MOCK_METHOD(std::unique_ptr<sdl::itexture>, create_texture, (const sdl::isurface &surface),
                 (const, noexcept, override));
-    MOCK_METHOD(void, render_texture, (const sdl::render_texture_options &), (const, noexcept, override));
+    MOCK_METHOD(void, render_texture, (sdl::itexture & texture, const sdl::frect *srcrect, const sdl::frect *dstrect),
+                (const, noexcept, override));
+    MOCK_METHOD(void, render_texture_affine,
+                (sdl::itexture & texture, const sdl::frect *srcrect, const sdl::fpoint *origin,
+                 const sdl::fpoint *right, const sdl::fpoint *down),
+                (const, noexcept, override));
+    MOCK_METHOD(void, render_texture_rotated,
+                (sdl::itexture & texture, const sdl::frect *srcrect, const sdl::frect *dstrect, double angle,
+                 const sdl::fpoint *center, sdl::flip flip_mode),
+                (const, noexcept, override));
     MOCK_METHOD(void, render_fill_rect, (const sdl::frect &rect), (const, noexcept, override));
     MOCK_METHOD(void, render_geometry, (const sdl::render_geometry_options &options), (const, noexcept, override));
     MOCK_METHOD(void, set_color, (const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a),

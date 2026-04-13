@@ -1,4 +1,5 @@
-#include "engine/component.h"
+#include "engine/component/sprite.h"
+#include "engine/component/transform.h"
 #include "engine/entity.h"
 
 #include <gtest/gtest.h>
